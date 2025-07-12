@@ -7,37 +7,85 @@ const app = new Hono();
 
 app.use(cors());
 
+let currentSongInfo: any = { message: "No song playing" };
+
+const scriptLines = [
+  'tell application "Music"',
+  "    set playerState to player state",
+  "    set currentTrack to current track",
+  "    set trackName to name of currentTrack",
+  "    set artistName to artist of currentTrack",
+  "    set albumName to album of currentTrack",
+  "    set currentTime to player position",
+  "    set totalTime to duration of currentTrack",
+  '    return trackName & "\n" & artistName & "\n" & albumName & "\n" & currentTime & "\n" & totalTime & "\n" & playerState',
+  "end tell",
+];
+
+const osascriptArgs = scriptLines.flatMap((line) => ["-e", line]);
+
+function updateSongInfo() {
+  execFile("osascript", osascriptArgs, (error, stdout, stderr) => {
+    if (error || stderr) {
+      currentSongInfo = { error: "Not playing" };
+      return;
+    }
+
+    const output = stdout.trim();
+    console.log(output);
+
+    if (output === "No song playing") {
+      currentSongInfo = { message: "No song playing" };
+      return;
+    }
+
+    const [name, artist, album, currentTime, duration, playerState] =
+      output.split("\n");
+
+    currentSongInfo = {
+      name,
+      artist,
+      album,
+      currentTime,
+      duration,
+      playerState,
+    };
+  });
+}
+
+setInterval(updateSongInfo, 100);
+
 app.get("/", (c) => c.text("Hello World"));
 
-app.get("/music", async (c) => {
-  return new Promise((resolve) => {
-    const delimiter = "|~|";
-    const scriptLines = [
-      'tell application "Music"',
-      '  if player state is not playing then',
-      '    error "Music is not playing."',
-      '  end if',
-      "  set oldDelimiters to AppleScript's text item delimiters",
-      `  set AppleScript's text item delimiters to {"${delimiter}"}`,
-      '  set trackInfo to {duration, name, artist, album} of current track',
-      '  set trackInfoString to trackInfo as string',
-      "  set AppleScript's text item delimiters to oldDelimiters",
-      '  trackInfoString',
-      'end tell',
-    ];
-
-    const osascriptArgs = scriptLines.flatMap((line) => ["-e", line]);
-
-    execFile("osascript", osascriptArgs, (error, stdout, stderr) => {
-      if (error || stderr) {
-        console.log(error || stderr);
-        return resolve(c.json({ error: "Not playing" }, 404));
-      }
-      console.log(stdout.trim());
-      const [duration, name, artist, album] = stdout.trim().split(delimiter);
-      return resolve(c.json({ duration, name, artist, album }));
-    });
-  });
+app.get("/music", (c) => {
+  if (currentSongInfo.error) {
+    return c.json(currentSongInfo, 404);
+  }
+  return c.json(currentSongInfo);
 });
 
-serve(app);
+app.post("/music", async (c) => {
+  const { playing, currentTime } = await c.req.json();
+  let scriptCommand: string;
+
+  if (playing) {
+    scriptCommand = 'tell application "Music" to play';
+  } else {
+    scriptCommand = 'tell application "Music" to pause';
+  }
+
+  execFile("osascript", ["-e", scriptCommand], (error, stdout, stderr) => {
+    if (error || stderr) {
+      console.error(`Error executing AppleScript: ${error || stderr}`);
+      return c.json({ error: "Failed to control Music app" }, 500);
+    }
+    console.log(`Music app command executed: ${scriptCommand}`);
+  });
+
+  return c.json({ message: `Music app set to ${playing ? "play" : "pause"}` });
+});
+
+serve({
+  fetch: app.fetch,
+  port: 4000,
+});

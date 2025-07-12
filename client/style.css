@@ -34,18 +34,31 @@ body {
     flex-direction: column;
     justify-content: flex-end;
     overflow: hidden;
-    -webkit-mask-image: linear-gradient(transparent, black 25%);
-    mask-image: linear-gradient(transparent, black 25%);
+    background-size: cover;
+    background-position: center;
+    transition: background-image 1s ease-in-out;
+}
+
+.lyrics-viewport::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(to bottom, transparent 50%, black 95%);
+    z-index: 1;
 }
 
 #lyrics-container {
-    height: 35%;
     overflow-y: auto;
     scroll-behavior: smooth;
     padding: 70vh 24px 0;
     display: flex;
     flex-direction: column-reverse;
     scrollbar-width: none; /* Firefox */
+    position: relative;
+    z-index: 1;
 }
 
 #lyrics-container::-webkit-scrollbar {
