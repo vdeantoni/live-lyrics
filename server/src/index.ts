@@ -7,8 +7,6 @@ const app = new Hono();
 
 app.use(cors());
 
-let currentSongInfo: any = { message: "No song playing" };
-
 const scriptLines = [
   'tell application "Music"',
   "    set playerState to player state",
@@ -24,65 +22,80 @@ const scriptLines = [
 
 const osascriptArgs = scriptLines.flatMap((line) => ["-e", line]);
 
-function updateSongInfo() {
-  execFile("osascript", osascriptArgs, (error, stdout, stderr) => {
-    if (error || stderr) {
-      currentSongInfo = { error: "Not playing" };
-      return;
-    }
+function getSongInfo(): Promise<any> {
+  return new Promise((resolve) => {
+    execFile("osascript", osascriptArgs, (error, stdout, stderr) => {
+      if (error || stderr) {
+        resolve({ error: "Not playing" });
+        return;
+      }
 
-    const output = stdout.trim();
-    console.log(output);
+      const output = stdout.trim();
+      console.log(output);
 
-    if (output === "No song playing") {
-      currentSongInfo = { message: "No song playing" };
-      return;
-    }
+      if (output === "No song playing") {
+        resolve({ message: "No song playing" });
+        return;
+      }
 
-    const [name, artist, album, currentTime, duration, playerState] =
-      output.split("\n");
+      const [name, artist, album, currentTime, duration, playerState] =
+        output.split("\n");
 
-    currentSongInfo = {
-      name,
-      artist,
-      album,
-      currentTime,
-      duration,
-      playerState,
-    };
+      resolve({
+        name,
+        artist,
+        album,
+        currentTime,
+        duration,
+        playerState,
+      });
+    });
   });
 }
 
-setInterval(updateSongInfo, 100);
-
 app.get("/", (c) => c.text("Hello World"));
 
-app.get("/music", (c) => {
-  if (currentSongInfo.error) {
-    return c.json(currentSongInfo, 404);
+app.get("/music", async (c) => {
+  const songInfo = await getSongInfo();
+  if (songInfo.error) {
+    return c.json(songInfo, 404);
   }
-  return c.json(currentSongInfo);
+  return c.json(songInfo);
 });
 
 app.post("/music", async (c) => {
   const { playing, currentTime } = await c.req.json();
-  let scriptCommand: string;
+  const commands: string[] = [];
 
-  if (playing) {
-    scriptCommand = 'tell application "Music" to play';
-  } else {
-    scriptCommand = 'tell application "Music" to pause';
+  if (playing === true) {
+    commands.push("play");
+  } else if (playing === false) {
+    commands.push("pause");
   }
 
-  execFile("osascript", ["-e", scriptCommand], (error, stdout, stderr) => {
-    if (error || stderr) {
-      console.error(`Error executing AppleScript: ${error || stderr}`);
-      return c.json({ error: "Failed to control Music app" }, 500);
-    }
-    console.log(`Music app command executed: ${scriptCommand}`);
-  });
+  if (currentTime !== undefined) {
+    commands.push(`set player position to ${currentTime}`);
+  }
 
-  return c.json({ message: `Music app set to ${playing ? "play" : "pause"}` });
+  if (commands.length > 0) {
+    const scriptLines = [
+      'tell application "Music"',
+      ...commands.map((cmd) => `    ${cmd}`),
+      "end tell",
+    ];
+
+    const osascriptArgs = scriptLines.flatMap((line) => ["-e", line]);
+
+    execFile("osascript", osascriptArgs, (error, stdout, stderr) => {
+      if (error || stderr) {
+        console.error(`Error executing AppleScript: ${error || stderr}`);
+      } else {
+        console.log(`Music app command executed`);
+      }
+    });
+  }
+
+  return c.json({ message: "Music app command received" });
 });
 
 serve({

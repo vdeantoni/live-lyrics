@@ -125,14 +125,14 @@ body {
     appearance: none;
     width: 18px;
     height: 18px;
-    background: #1db954;
+    background: #fa586a;
     border-radius: 50%;
     cursor: pointer;
     transition: background 0.2s;
 }
 
 #progress-bar:hover::-webkit-slider-thumb {
-    background: #1ed760;
+    background: #fa586a;
 }
 
 .time-display {
@@ -149,7 +149,7 @@ body {
 }
 
 #play-pause-btn {
-    background-color: #1db954;
+    background-color: #fa586a;
     color: white;
     border: none;
     border-radius: 50%;
@@ -164,5 +164,5 @@ body {
 }
 
 #play-pause-btn:hover {
-    background-color: #1ed760;
+    background-color: #ff8a9c;
 }

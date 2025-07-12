@@ -32,6 +32,8 @@ document.addEventListener("DOMContentLoaded", () => {
     },
     animationFrameId: null,
     pollingIntervalId: null,
+    lastTimestamp: 0,
+    isSyncing: false,
   };
 
   // UI Rendering Functions
@@ -44,8 +46,12 @@ document.addEventListener("DOMContentLoaded", () => {
   const renderPlayerControls = () => {
     const { currentTime } = state.player;
     const { duration } = state.currentSong;
+
+    if (!state.player.isSeeking) {
+      progressBarEl.value = currentTime;
+    }
     progressBarEl.max = duration;
-    progressBarEl.value = currentTime;
+
     totalDurationEl.textContent = formatTime(duration);
     currentTimeEl.textContent = formatTime(currentTime);
     playPauseBtn.textContent = state.player.isPlaying ? "❚❚" : "▶";
@@ -60,8 +66,9 @@ document.addEventListener("DOMContentLoaded", () => {
         p.classList.add("lyric-line");
         p.dataset.index = index;
         p.addEventListener("click", () => {
-          state.player.currentTime = state.currentSong.lyrics[index].time;
-          updateUI();
+          handleScrub({
+            target: { value: state.currentSong.lyrics[index].time },
+          });
         });
         lyricsContainerEl.appendChild(p);
       });
@@ -105,12 +112,6 @@ document.addEventListener("DOMContentLoaded", () => {
         setTimeout(() => (state.ui.isProgrammaticScroll = false), 600);
       }
     }
-  };
-
-  const updateUI = () => {
-    renderSongInfo();
-    renderPlayerControls();
-    updateActiveLyric();
   };
 
   // Data Fetching and State Management
@@ -163,12 +164,15 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   const syncWithServer = async () => {
+    state.isSyncing = true;
+
     try {
       const res = await fetch(`http://127.0.0.1:4000/music`);
       const musicData = await res.json();
 
       state.player.isPlaying = musicData.playerState === "playing";
       state.player.currentTime = parseFloat(musicData.currentTime || "0");
+      state.lastTimestamp = 0;
 
       const isNewSong = musicData.name !== state.currentSong?.name;
 
@@ -190,46 +194,79 @@ document.addEventListener("DOMContentLoaded", () => {
     } catch (error) {
       console.error("Sync failed:", error);
     }
+
+    state.isSyncing = false;
   };
 
   // Player Loop
-  const gameLoop = () => {
-    if (state.player.isPlaying && !state.player.isSeeking) {
-      updateUI();
+  const gameLoop = (timestamp) => {
+    renderSongInfo();
+    updateActiveLyric();
+    renderPlayerControls();
+
+    const deltaTime = timestamp - (state.lastTimestamp || timestamp);
+    if (state.player.isPlaying && !state.player.isSeeking && !state.isSyncing) {
+      state.player.currentTime += deltaTime / 1000;
     }
+    state.lastTimestamp = timestamp;
 
     state.animationFrameId = requestAnimationFrame(gameLoop);
   };
 
   // Event Handlers
   const togglePlayPause = async () => {
+    stopSyncing();
+
+    state.player.isPlaying = !state.player.isPlaying;
     await fetch("http://127.0.0.1:4000/music", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ playing: !state.player.isPlaying }),
+      body: JSON.stringify({ playing: state.player.isPlaying }),
     }).catch((error) => console.error("Error updating playing state:", error));
+
+    startSyncing();
   };
 
-  const handleScrub = (e) => {
+  const handleScrub = async (e) => {
+    stopSyncing();
+
     state.player.currentTime = parseFloat(e.target.value);
+    await fetch("http://127.0.0.1:4000/music", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ currentTime: state.player.currentTime }),
+    }).catch((error) => console.error("Error updating playing state:", error));
+
+    startSyncing();
+  };
+
+  const startSyncing = () => {
+    syncWithServer();
+    state.pollingIntervalId = setInterval(syncWithServer, 300);
+  };
+
+  const stopSyncing = () => {
+    clearInterval(state.pollingIntervalId);
   };
 
   const init = async () => {
     playPauseBtn.addEventListener("click", () => togglePlayPause());
-    progressBarEl.addEventListener("input", handleScrub);
     progressBarEl.addEventListener("mousedown", () => {
       state.player.isSeeking = true;
     });
-    progressBarEl.addEventListener("mouseup", () => {
+    progressBarEl.addEventListener("mouseup", async (e) => {
+      await handleScrub(e);
       state.player.isSeeking = false;
     });
     lyricsContainerEl.addEventListener("scroll", () => {
       /* scroll handling logic can be added here if needed */
     });
 
-    state.pollingIntervalId = setInterval(syncWithServer, 1000);
+    startSyncing();
     requestAnimationFrame(gameLoop);
   };
 
