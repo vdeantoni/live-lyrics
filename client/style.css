@@ -37,6 +37,7 @@ body {
     background-size: cover;
     background-position: center;
     transition: background-image 1s ease-in-out;
+    padding-bottom: 12px;
 }
 
 .lyrics-viewport::before {
@@ -70,15 +71,22 @@ body {
     font-size: 1.4rem;
     font-weight: bold;
     color: #666;
+    will-change: transform;
     text-align: center;
-    transform-origin: bottom center;
-    margin-top: 12px;
+    transform-origin: top center;
+    transition:
+        color 0.3s ease-in-out,
+        transform 0.55s ease-out;
 }
 
 .lyric-line.active {
     color: #fff;
-    transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    padding-bottom: 24px;
+    transform-origin: center center;
+    transition: all 0.5s linear;
+}
+
+.lyric-line.inactive {
+    visibility: hidden;
 }
 
 .player-controls {

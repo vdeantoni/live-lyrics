@@ -6,8 +6,11 @@ const formatTime = (seconds) => {
 };
 
 const parseLRC = (lrcContent) => {
-  if (!lrcContent) return [];
-  return lrcContent
+  if (!lrcContent) {
+    return [];
+  }
+
+  const lines = lrcContent
     .split("\n")
     .map((line) => {
       const match = line.match(/^\[(\d{2}):(\d{2})\.(\d{2,3})\](.*)$/);
@@ -22,4 +25,9 @@ const parseLRC = (lrcContent) => {
       return null;
     })
     .filter(Boolean);
+
+  return lines.map(({ time, text }) => ({
+    time,
+    text,
+  }));
 };
