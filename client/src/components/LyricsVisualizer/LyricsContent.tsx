@@ -18,7 +18,6 @@ const LyricsContent: React.FC<LyricsContentProps> = ({
   const cursorRef = useRef<HTMLDivElement>(null);
   const [lines, setLines] = useState<React.ReactElement[]>([]);
 
-  // Generate lines similar to reference implementation
   useEffect(() => {
     if (!lyricsData) {
       setLines([]);
@@ -26,20 +25,19 @@ const LyricsContent: React.FC<LyricsContentProps> = ({
     }
 
     const newLines = lyricsData.lines.map((line, index) => {
-      // Compare by index since liricle provides line.index in sync event
       const isActive = activeLine?.index === index;
 
       return (
         <div
           key={index}
-          className={`lyric__line ${isActive ? "active" : ""}`}
+          className={`text-center text-2xl font-normal mb-5 opacity-75 transition-all duration-200 py-2.5 cursor-pointer ${
+            isActive ? "text-4xl font-bold opacity-100" : ""
+          }`}
           onClick={() => onLineClick?.({ ...line, index })}
         >
           {lyricsData.enhanced && line.words
             ? line.words.map((word, wordIndex) => (
-                <span key={wordIndex} className="lyric__word">
-                  {word.text}{" "}
-                </span>
+                <span key={wordIndex}>{word.text} </span>
               ))
             : line.text}
         </div>
@@ -109,8 +107,14 @@ const LyricsContent: React.FC<LyricsContentProps> = ({
   }, [lyricsData?.enhanced]);
 
   return (
-    <div ref={contentRef} className="lyric__content">
-      <div ref={cursorRef} className="lyric__cursor" />
+    <div
+      ref={contentRef}
+      className="w-full h-screen pt-[300px] pb-[300px] px-10 overflow-auto scroll-smooth [&::-webkit-scrollbar]:hidden"
+    >
+      <div
+        ref={cursorRef}
+        className="absolute w-1 h-1 rounded-md bg-current  opacity-20 transition-all duration-300"
+      />
       {lines}
     </div>
   );
