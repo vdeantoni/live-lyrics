@@ -1,6 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
 import styled from 'styled-components';
-import Liricle from 'liricle';
 
 const PlayerContainer = styled.div`
   flex-grow: 1;
@@ -8,6 +7,21 @@ const PlayerContainer = styled.div`
   flex-direction: column;
   padding: 20px;
   overflow: hidden;
+`;
+
+const ProgressBarContainer = styled.div`
+  width: 100%;
+  height: 5px;
+  background-color: #ccc;
+  border-radius: 5px;
+  margin-bottom: 20px;
+`;
+
+const ProgressBar = styled.div`
+  height: 100%;
+  background-color: #007bff;
+  border-radius: 5px;
+  transition: width 0.1s linear;
 `;
 
 const LyricsWrapper = styled.div`
@@ -36,60 +50,95 @@ const LyricLine = styled.div`
   }
 `;
 
-const PlayerWrapper = styled.div`
-  width: 100%;
-  padding: 20px 0;
-`;
+const parseLrc = lrcText => {
+  const lines = lrcText.split('\n');
+  const result = [];
+  const timeRegex = /\[(\d{2}):(\d{2})\.(\d{2,3})\](.*)/;
 
-const AudioPlayer = styled.audio`
-  width: 100%;
-`;
+  for (const line of lines) {
+    const match = line.match(timeRegex);
+    if (match) {
+      const minutes = parseInt(match[1], 10);
+      const seconds = parseInt(match[2], 10);
+      const milliseconds = parseInt(match[3], 10);
+      const text = match[4].trim();
+      const time = minutes * 60 + seconds + milliseconds / 1000;
+      result.push({ time, text });
+    }
+  }
+  return result;
+};
 
 function Player({ song }) {
-  const playerRef = useRef(null);
   const lyricsWrapperRef = useRef(null);
-  const liricleRef = useRef(null);
+  const intervalRef = useRef(null);
   const [lyrics, setLyrics] = useState([]);
-  const [activeLineIndex, setActiveLineIndex] = useState(null);
+  const [activeLineIndex, setActiveLineIndex] = useState(-1);
+  const [progress, setProgress] = useState(0);
 
   useEffect(() => {
-    if (!liricleRef.current) {
-      liricleRef.current = new Liricle();
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+    }
 
-      liricleRef.current.on('load', data => {
-        setLyrics(data.lines);
-        setActiveLineIndex(null);
-        if (lyricsWrapperRef.current) {
-          lyricsWrapperRef.current.scrollTop = 0;
-        }
-      });
+    if (song && song.lrcUrl) {
+      fetch(song.lrcUrl)
+        .then(res => res.text())
+        .then(text => {
+          const parsedLyrics = parseLrc(text);
+          if (!parsedLyrics.length) {
+            setLyrics([]);
+            setProgress(0);
+            setActiveLineIndex(-1);
+            return;
+          }
 
-      liricleRef.current.on('sync', data => {
-        setActiveLineIndex(data.index);
-      });
+          setLyrics(parsedLyrics);
+          setActiveLineIndex(0);
+          setProgress(0);
+
+          const totalDuration = parsedLyrics[parsedLyrics.length - 1].time;
+          let currentTime = 0;
+
+          intervalRef.current = setInterval(() => {
+            currentTime += 0.1;
+            if (currentTime > totalDuration) {
+              clearInterval(intervalRef.current);
+              setProgress(100);
+              return;
+            }
+
+            const progressPercentage = (currentTime / totalDuration) * 100;
+            setProgress(progressPercentage);
+
+            let newActiveLineIndex = 0;
+            for (let i = 0; i < parsedLyrics.length; i++) {
+              if (currentTime >= parsedLyrics[i].time) {
+                newActiveLineIndex = i;
+              } else {
+                break;
+              }
+            }
+            setActiveLineIndex(newActiveLineIndex);
+          }, 100);
+        })
+        .catch(error => {
+          console.error('Error fetching lyrics:', error);
+          setLyrics([]);
+          setProgress(0);
+          setActiveLineIndex(-1);
+        });
     }
 
     return () => {
-      if (liricleRef.current) {
-        liricleRef.current.destroy();
-        liricleRef.current = null;
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
       }
     };
-  }, []);
-
-  useEffect(() => {
-    if (liricleRef.current && song) {
-      setLyrics([]);
-      setActiveLineIndex(null);
-      liricleRef.current.load({ url: song.lrcUrl });
-      if (playerRef.current) {
-        playerRef.current.load();
-      }
-    }
   }, [song]);
 
   useEffect(() => {
-    if (lyricsWrapperRef.current && activeLineIndex !== null) {
+    if (lyricsWrapperRef.current && activeLineIndex !== null && activeLineIndex >= 0) {
       const activeLine = lyricsWrapperRef.current.children[activeLineIndex];
       if (activeLine) {
         const wrapperRect = lyricsWrapperRef.current.getBoundingClientRect();
@@ -105,15 +154,11 @@ function Player({ song }) {
     }
   }, [activeLineIndex]);
 
-  const handleTimeUpdate = () => {
-    if (liricleRef.current && playerRef.current) {
-      const time = playerRef.current.currentTime;
-      liricleRef.current.sync(time, false);
-    }
-  };
-
   return (
     <PlayerContainer>
+      <ProgressBarContainer>
+        <ProgressBar style={{ width: `${progress}%` }} />
+      </ProgressBarContainer>
       <LyricsWrapper ref={lyricsWrapperRef}>
         {lyrics.map((line, index) => (
           <LyricLine key={index} className={activeLineIndex === index ? 'active-line' : ''}>
@@ -121,9 +166,6 @@ function Player({ song }) {
           </LyricLine>
         ))}
       </LyricsWrapper>
-      <PlayerWrapper>
-        <AudioPlayer ref={playerRef} src={song.audioUrl} controls onTimeUpdate={handleTimeUpdate} autoPlay/>
-      </PlayerWrapper>
     </PlayerContainer>
   );
 }

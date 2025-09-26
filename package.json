@@ -10,7 +10,6 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "liricle": "^4.2.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "styled-components": "^6.1.19"
