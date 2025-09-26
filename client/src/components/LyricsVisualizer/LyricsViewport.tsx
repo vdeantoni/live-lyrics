@@ -22,13 +22,13 @@ const LyricsViewport = ({ children }: PropsWithChildren) => {
   }, [artworks]);
 
   return (
-    <div className="relative h-full overflow-hidden">
+    <div className="relative h-full w-full overflow-hidden">
       {/* Background Image Layer with Effects */}
       <div
         className="absolute inset-0 bg-cover bg-center transition-all duration-1000 ease-in-out"
         style={{
           backgroundImage: `url(${currentArtworkUrl})`,
-          filter: "blur(4px) grayscale(0.6) brightness(0.6) contrast(1.1)",
+          filter: "blur(4px) grayscale(0.7) brightness(0.6) contrast(1.1)",
           transform: "scale(1.1)", // Slightly scale to hide blur edges
         }}
       />

@@ -31,7 +31,9 @@ const LyricsContent: React.FC<LyricsContentProps> = ({
         <div
           key={index}
           className={`text-center text-2xl font-normal my-3 opacity-50 transition-all duration-300 py-2.5 cursor-pointer transform ${
-            isActive ? "text-2xl font-bold opacity-100 scale-110" : ""
+            isActive
+              ? "text-2xl font-bold opacity-100 scale-110 [text-shadow:0_0_10px_#fff,4px_4px_8px_rgba(0,0,0,0.5)]"
+              : ""
           }`}
           onClick={() => onLineClick?.({ ...line, index })}
         >
