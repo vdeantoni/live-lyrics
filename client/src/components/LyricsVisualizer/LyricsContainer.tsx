@@ -1,23 +1,26 @@
-import { useLyrics, useSong, type LineData, type WordData, type LyricsData } from "@/lib/api";
-import { useEffect, useState, useRef } from "react";
+import {
+  useLyrics,
+  useSong,
+  type LineData,
+  type WordData,
+  type LyricsData,
+} from "@/lib/api";
+import { useEffect, useState, useRef, useCallback } from "react";
 import LyricsContent from "./LyricsContent";
-import "./LyricsContent/LyricsContent.css";
 import Liricle from "liricle";
-
-export const MAGIC_NUMBER = 0.8;
 
 const LyricsContainer = () => {
   const { data: song } = useSong();
-  const { data: lrcContent } = useLyrics(song!);
+  const { data: lrcContent } = useLyrics(song);
 
   const liricleRef = useRef<Liricle | null>(null);
   const [lyricsData, setLyricsData] = useState<LyricsData | null>(null);
   const [activeLine, setActiveLine] = useState<LineData | null>(null);
   const [activeWord, setActiveWord] = useState<WordData | null>(null);
 
-  const handleLineClick = (line: LineData) => {
+  const handleLineClick = useCallback((line: LineData) => {
     console.log(`Clicked line: ${line.text} at time ${line.time}`);
-  };
+  }, []);
 
   // Initialize liricle when LRC content is available
   useEffect(() => {
@@ -53,7 +56,7 @@ const LyricsContainer = () => {
 
   // Sync with current time
   useEffect(() => {
-    if (!liricleRef.current || !song) return;
+    if (!liricleRef.current || !song?.currentTime) return;
 
     liricleRef.current.sync(song.currentTime);
   }, [song?.currentTime]);
