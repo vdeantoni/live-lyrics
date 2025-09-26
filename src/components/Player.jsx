@@ -1,5 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
 import styled from 'styled-components';
+import SilenceLoader from './SilenceLoader';
 
 const PlayerContainer = styled.div`
   flex-grow: 1;
@@ -51,123 +52,186 @@ const LyricLine = styled.div`
 `;
 
 const parseLrc = lrcText => {
-  const lines = lrcText.split('\n');
-  const result = [];
-  const timeRegex = /\[(\d{2}):(\d{2})\.(\d{2,3})\](.*)/;
+    const lines = lrcText.split('\n');
+    const parsedLines = [];
+    const timeRegex = /\[(\d{2}):(\d{2})\.(\d{2,3})\](.*)/;
 
-  for (const line of lines) {
-    const match = line.match(timeRegex);
-    if (match) {
-      const minutes = parseInt(match[1], 10);
-      const seconds = parseInt(match[2], 10);
-      const milliseconds = parseInt(match[3], 10);
-      const text = match[4].trim();
-      const time = minutes * 60 + seconds + milliseconds / 1000;
-      result.push({ time, text });
+    for (const line of lines) {
+        const match = line.match(timeRegex);
+        if (match) {
+            const minutes = parseInt(match[1], 10);
+            const seconds = parseInt(match[2], 10);
+            const milliseconds = parseInt(match[3], 10);
+            const text = match[4].trim();
+            const time = minutes * 60 + seconds + milliseconds / 1000;
+            parsedLines.push({ time, text });
+        }
     }
-  }
-  return result;
+
+    if (parsedLines.length === 0) {
+        return [];
+    }
+
+    const result = [];
+    if (parsedLines[0].time > 0.5) {
+        result.push({
+            time: 0,
+            text: '',
+            isSilence: true,
+            duration: parsedLines[0].time,
+        });
+    }
+
+    for (let i = 0; i < parsedLines.length; i++) {
+        const currentLine = parsedLines[i];
+        if (currentLine.text === '') {
+            let nextLineWithText = null;
+            let nextLineWithTextIndex = -1;
+            for (let j = i + 1; j < parsedLines.length; j++) {
+                if (parsedLines[j].text !== '') {
+                    nextLineWithText = parsedLines[j];
+                    nextLineWithTextIndex = j;
+                    break;
+                }
+            }
+
+            if (nextLineWithText) {
+                const duration = nextLineWithText.time - currentLine.time;
+                if (duration > 0.1) {
+                    result.push({
+                        time: currentLine.time,
+                        text: '',
+                        isSilence: true,
+                        duration: duration,
+                    });
+                }
+                i = nextLineWithTextIndex - 1;
+            } else {
+                result.push(currentLine);
+            }
+        } else {
+            result.push(currentLine);
+        }
+    }
+    return result;
 };
 
 function Player({ song }) {
-  const lyricsWrapperRef = useRef(null);
-  const intervalRef = useRef(null);
-  const [lyrics, setLyrics] = useState([]);
-  const [activeLineIndex, setActiveLineIndex] = useState(-1);
-  const [progress, setProgress] = useState(0);
+    const lyricsWrapperRef = useRef(null);
+    const intervalRef = useRef(null);
+    const [lyrics, setLyrics] = useState([]);
+    const [activeLineIndex, setActiveLineIndex] = useState(-1);
+    const [progress, setProgress] = useState(0);
+    const [currentTime, setCurrentTime] = useState(0);
 
-  useEffect(() => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-    }
+    useEffect(() => {
+        if (intervalRef.current) {
+            clearInterval(intervalRef.current);
+        }
 
-    if (song && song.lrcUrl) {
-      fetch(song.lrcUrl)
-        .then(res => res.text())
-        .then(text => {
-          const parsedLyrics = parseLrc(text);
-          if (!parsedLyrics.length) {
-            setLyrics([]);
-            setProgress(0);
-            setActiveLineIndex(-1);
-            return;
-          }
+        if (song && song.lrcUrl) {
+            fetch(song.lrcUrl)
+                .then(res => res.text())
+                .then(text => {
+                    const parsedLyrics = parseLrc(text);
+                    if (!parsedLyrics.length) {
+                        setLyrics([]);
+                        setProgress(0);
+                        setActiveLineIndex(-1);
+                        setCurrentTime(0);
+                        return;
+                    }
 
-          setLyrics(parsedLyrics);
-          setActiveLineIndex(0);
-          setProgress(0);
+                    setLyrics(parsedLyrics);
+                    setActiveLineIndex(0);
+                    setProgress(0);
+                    setCurrentTime(0);
 
-          const totalDuration = parsedLyrics[parsedLyrics.length - 1].time;
-          let currentTime = 0;
+                    const totalDuration = parsedLyrics.length > 0 ? parsedLyrics[parsedLyrics.length - 1].time : 0;
 
-          intervalRef.current = setInterval(() => {
-            currentTime += 0.1;
-            if (currentTime > totalDuration) {
-              clearInterval(intervalRef.current);
-              setProgress(100);
-              return;
+                    intervalRef.current = setInterval(() => {
+                        setCurrentTime(prevTime => {
+                            const newTime = prevTime + 0.1;
+
+                            if (newTime > totalDuration) {
+                                clearInterval(intervalRef.current);
+                                setProgress(100);
+                                return totalDuration;
+                            }
+
+                            const progressPercentage = totalDuration > 0 ? (newTime / totalDuration) * 100 : 0;
+                            setProgress(progressPercentage);
+
+                            let newActiveLineIndex = -1;
+                            for (let i = 0; i < parsedLyrics.length; i++) {
+                                if (newTime >= parsedLyrics[i].time) {
+                                    newActiveLineIndex = i;
+                                } else {
+                                    break;
+                                }
+                            }
+                            setActiveLineIndex(newActiveLineIndex);
+
+                            return newTime;
+                        });
+                    }, 100);
+                })
+                .catch(error => {
+                    console.error('Error fetching lyrics:', error);
+                    setLyrics([]);
+                    setProgress(0);
+                    setActiveLineIndex(-1);
+                    setCurrentTime(0);
+                });
+        }
+
+        return () => {
+            if (intervalRef.current) {
+                clearInterval(intervalRef.current);
             }
+        };
+    }, [song]);
 
-            const progressPercentage = (currentTime / totalDuration) * 100;
-            setProgress(progressPercentage);
+    useEffect(() => {
+        if (lyricsWrapperRef.current && activeLineIndex !== null && activeLineIndex >= 0 && lyrics[activeLineIndex]) {
+            const activeLineElement = lyricsWrapperRef.current.children[activeLineIndex];
+            if (activeLineElement) {
+                const wrapperRect = lyricsWrapperRef.current.getBoundingClientRect();
+                const scrollCenter = wrapperRect.height / 2;
+                const lineTop = activeLineElement.offsetTop;
+                const lineCenter = activeLineElement.offsetHeight / 2;
 
-            let newActiveLineIndex = 0;
-            for (let i = 0; i < parsedLyrics.length; i++) {
-              if (currentTime >= parsedLyrics[i].time) {
-                newActiveLineIndex = i;
-              } else {
-                break;
-              }
+                lyricsWrapperRef.current.scrollTo({
+                    top: lineTop - scrollCenter + lineCenter,
+                    behavior: 'smooth',
+                });
             }
-            setActiveLineIndex(newActiveLineIndex);
-          }, 100);
-        })
-        .catch(error => {
-          console.error('Error fetching lyrics:', error);
-          setLyrics([]);
-          setProgress(0);
-          setActiveLineIndex(-1);
-        });
-    }
+        }
+    }, [activeLineIndex, lyrics]);
 
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-    };
-  }, [song]);
-
-  useEffect(() => {
-    if (lyricsWrapperRef.current && activeLineIndex !== null && activeLineIndex >= 0) {
-      const activeLine = lyricsWrapperRef.current.children[activeLineIndex];
-      if (activeLine) {
-        const wrapperRect = lyricsWrapperRef.current.getBoundingClientRect();
-        const scrollCenter = wrapperRect.height / 2;
-        const lineTop = activeLine.offsetTop;
-        const lineCenter = activeLine.offsetHeight / 2;
-
-        lyricsWrapperRef.current.scrollTo({
-          top: lineTop - scrollCenter + lineCenter,
-          behavior: 'smooth',
-        });
-      }
-    }
-  }, [activeLineIndex]);
-
-  return (
-    <PlayerContainer>
-      <ProgressBarContainer>
-        <ProgressBar style={{ width: `${progress}%` }} />
-      </ProgressBarContainer>
-      <LyricsWrapper ref={lyricsWrapperRef}>
-        {lyrics.map((line, index) => (
-          <LyricLine key={index} className={activeLineIndex === index ? 'active-line' : ''}>
-            {line.text || '\u00A0'}
-          </LyricLine>
-        ))}
-      </LyricsWrapper>
-    </PlayerContainer>
-  );
+    return (
+        <PlayerContainer>
+            <ProgressBarContainer>
+                <ProgressBar style={{ width: `${progress}%` }} />
+            </ProgressBarContainer>
+            <LyricsWrapper ref={lyricsWrapperRef}>
+                {lyrics.map((line, index) => {
+                    if (line.isSilence) {
+                        if (activeLineIndex === index) {
+                            const remainingTime = (line.time + line.duration) - currentTime;
+                            return <SilenceLoader key={index} remainingTime={remainingTime > 0 ? remainingTime : 0} />;
+                        }
+                        return <div key={index} style={{ height: '3em' }} />;
+                    }
+                    return (
+                        <LyricLine key={index} className={activeLineIndex === index ? 'active-line' : ''}>
+                            {line.text || '\u00A0'}
+                        </LyricLine>
+                    );
+                })}
+            </LyricsWrapper>
+        </PlayerContainer>
+    );
 }
 
 export default Player;
