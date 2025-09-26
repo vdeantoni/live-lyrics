@@ -22,14 +22,30 @@ const LyricsViewport = ({ children }: PropsWithChildren) => {
   }, [artworks]);
 
   return (
-    <div
-      className={`relative h-full overflow-hidden bg-cover bg-center`}
-      style={{
-        backgroundImage: `url(${currentArtworkUrl})`,
-        transition: "background-image 1s ease-in-out",
-      }}
-    >
-      {children}
+    <div className="relative h-full overflow-hidden">
+      {/* Background Image Layer with Effects */}
+      <div
+        className="absolute inset-0 bg-cover bg-center transition-all duration-1000 ease-in-out"
+        style={{
+          backgroundImage: `url(${currentArtworkUrl})`,
+          filter: "blur(4px) grayscale(0.6) brightness(0.6) contrast(1.1)",
+          transform: "scale(1.1)", // Slightly scale to hide blur edges
+        }}
+      />
+
+      {/* Dark Gradient Overlay for Better Text Contrast */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-black/60" />
+
+      {/* Subtle Noise/Grain Texture (Optional) */}
+      <div
+        className="absolute inset-0 opacity-25 mix-blend-overlay"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
+        }}
+      />
+
+      {/* Content Layer */}
+      <div className="relative z-10 h-full">{children}</div>
     </div>
   );
 };
