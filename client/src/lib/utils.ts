@@ -1,11 +1,18 @@
-// Utility Functions
-const formatTime = (seconds) => {
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
+
+export const formatTime = (seconds: number) => {
+  if (!seconds) return "0:00";
   const minutes = Math.floor(seconds / 60);
   const secs = Math.floor(seconds % 60);
   return `${minutes}:${secs.toString().padStart(2, "0")}`;
 };
 
-const parseLRC = (lrcContent) => {
+export const parseLRC = (lrcContent: string) => {
   if (!lrcContent) {
     return [];
   }
@@ -24,7 +31,7 @@ const parseLRC = (lrcContent) => {
       }
       return null;
     })
-    .filter(Boolean);
+    .filter(Boolean) as Array<{ time: number; text: string }>;
 
   return lines.map(({ time, text }) => ({
     time,
