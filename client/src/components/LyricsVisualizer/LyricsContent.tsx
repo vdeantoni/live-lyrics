@@ -30,8 +30,8 @@ const LyricsContent: React.FC<LyricsContentProps> = ({
       return (
         <div
           key={index}
-          className={`text-center text-2xl font-normal mb-5 opacity-75 transition-all duration-200 py-2.5 cursor-pointer ${
-            isActive ? "text-4xl font-bold opacity-100" : ""
+          className={`text-center text-2xl font-normal my-3 opacity-50 transition-all duration-300 py-2.5 cursor-pointer transform ${
+            isActive ? "text-2xl font-bold opacity-100 scale-110" : ""
           }`}
           onClick={() => onLineClick?.({ ...line, index })}
         >
@@ -47,24 +47,44 @@ const LyricsContent: React.FC<LyricsContentProps> = ({
     setLines(newLines);
   }, [lyricsData, activeLine, onLineClick]);
 
-  // Auto-scroll to active line (matching reference implementation)
+  // Auto-scroll to active line with proper centering (Refactored)
   useEffect(() => {
-    if (!activeLine || !contentRef.current) return;
-
-    const activeLineElement = contentRef.current.children[
+    // 1. Guard Clauses: Ensure all required elements and data are present.
+    if (!activeLine || !contentRef.current) {
+      return;
+    }
+    const container = contentRef.current;
+    const activeLineElement = container.children[
       activeLine.index || 0
     ] as HTMLElement;
-    if (!activeLineElement) return;
 
-    // Center the active line in the container
-    const containerHeight = contentRef.current.offsetHeight;
-    const lineHeight = activeLineElement.offsetHeight;
-    const lineTop = activeLineElement.offsetTop;
+    if (!activeLineElement) {
+      return;
+    }
 
-    // Calculate scroll position to center the line
-    const scrollTop = lineTop - containerHeight / 2 + lineHeight / 2;
+    // 2. DOM Measurements
+    const containerHeight = container.clientHeight;
+    const activeLineTop = activeLineElement.offsetTop;
+    const activeLineHeight = activeLineElement.offsetHeight;
 
-    contentRef.current.scrollTop = scrollTop;
+    // 3. Calculate the ideal scroll position to center the line
+    // Formula: Position the top of the container at the line's top,
+    // then move it up by half the container's height,
+    // then move it down by half the line's height.
+    // 64 accounts for padding and margin
+    const idealScrollTop =
+      activeLineTop - containerHeight / 2 + activeLineHeight / 2 + 64;
+
+    // 4. Clamp the scroll position to valid bounds
+    // We can't scroll above 0 or past the maximum scrollable position.
+    const maxScrollTop = container.scrollHeight - containerHeight;
+    const targetScrollTop = Math.max(0, Math.min(idealScrollTop, maxScrollTop));
+
+    // 5. Scroll to the calculated position
+    container.scrollTo({
+      top: targetScrollTop,
+      behavior: "smooth",
+    });
   }, [activeLine]);
 
   // Word-level cursor positioning (matching reference implementation)
@@ -109,11 +129,11 @@ const LyricsContent: React.FC<LyricsContentProps> = ({
   return (
     <div
       ref={contentRef}
-      className="w-full h-screen pt-[300px] pb-[300px] px-10 overflow-auto scroll-smooth [&::-webkit-scrollbar]:hidden"
+      className="w-full h-full px-10 overflow-auto scroll-smooth [&::-webkit-scrollbar]:hidden"
     >
       <div
         ref={cursorRef}
-        className="absolute w-1 h-1 rounded-md bg-current  opacity-20 transition-all duration-300"
+        className="absolute w-1 h-1 rounded-md bg-current opacity-20 transition-all duration-300"
       />
       {lines}
     </div>
