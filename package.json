@@ -1,0 +1,17 @@
+{
+  "name": "live-lyrics",
+  "private": true,
+  "packageManager": "pnpm@9.6.0",
+  "workspaces": [
+    "client",
+    "server"
+  ],
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint"
+  },
+  "devDependencies": {
+    "turbo": "^2.0.9"
+  }
+}
