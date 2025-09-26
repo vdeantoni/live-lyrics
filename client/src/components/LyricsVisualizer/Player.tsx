@@ -14,17 +14,17 @@ const Player = () => {
       </div>
       <div className="flex items-center gap-3">
         <span id="current-time" className="text-sm min-w-10 text-center">
-          {formatTime(song?.currentTime)}
+          {formatTime(song?.currentTime || 0)}
         </span>
         <Slider
           value={[song?.currentTime || 0]}
           min={0}
-          max={song?.duration}
+          max={song?.duration || 0}
           step={0.1}
           className=" bg-zinc-700 rounded-md"
         />
         <span id="total-duration" className="text-sm min-w-10 text-center">
-          {formatTime(song?.duration)}
+          {formatTime(song?.duration || 0)}
         </span>
       </div>
       <div className="flex flex-col items-center">

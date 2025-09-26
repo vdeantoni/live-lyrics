@@ -1,5 +1,4 @@
 import { useQuery } from "@tanstack/react-query";
-import { parseLRC } from "./utils";
 
 export type Song = {
   name: string;
@@ -14,11 +13,33 @@ export type Artwork = {
   url: string;
 };
 
-export type Lyrics = {
+export interface WordData {
+  index?: number;
   time: number;
   text: string;
-  length?: number;
-};
+}
+export interface LineData {
+  index?: number;
+  time: number;
+  text: string;
+  words?: WordData[] | null;
+}
+export interface LyricsData {
+  tags: TagsData;
+  lines: LineData[];
+  enhanced: boolean;
+}
+export interface TagsData {
+  ar?: string;
+  ti?: string;
+  al?: string;
+  au?: string;
+  by?: string;
+  length?: string;
+  offset?: string;
+  re?: string;
+  ve?: string;
+}
 
 const getSongId = (song: Song) => {
   if (!song) {
@@ -74,7 +95,7 @@ export const useArtworks = (song: Song) => {
 export const useLyrics = (song: Song) => {
   return useQuery({
     queryKey: ["song", getSongId(song), "lyrics"],
-    queryFn: async (): Promise<Lyrics[]> => {
+    queryFn: async (): Promise<string> => {
       const response = await fetch(
         `https://lrclib.net/api/search?artist_name=${encodeURIComponent(
           song.artist,
@@ -84,12 +105,12 @@ export const useLyrics = (song: Song) => {
 
       console.log("json", json);
       if (!json?.length) {
-        return [];
+        return "";
       }
 
       const albumMatch = json.find((item: any) => item.album === song.album);
-      if (albumMatch) {
-        return parseLRC(albumMatch.syncedLyrics);
+      if (albumMatch && albumMatch.syncedLyrics) {
+        return albumMatch.syncedLyrics;
       }
 
       const bestMatch = json.reduce((best: any, current: any) => {
@@ -101,11 +122,11 @@ export const useLyrics = (song: Song) => {
         return currentDiff < bestDiff ? current : best;
       }, null);
 
-      if (bestMatch) {
-        return parseLRC(bestMatch.syncedLyrics);
+      if (bestMatch && bestMatch.syncedLyrics) {
+        return bestMatch.syncedLyrics;
       }
 
-      return [];
+      return "";
     },
     staleTime: "static",
   });

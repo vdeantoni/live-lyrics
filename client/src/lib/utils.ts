@@ -1,5 +1,7 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import Liricle from "liricle";
+import type { LyricsData } from "@/lib/api";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -12,29 +14,22 @@ export const formatTime = (seconds: number) => {
   return `${minutes}:${secs.toString().padStart(2, "0")}`;
 };
 
-export const parseLRC = (lrcContent: string) => {
+export const parseLRC = async (lrcContent: string): Promise<LyricsData> => {
   if (!lrcContent) {
-    return [];
+    return { tags: {}, lines: [], enhanced: false };
   }
 
-  const lines = lrcContent
-    .split("\n")
-    .map((line) => {
-      const match = line.match(/^\[(\d{2}):(\d{2})\.(\d{2,3})\](.*)$/);
-      if (match) {
-        const [, minutes, seconds, hundredths, text] = match;
-        const time =
-          parseInt(minutes) * 60 +
-          parseInt(seconds) +
-          parseInt(hundredths) / (hundredths.length === 3 ? 1000 : 100);
-        return { time, text: text.trim() };
-      }
-      return null;
-    })
-    .filter(Boolean) as Array<{ time: number; text: string }>;
+  const liricle = new Liricle();
 
-  return lines.map(({ time, text }) => ({
-    time,
-    text,
-  }));
+  return new Promise((resolve, reject) => {
+    liricle.on("load", (data) => {
+      resolve(data);
+    });
+
+    liricle.on("loaderror", (error: Error) => {
+      reject(error);
+    });
+
+    liricle.load({ text: lrcContent });
+  });
 };

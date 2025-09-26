@@ -8,7 +8,7 @@ const queryClient = new QueryClient();
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <div className="flex flex-col items-center container m-auto p-10">
+      <div className="flex flex-col items-center m-auto p-8">
         <LyricsVisualizer />
       </div>
       <ReactQueryDevtools initialIsOpen={false} />

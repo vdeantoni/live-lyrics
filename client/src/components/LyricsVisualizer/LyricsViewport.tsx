@@ -3,7 +3,7 @@ import { useEffect, useState, type PropsWithChildren } from "react";
 
 const LyricsViewport = ({ children }: PropsWithChildren) => {
   const { data: song } = useSong();
-  const { data: artworks } = useArtworks(song);
+  const { data: artworks } = useArtworks(song!);
 
   const [currentArtworkUrl, setCurrentArtworkUrl] = useState("");
 
@@ -23,7 +23,7 @@ const LyricsViewport = ({ children }: PropsWithChildren) => {
 
   return (
     <div
-      className={`relative h-full overflow-hidden bg-cover bg-center before:content-[''] before:absolute before:top-0 before:left-0 before:w-full before:h-full before:bg-gradient-to-b before:from-transparent before:via-zinc-950/20 before:to-zinc-950 before:to-93% before:z-10`}
+      className={`relative h-full overflow-hidden bg-cover bg-center`}
       style={{
         backgroundImage: `url(${currentArtworkUrl})`,
         transition: "background-image 1s ease-in-out",
