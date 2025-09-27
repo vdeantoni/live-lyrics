@@ -105,21 +105,41 @@ app.get("/music", function (c) { return __awaiter(void 0, void 0, void 0, functi
     });
 }); });
 app.post("/music", function (c) { return __awaiter(void 0, void 0, void 0, function () {
-    var _a, playing, currentTime, commands, scriptLines_1, osascriptArgs_1;
-    return __generator(this, function (_b) {
-        switch (_b.label) {
+    var body, commands, playing, currentTime, scriptLines_1, osascriptArgs_1;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
             case 0: return [4 /*yield*/, c.req.json()];
             case 1:
-                _a = _b.sent(), playing = _a.playing, currentTime = _a.currentTime;
+                body = _a.sent();
                 commands = [];
-                if (playing === true) {
-                    commands.push("play");
+                // Handle new action-based format
+                if (body.action) {
+                    switch (body.action) {
+                        case "play":
+                            commands.push("play");
+                            break;
+                        case "pause":
+                            commands.push("pause");
+                            break;
+                        case "seek":
+                            if (body.time !== undefined) {
+                                commands.push("set player position to ".concat(body.time));
+                            }
+                            break;
+                    }
                 }
-                else if (playing === false) {
-                    commands.push("pause");
-                }
-                if (currentTime !== undefined) {
-                    commands.push("set player position to ".concat(currentTime));
+                // Handle old format for backward compatibility
+                else {
+                    playing = body.playing, currentTime = body.currentTime;
+                    if (playing === true) {
+                        commands.push("play");
+                    }
+                    else if (playing === false) {
+                        commands.push("pause");
+                    }
+                    if (currentTime !== undefined) {
+                        commands.push("set player position to ".concat(currentTime));
+                    }
                 }
                 if (commands.length > 0) {
                     scriptLines_1 = __spreadArray(__spreadArray([
@@ -133,7 +153,7 @@ app.post("/music", function (c) { return __awaiter(void 0, void 0, void 0, funct
                             console.error("Error executing AppleScript: ".concat(error || stderr));
                         }
                         else {
-                            console.log("Music app command executed");
+                            console.log("Music app command executed: ".concat(commands.join(", ")));
                         }
                     });
                 }

@@ -1,8 +1,27 @@
-import { useArtworks, useSong } from "@/lib/api";
+import { useArtworks } from "@/lib/api";
 import { useEffect, useState, type PropsWithChildren } from "react";
+import { useAtomValue } from "jotai";
+import { songNameAtom, artistAtom, albumAtom, durationAtom, currentTimeAtom, isPlayingAtom } from "@/atoms/playerAtoms";
 
 const LyricsDisplay = ({ children }: PropsWithChildren) => {
-  const { data: song } = useSong();
+  // Read song data from atoms (populated by useSongSync in parent)
+  const songName = useAtomValue(songNameAtom);
+  const artist = useAtomValue(artistAtom);
+  const album = useAtomValue(albumAtom);
+  const duration = useAtomValue(durationAtom);
+  const currentTime = useAtomValue(currentTimeAtom);
+  const isPlaying = useAtomValue(isPlayingAtom);
+
+  // Construct song object for artwork API
+  const song = songName && artist ? {
+    name: songName,
+    artist,
+    album: album || '',
+    duration,
+    currentTime,
+    isPlaying
+  } : null;
+
   const { data: artworks } = useArtworks(song!);
 
   const [currentArtworkUrl, setCurrentArtworkUrl] = useState("");

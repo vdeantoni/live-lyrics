@@ -14,13 +14,9 @@ import {
   seekAtom,
   isDraggingAtom,
 } from "@/atoms/playerAtoms";
-import { useSongSync } from "@/hooks/useSongSync";
 import AnimatedSongName from "./AnimatedSongName";
 
 const Player = () => {
-  // Sync with server data
-  useSongSync();
-
   // Read atoms
   const currentTime = useAtomValue(currentTimeAtom);
   const duration = useAtomValue(durationAtom);

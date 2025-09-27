@@ -1,5 +1,6 @@
 import { atom } from "jotai";
 import type { Song } from "@/lib/api";
+import { currentMusicSourceAtom } from "@/atoms/sourceAtoms";
 
 // Base atoms for player state
 export const currentTimeAtom = atom(0);
@@ -34,84 +35,80 @@ export const songInfoAtom = atom((get) => ({
   isPlaying: get(isPlayingAtom),
 }));
 
-// Action atoms for player controls
+// Action atoms for player controls using music source
 export const playAtom = atom(null, async (get, set) => {
   const wasPlaying = get(isPlayingAtom);
+  const source = get(currentMusicSourceAtom);
+
   set(isPlayingAtom, true);
 
   try {
-    const response = await fetch("http://127.0.0.1:4000/music", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "play" }),
-    });
-
-    if (!response.ok) {
-      throw new Error("Failed to play");
-    }
+    await source.play();
   } catch (error) {
     // Rollback on error
     set(isPlayingAtom, wasPlaying);
     console.error("Failed to play:", error);
+    throw error;
   }
 });
 
 export const pauseAtom = atom(null, async (get, set) => {
   const wasPlaying = get(isPlayingAtom);
+  const source = get(currentMusicSourceAtom);
+
   set(isPlayingAtom, false);
 
   try {
-    const response = await fetch("http://127.0.0.1:4000/music", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "pause" }),
-    });
-
-    if (!response.ok) {
-      throw new Error("Failed to pause");
-    }
+    await source.pause();
   } catch (error) {
     // Rollback on error
     set(isPlayingAtom, wasPlaying);
     console.error("Failed to pause:", error);
+    throw error;
   }
 });
 
 export const seekAtom = atom(null, async (get, set, time: number) => {
   const previousTime = get(currentTimeAtom);
+  const source = get(currentMusicSourceAtom);
+
   set(currentTimeAtom, time);
   set(isUserSeekingAtom, true);
 
   try {
-    const response = await fetch("http://127.0.0.1:4000/music", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "seek", time }),
-    });
-
-    if (!response.ok) {
-      throw new Error("Failed to seek");
-    }
+    await source.seek(time);
   } catch (error) {
     // Rollback on error
     set(currentTimeAtom, previousTime);
     console.error("Failed to seek:", error);
+    throw error;
   } finally {
     // Clear seeking state after a delay
     setTimeout(() => set(isUserSeekingAtom, false), 1000);
   }
 });
 
-// Server sync atom
-export const syncFromServerAtom = atom(null, (get, set, serverData: Song) => {
+// Server sync atom using music source
+export const syncFromSourceAtom = atom(null, (get, set, sourceData: Song) => {
   const canUpdate = get(canUpdateFromServerAtom);
 
   if (canUpdate) {
-    set(currentTimeAtom, serverData.currentTime || 0);
-    set(durationAtom, serverData.duration || 0);
-    set(isPlayingAtom, serverData.isPlaying || false);
-    set(songNameAtom, serverData.name);
-    set(artistAtom, serverData.artist);
-    set(albumAtom, serverData.album);
+    set(currentTimeAtom, sourceData.currentTime || 0);
+    set(durationAtom, sourceData.duration || 0);
+    set(isPlayingAtom, sourceData.isPlaying || false);
+    set(songNameAtom, sourceData.name);
+    set(artistAtom, sourceData.artist);
+    set(albumAtom, sourceData.album);
+  }
+});
+
+// Fetch song data from current source
+export const fetchSongDataAtom = atom(async (get) => {
+  const source = get(currentMusicSourceAtom);
+  try {
+    return await source.getSong();
+  } catch (error) {
+    console.error("Failed to fetch song data:", error);
+    throw error;
   }
 });
