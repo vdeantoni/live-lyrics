@@ -121,3 +121,59 @@
     @apply h-full;
   }
 }
+
+@layer utilities {
+  @keyframes scroll-text {
+    0% {
+      transform: translateX(0);
+    }
+    20% {
+      transform: translateX(0);
+    }
+    80% {
+      transform: translateX(calc(-100% + var(--container-width, 100%)));
+    }
+    100% {
+      transform: translateX(calc(-100% + var(--container-width, 100%)));
+    }
+  }
+
+  .animate-scroll-text {
+    animation: scroll-text 6s ease-in-out;
+  }
+}
+
+/*
+  Define the keyframes for the scrolling animation.
+  It uses the CSS variables set by the React component.
+*/
+@keyframes scroll-text {
+  /* Initial state and pause at the beginning */
+  0% {
+    transform: translateX(0);
+  }
+  var(--start-delay-percent) {
+    transform: translateX(0);
+  }
+
+  /* The scrolling part of the animation */
+  var(--scroll-start-percent) {
+    transform: translateX(var(--scroll-distance));
+  }
+
+  /* Pause at the end of the scroll */
+  100% {
+    transform: translateX(var(--scroll-distance));
+  }
+}
+
+/*
+  This class is applied by the React component when the text overflows.
+*/
+.animate-scroll {
+  /* Apply the animation defined above */
+  animation-name: scroll-text;
+  animation-duration: var(--animation-duration);
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
