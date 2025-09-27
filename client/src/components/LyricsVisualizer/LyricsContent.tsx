@@ -136,7 +136,7 @@ const LyricsContent: React.FC<LyricsContentProps> = ({
   return (
     <div
       ref={contentRef}
-      className="w-full h-full px-10 overflow-auto scroll-smooth [&::-webkit-scrollbar]:hidden"
+      className="w-full h-full px-6 lg:px-8 xl:px-10 overflow-auto scroll-smooth [&::-webkit-scrollbar]:hidden"
     >
       <div
         ref={cursorRef}

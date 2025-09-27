@@ -24,7 +24,7 @@ function App() {
         buster: "v1", // Cache version - increment to invalidate old caches
       }}
     >
-      <div className="flex flex-col h-full w-full items-center m-auto p-8">
+      <div className="flex flex-col h-full w-full items-center m-auto p-2 lg:p-4 xl-p-8">
         <LyricsVisualizer />
       </div>
       <ReactQueryDevtools initialIsOpen={false} />
