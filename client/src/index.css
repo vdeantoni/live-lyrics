@@ -115,7 +115,8 @@
     @apply border-border outline-ring/50 box-border;
   }
   body {
-    @apply bg-background text-foreground h-screen w-screen;
+    @apply bg-background text-foreground;
+    height: 100dvh;
   }
   #root {
     @apply h-full;
