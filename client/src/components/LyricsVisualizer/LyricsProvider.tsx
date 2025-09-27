@@ -9,7 +9,7 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import LyricsContent from "./LyricsContent";
 import Liricle from "liricle";
 
-const LyricsContainer = () => {
+const LyricsProvider = () => {
   const { data: song } = useSong();
   const { data: lrcContent } = useLyrics(song);
 
@@ -73,4 +73,4 @@ const LyricsContainer = () => {
   );
 };
 
-export default LyricsContainer;
+export default LyricsProvider;

@@ -1,7 +1,7 @@
 import { useArtworks, useSong } from "@/lib/api";
 import { useEffect, useState, type PropsWithChildren } from "react";
 
-const LyricsViewport = ({ children }: PropsWithChildren) => {
+const LyricsDisplay = ({ children }: PropsWithChildren) => {
   const { data: song } = useSong();
   const { data: artworks } = useArtworks(song!);
 
@@ -50,4 +50,4 @@ const LyricsViewport = ({ children }: PropsWithChildren) => {
   );
 };
 
-export default LyricsViewport;
+export default LyricsDisplay;
