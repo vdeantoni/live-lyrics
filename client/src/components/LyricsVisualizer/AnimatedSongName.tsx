@@ -3,10 +3,12 @@ import { motion, useAnimation } from "framer-motion";
 
 // Animation timing constants
 const ANIMATION_CONSTANTS = {
-  INITIAL_DELAY: 3, // Delay in seconds
-  SCROLL_SPEED_PER_PIXEL: 0.02, // Time in seconds to scroll one pixel
-  PAUSE_AFTER_SCROLL: 3, // Pause in seconds
+  INITIAL_DELAY: 3,
+  SCROLL_SPEED_PER_PIXEL: 0.02,
+  PAUSE_AFTER_SCROLL: 3,
   SCROLL_PADDING: 20,
+  RESUME_DELAY_AFTER_DRAG: 2.5, // seconds
+  RESUME_DELAY_AFTER_HOVER: 0.5, // seconds
 } as const;
 
 interface AnimatedSongNameProps {
@@ -22,18 +24,27 @@ const AnimatedSongName = ({
   const textRef = useRef<HTMLHeadingElement>(null);
 
   const [isOverflowing, setIsOverflowing] = useState(false);
+  const [scrollDistance, setScrollDistance] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
 
-  const animationValuesRef = useRef({ scrollDistance: 0, scrollDuration: 0 });
+  // --- Refs to hold current animation values ---
+  const scrollDistanceRef = useRef(0);
+  const scrollDurationRef = useRef(0);
+  const resumeTimeoutRef = useRef<number | null>(null);
   const xPositionRef = useRef(0);
+
   const controls = useAnimation();
 
   const startInfiniteAnimation = () => {
-    const { scrollDistance, scrollDuration } = animationValuesRef.current;
+    // Read from refs to get the latest values
+    const distance = scrollDistanceRef.current;
+    const duration = scrollDurationRef.current;
+
     controls.start({
-      x: [0, -scrollDistance],
+      x: [0, -distance],
       transition: {
         x: {
-          duration: scrollDuration,
+          duration: duration,
           delay: ANIMATION_CONSTANTS.INITIAL_DELAY,
           ease: "linear",
           repeat: Infinity,
@@ -44,7 +55,33 @@ const AnimatedSongName = ({
     });
   };
 
-  // This effect is for measuring the element
+  const resumeAndLoop = async () => {
+    // Read from refs to get the latest values
+    const distance = scrollDistanceRef.current;
+    const duration = scrollDurationRef.current;
+
+    // Safety check to prevent division by zero
+    if (distance === 0) return;
+
+    const currentX = xPositionRef.current;
+    const targetX = -distance;
+    const remainingDistance = Math.abs(targetX - currentX);
+    const remainingDuration = (remainingDistance / distance) * duration;
+
+    await controls.start({
+      x: targetX,
+      transition: { duration: remainingDuration, ease: "linear" },
+    });
+    await controls.start({
+      x: targetX,
+      transition: {
+        delay: ANIMATION_CONSTANTS.PAUSE_AFTER_SCROLL,
+        duration: 0,
+      },
+    });
+    startInfiniteAnimation();
+  };
+
   useEffect(() => {
     const checkOverflow = () => {
       const container = containerRef.current;
@@ -52,27 +89,62 @@ const AnimatedSongName = ({
 
       if (container && text) {
         const hasOverflow = text.scrollWidth > container.offsetWidth;
-        setIsOverflowing(hasOverflow); // Fix is here
+        setIsOverflowing(hasOverflow);
 
         if (hasOverflow) {
-          const scrollDistance =
+          const distance =
             text.scrollWidth -
             container.offsetWidth +
             ANIMATION_CONSTANTS.SCROLL_PADDING;
-          const scrollDuration =
-            scrollDistance * ANIMATION_CONSTANTS.SCROLL_SPEED_PER_PIXEL;
-
-          animationValuesRef.current = { scrollDistance, scrollDuration };
+          // Set both state and ref
+          setScrollDistance(distance);
+          scrollDistanceRef.current = distance;
+          scrollDurationRef.current =
+            distance * ANIMATION_CONSTANTS.SCROLL_SPEED_PER_PIXEL;
+        } else {
+          // Reset both state and ref
+          setScrollDistance(0);
+          scrollDistanceRef.current = 0;
         }
       }
     };
-
     checkOverflow();
     window.addEventListener("resize", checkOverflow);
     return () => window.removeEventListener("resize", checkOverflow);
-  }, [songName]); // Dependency array updated
+  }, [songName]);
 
-  // This effect starts/stops the animation when overflow status changes
+  const handleMouseEnter = () => {
+    if (resumeTimeoutRef.current) clearTimeout(resumeTimeoutRef.current);
+    if (!isDragging) {
+      controls.stop();
+    }
+  };
+
+  const handleMouseLeave = () => {
+    if (isDragging) return;
+    resumeTimeoutRef.current = setTimeout(
+      resumeAndLoop,
+      ANIMATION_CONSTANTS.RESUME_DELAY_AFTER_HOVER * 1000,
+    );
+  };
+
+  const handleDragStart = () => {
+    setIsDragging(true);
+    if (resumeTimeoutRef.current) clearTimeout(resumeTimeoutRef.current);
+    controls.stop();
+  };
+
+  const handleDragEnd = () => {
+    setIsDragging(false);
+    // Only schedule resume if there's actually overflow
+    if (scrollDistanceRef.current > 0) {
+      resumeTimeoutRef.current = setTimeout(
+        resumeAndLoop,
+        ANIMATION_CONSTANTS.RESUME_DELAY_AFTER_DRAG * 1000,
+      );
+    }
+  };
+
   useEffect(() => {
     if (isOverflowing) {
       startInfiniteAnimation();
@@ -81,39 +153,6 @@ const AnimatedSongName = ({
       controls.set({ x: 0 });
     }
   }, [isOverflowing, controls]);
-
-  const handleMouseEnter = () => {
-    controls.stop();
-  };
-
-  const handleMouseLeave = () => {
-    const { scrollDistance, scrollDuration } = animationValuesRef.current;
-    const currentX = xPositionRef.current;
-    const targetX = -scrollDistance;
-    const remainingDistance = Math.abs(targetX - currentX);
-    const totalDistance = scrollDistance;
-    const remainingDuration =
-      (remainingDistance / totalDistance) * scrollDuration;
-
-    const resumeAndLoop = async () => {
-      await controls.start({
-        x: targetX,
-        transition: { duration: remainingDuration, ease: "linear" },
-      });
-      await controls.start({
-        x: targetX,
-        transition: {
-          delay: ANIMATION_CONSTANTS.PAUSE_AFTER_SCROLL,
-          duration: 0,
-        },
-      });
-      startInfiniteAnimation();
-    };
-
-    if (isOverflowing) {
-      resumeAndLoop();
-    }
-  };
 
   if (!songName) return null;
 
@@ -126,13 +165,22 @@ const AnimatedSongName = ({
     >
       <motion.h2
         ref={textRef}
-        className="text-2xl font-semibold whitespace-nowrap cursor-text select-text"
+        className="text-2xl font-semibold whitespace-nowrap"
         animate={controls}
         onUpdate={(latest) => {
           if (typeof latest.x === "number") {
             xPositionRef.current = latest.x;
           }
         }}
+        drag={isOverflowing ? "x" : false}
+        dragConstraints={{ left: -scrollDistance, right: 0 }}
+        dragMomentum={false}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+        style={{
+          cursor: isOverflowing ? "grab" : "text",
+        }}
+        whileDrag={{ cursor: "grabbing" }}
       >
         {songName}
       </motion.h2>
