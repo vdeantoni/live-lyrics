@@ -30,7 +30,7 @@ const AnimatedSongName = ({
   // --- Refs to hold current animation values ---
   const scrollDistanceRef = useRef(0);
   const scrollDurationRef = useRef(0);
-  const resumeTimeoutRef = useRef<number | null>(null);
+  const resumeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const xPositionRef = useRef(0);
 
   const controls = useAnimation();
