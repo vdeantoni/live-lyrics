@@ -43,7 +43,7 @@ const Player = () => {
 
         <div className="flex-1 flex items-center justify-center">
           {/* Play/Pause Button - Centered */}
-          <Button className="rounded-full h-12 w-12 p-0 flex items-center justify-center">
+          <Button className="rounded-full h-12 w-12 flex items-center justify-center">
             {song?.isPlaying ? (
               <Pause style={{ width: "24px", height: "24px" }} />
             ) : (
