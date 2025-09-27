@@ -39,13 +39,16 @@ This is a [Turborepo](https://turbo.build/) monorepo project. Use these commands
 - **Framework**: React 19 with TypeScript
 - **Build Tool**: Vite
 - **Styling**: Tailwind CSS v4 with custom CSS animations
+- **Animations**: Framer Motion for complex animations (song name scrolling)
 - **State Management**: @tanstack/react-query with persistent localStorage cache
-- **UI Components**: Radix UI primitives (slider, aspect-ratio)
+- **Icons**: Lucide React for consistent iconography
+- **UI Components**: Radix UI primitives (slider, aspect-ratio, button)
 - **Key Features**:
   - Real-time music data fetching (300ms intervals)
   - Lyrics integration with external APIs (iTunes artwork, Lrclib lyrics)
   - Visual lyrics display with synchronized highlighting
   - Responsive design with landscape mode optimizations
+  - Animated song name scrolling with hover pause/resume
 
 ### Component Architecture
 - **LyricsVisualizer/**: Main lyrics display component hierarchy
@@ -53,7 +56,8 @@ This is a [Turborepo](https://turbo.build/) monorepo project. Use these commands
   - `LyricsProvider.tsx`: Data fetching, state management, and lyrics processing
   - `LyricsDisplay.tsx`: Visual effects wrapper and background rendering
   - `LyricsContent.tsx`: Actual lyrics rendering with synchronization
-  - `Player.tsx`: Music playback controls
+  - `Player.tsx`: Music playback controls with animated song name
+  - `AnimatedSongName.tsx`: Framer Motion component for scrolling song titles
 - **ui/**: Reusable UI components (buttons, sliders, skeletons)
 
 ### Data Flow
