@@ -32,6 +32,8 @@ const LyricsContent: React.FC<LyricsContentProps> = ({
       return (
         <div
           key={`${lyricsData.tags?.ti || 'song'}-${index}-${line.text.slice(0, 10)}`} // More unique key
+          data-line-index={index} // Add data attribute for easier detection
+          data-line-text={line.text.substring(0, 20)} // Add data attribute for text matching
           className={`text-center font-normal my-3 opacity-50 transition-all duration-300 py-2.5 cursor-pointer transform ${
             isActive
               ? "font-bold opacity-100 scale-110 [text-shadow:0_0_10px_#fff,4px_4px_8px_rgba(0,0,0,0.5)]"
@@ -91,8 +93,10 @@ const LyricsContent: React.FC<LyricsContentProps> = ({
 
           // Wait longer for React to fully update the DOM with active classes
           setTimeout(() => {
-            // Find the active line element by looking for the one with active styling
+            // Robust element detection - same as main scroll effect
             let activeLineElement: HTMLElement | null = null;
+
+            // First try to find by class name
             for (let i = 0; i < container.children.length; i++) {
               const child = container.children[i] as HTMLElement;
               if (child.className.includes('font-bold opacity-100 scale-110')) {
@@ -101,8 +105,26 @@ const LyricsContent: React.FC<LyricsContentProps> = ({
               }
             }
 
+            // Fallback: try to find by index if activeLine has an index
+            if (!activeLineElement && activeLine.index !== undefined) {
+              const potentialElement = container.children[activeLine.index] as HTMLElement;
+              if (potentialElement) {
+                activeLineElement = potentialElement;
+              }
+            }
+
+            // Last resort: find by searching through all elements for matching text
             if (!activeLineElement) {
-              console.log('No active line element found - React may not have updated classes yet');
+              for (let i = 0; i < container.children.length; i++) {
+                const child = container.children[i] as HTMLElement;
+                if (child.textContent?.includes(activeLine.text.substring(0, 20))) {
+                  activeLineElement = child;
+                  break;
+                }
+              }
+            }
+
+            if (!activeLineElement) {
               return;
             }
 
@@ -144,43 +166,69 @@ const LyricsContent: React.FC<LyricsContentProps> = ({
     }
     const container = contentRef.current;
 
-    // Find the active line element by looking for the one with active styling
-    let activeLineElement: HTMLElement | null = null;
-    for (let i = 0; i < container.children.length; i++) {
-      const child = container.children[i] as HTMLElement;
-      if (child.className.includes('font-bold opacity-100 scale-110')) {
-        activeLineElement = child;
-        break;
+    // Use requestAnimationFrame to ensure DOM has been updated with new classes
+    const frame = requestAnimationFrame(() => {
+      // Find the active line element by looking for the one with active styling
+      let activeLineElement: HTMLElement | null = null;
+
+      // First try to find by class name
+      for (let i = 0; i < container.children.length; i++) {
+        const child = container.children[i] as HTMLElement;
+        if (child.className.includes('font-bold opacity-100 scale-110')) {
+          activeLineElement = child;
+          break;
+        }
       }
-    }
 
-    if (!activeLineElement) {
-      return;
-    }
+      // Fallback: try to find by index if activeLine has an index
+      if (!activeLineElement && activeLine.index !== undefined) {
+        const potentialElement = container.children[activeLine.index] as HTMLElement;
+        if (potentialElement) {
+          activeLineElement = potentialElement;
+        }
+      }
 
-    // 2. DOM Measurements
-    const containerHeight = container.clientHeight;
-    const activeLineTop = activeLineElement.offsetTop;
-    const activeLineHeight = activeLineElement.offsetHeight;
+      // Last resort: find by searching through all elements for matching text
+      if (!activeLineElement) {
+        for (let i = 0; i < container.children.length; i++) {
+          const child = container.children[i] as HTMLElement;
+          if (child.textContent?.includes(activeLine.text.substring(0, 20))) {
+            activeLineElement = child;
+            break;
+          }
+        }
+      }
 
-    // 3. Calculate the ideal scroll position to center the line
-    // Formula: Position the top of the container at the line's top,
-    // then move it up by half the container's height,
-    // then move it down by half the line's height.
-    // 64 accounts for padding and margin
-    const idealScrollTop =
-      activeLineTop - containerHeight / 2 + activeLineHeight / 2 + 64;
+      if (!activeLineElement) {
+        return;
+      }
 
-    // 4. Clamp the scroll position to valid bounds
-    // We can't scroll above 0 or past the maximum scrollable position.
-    const maxScrollTop = container.scrollHeight - containerHeight;
-    const targetScrollTop = Math.max(0, Math.min(idealScrollTop, maxScrollTop));
+      // 2. DOM Measurements
+      const containerHeight = container.clientHeight;
+      const activeLineTop = activeLineElement.offsetTop;
+      const activeLineHeight = activeLineElement.offsetHeight;
 
-    // 5. Scroll to the calculated position
-    container.scrollTo({
-      top: targetScrollTop,
-      behavior: "smooth",
+      // 3. Calculate the ideal scroll position to center the line
+      // Formula: Position the top of the container at the line's top,
+      // then move it up by half the container's height,
+      // then move it down by half the line's height.
+      // 64 accounts for padding and margin
+      const idealScrollTop =
+        activeLineTop - containerHeight / 2 + activeLineHeight / 2 + 64;
+
+      // 4. Clamp the scroll position to valid bounds
+      // We can't scroll above 0 or past the maximum scrollable position.
+      const maxScrollTop = container.scrollHeight - containerHeight;
+      const targetScrollTop = Math.max(0, Math.min(idealScrollTop, maxScrollTop));
+
+      // 5. Scroll to the calculated position
+      container.scrollTo({
+        top: targetScrollTop,
+        behavior: "smooth",
+      });
     });
+
+    return () => cancelAnimationFrame(frame);
   }, [activeLine]);
 
   // Handle initial scroll when lyrics data loads with an already-active line (only for new songs)
@@ -199,13 +247,34 @@ const LyricsContent: React.FC<LyricsContentProps> = ({
       const container = contentRef.current;
       if (!container) return;
 
-      // Find the active line element by looking for the one with the active styling
+      // Robust element detection - same as main scroll effect
       let activeLineElement: HTMLElement | null = null;
+
+      // First try to find by class name
       for (let i = 0; i < container.children.length; i++) {
         const child = container.children[i] as HTMLElement;
         if (child.className.includes('font-bold opacity-100 scale-110')) {
           activeLineElement = child;
           break;
+        }
+      }
+
+      // Fallback: try to find by index if activeLine has an index
+      if (!activeLineElement && activeLine.index !== undefined) {
+        const potentialElement = container.children[activeLine.index] as HTMLElement;
+        if (potentialElement) {
+          activeLineElement = potentialElement;
+        }
+      }
+
+      // Last resort: find by searching through all elements for matching text
+      if (!activeLineElement) {
+        for (let i = 0; i < container.children.length; i++) {
+          const child = container.children[i] as HTMLElement;
+          if (child.textContent?.includes(activeLine.text.substring(0, 20))) {
+            activeLineElement = child;
+            break;
+          }
         }
       }
 
@@ -231,7 +300,7 @@ const LyricsContent: React.FC<LyricsContentProps> = ({
     });
 
     return () => cancelAnimationFrame(frame);
-  }, [lyricsData]); // Also depend on activeLine changes
+  }, [lyricsData, activeLine]); // Depend on both for proper initial scroll
 
   // Word-level cursor positioning (matching reference implementation)
   useEffect(() => {
