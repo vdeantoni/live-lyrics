@@ -10,12 +10,11 @@ const LyricsVisualizer = () => {
 
   return (
     <div className="flex flex-col w-full h-full bg-zinc-800 rounded-2xl shadow-xl p-6 gap-4 mx-auto">
-      {/* Source switcher at the top */}
-      <div className="flex justify-center">
-        <SourceSwitcher />
-      </div>
-
       <LyricsDisplay>
+        {/* Floating source switcher overlay */}
+        <div className="absolute top-4 right-4 z-20">
+          <SourceSwitcher />
+        </div>
         <LyricsProvider />
       </LyricsDisplay>
       <Player />
