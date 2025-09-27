@@ -89,42 +89,48 @@ const LyricsContent: React.FC<LyricsContentProps> = ({
           // Only check for active line if there actually is one (not at time 0)
           if (!activeLine || (activeLine.index === undefined && activeLine.time === undefined)) return;
 
-          // Find the active line element by looking for the one with active styling
-          let activeLineElement: HTMLElement | null = null;
-          for (let i = 0; i < container.children.length; i++) {
-            const child = container.children[i] as HTMLElement;
-            if (child.className.includes('font-bold opacity-100 scale-110')) {
-              activeLineElement = child;
-              break;
+          // Wait longer for React to fully update the DOM with active classes
+          setTimeout(() => {
+            // Find the active line element by looking for the one with active styling
+            let activeLineElement: HTMLElement | null = null;
+            for (let i = 0; i < container.children.length; i++) {
+              const child = container.children[i] as HTMLElement;
+              if (child.className.includes('font-bold opacity-100 scale-110')) {
+                activeLineElement = child;
+                break;
+              }
             }
-          }
 
-          if (!activeLineElement) return;
+            if (!activeLineElement) {
+              console.log('No active line element found - React may not have updated classes yet');
+              return;
+            }
 
-          // Check if the active line is visible
-          const containerHeight = container.clientHeight;
-          const containerScrollTop = container.scrollTop;
-          const activeLineTop = activeLineElement.offsetTop;
-          const activeLineHeight = activeLineElement.offsetHeight;
+            // Check if the active line is visible
+            const containerHeight = container.clientHeight;
+            const containerScrollTop = container.scrollTop;
+            const activeLineTop = activeLineElement.offsetTop;
+            const activeLineHeight = activeLineElement.offsetHeight;
 
-          const lineTopInViewport = activeLineTop - containerScrollTop;
-          const lineBottomInViewport = lineTopInViewport + activeLineHeight;
+            const lineTopInViewport = activeLineTop - containerScrollTop;
+            const lineBottomInViewport = lineTopInViewport + activeLineHeight;
 
-          // If active line is not visible, scroll to it
-          if (lineTopInViewport < 0 || lineBottomInViewport > containerHeight) {
-            const idealScrollTop =
-              activeLineTop - containerHeight / 2 + activeLineHeight / 2 + 64;
-            const maxScrollTop = container.scrollHeight - containerHeight;
-            const targetScrollTop = Math.max(0, Math.min(idealScrollTop, maxScrollTop));
+            // If active line is not visible, scroll to it
+            if (lineTopInViewport < 0 || lineBottomInViewport > containerHeight) {
+              const idealScrollTop =
+                activeLineTop - containerHeight / 2 + activeLineHeight / 2 + 64;
+              const maxScrollTop = container.scrollHeight - containerHeight;
+              const targetScrollTop = Math.max(0, Math.min(idealScrollTop, maxScrollTop));
 
-            container.scrollTo({
-              top: targetScrollTop,
-              behavior: "instant",
-            });
+              container.scrollTo({
+                top: targetScrollTop,
+                behavior: "instant",
+              });
 
-            // Update the stored position
-            lastScrollPosition.current = targetScrollTop;
-          }
+              // Update the stored position
+              lastScrollPosition.current = targetScrollTop;
+            }
+          }, 200); // Increased delay to ensure React has updated
         });
       });
     }

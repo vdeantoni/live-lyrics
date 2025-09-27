@@ -53,6 +53,10 @@ const LyricsProvider = () => {
 
   // Initialize liricle when LRC content is available
   useEffect(() => {
+    // Reset active line when lyrics content changes
+    setActiveLine(null);
+    setActiveWord(null);
+
     if (!lrcContent) {
       setLyricsData(null);
       return;
