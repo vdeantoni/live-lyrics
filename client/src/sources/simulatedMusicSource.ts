@@ -1,6 +1,7 @@
 import type { Song } from "@/lib/api";
 import type { MusicSource, LyricsProvider, ArtworkProvider } from "@/types/musicSource";
 import { SimulatedLyricsProvider } from "@/providers/simulatedLyricsProvider";
+import { ITunesArtworkProvider } from "@/providers/itunesArtworkProvider";
 
 /**
  * Simulated music source with internal clock for testing and development
@@ -16,6 +17,7 @@ export class SimulatedMusicSource implements MusicSource {
   private lastUpdateTime: number = Date.now();
   private intervalId: number | null = null;
   private lyricsProvider!: LyricsProvider; // Will be initialized in constructor
+  private artworkProvider!: ArtworkProvider; // Will be initialized in constructor
 
   // Demo playlist of songs
   private playlist: Song[] = [
@@ -72,6 +74,7 @@ export class SimulatedMusicSource implements MusicSource {
     // Initialize new instance
     this.startClock();
     this.lyricsProvider = new SimulatedLyricsProvider();
+    this.artworkProvider = new ITunesArtworkProvider();
 
     // Store the instance
     SimulatedMusicSource.instance = this;
@@ -158,8 +161,7 @@ export class SimulatedMusicSource implements MusicSource {
   }
 
   getArtworkProvider(): ArtworkProvider | null {
-    // Simulated source doesn't provide artwork for now
-    return null;
+    return this.artworkProvider;
   }
 
   // Additional methods for simulated source

@@ -59,3 +59,26 @@ export const useLyricsFromSource = (song?: Song) => {
     gcTime: 1000 * 60 * 60 * 24 * 365, // 1 year - keep in cache for a year
   })
 }
+
+/**
+ * Hook that fetches artwork using the current music source's artwork provider
+ */
+export const useArtworkFromSource = (song?: Song) => {
+  const source = useAtomValue(currentMusicSourceAtom)
+  const artworkProvider = source.getArtworkProvider()
+
+  return useQuery({
+    queryKey: ['artwork', source.getId(), song?.name, song?.artist, song?.album],
+    queryFn: async (): Promise<string[]> => {
+      if (!song || !artworkProvider) {
+        return []
+      }
+
+      const artwork = await artworkProvider.getArtwork(song)
+      return artwork || []
+    },
+    enabled: !!song && !!artworkProvider,
+    staleTime: 1000 * 60 * 60 * 24 * 365, // 1 year - artwork rarely changes
+    gcTime: 1000 * 60 * 60 * 24 * 365, // 1 year - keep in cache for a year
+  })
+}

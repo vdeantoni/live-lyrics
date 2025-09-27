@@ -1,6 +1,7 @@
 import type { Song } from '@/lib/api'
 import type { MusicSource, LyricsProvider, ArtworkProvider } from '@/types/musicSource'
 import { HttpLyricsProvider } from '@/providers/httpLyricsProvider'
+import { ITunesArtworkProvider } from '@/providers/itunesArtworkProvider'
 
 /**
  * HTTP-based music source that communicates with a real server
@@ -8,10 +9,12 @@ import { HttpLyricsProvider } from '@/providers/httpLyricsProvider'
 export class HttpMusicSource implements MusicSource {
   private baseUrl: string
   private lyricsProvider: LyricsProvider
+  private artworkProvider: ArtworkProvider
 
   constructor(baseUrl: string = 'http://127.0.0.1:4000') {
     this.baseUrl = baseUrl
     this.lyricsProvider = new HttpLyricsProvider()
+    this.artworkProvider = new ITunesArtworkProvider()
   }
 
   async getSong(): Promise<Song> {
@@ -93,8 +96,6 @@ export class HttpMusicSource implements MusicSource {
   }
 
   getArtworkProvider(): ArtworkProvider | null {
-    // For now, HTTP source doesn't provide artwork directly
-    // Could implement iTunes API artwork provider here
-    return null
+    return this.artworkProvider
   }
 }

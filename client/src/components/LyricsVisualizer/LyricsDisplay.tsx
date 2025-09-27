@@ -1,7 +1,7 @@
-import { useArtworks } from "@/lib/api";
 import { useEffect, useState, type PropsWithChildren } from "react";
 import { useAtomValue } from "jotai";
 import { songNameAtom, artistAtom, albumAtom, durationAtom, currentTimeAtom, isPlayingAtom } from "@/atoms/playerAtoms";
+import { useArtworkFromSource } from "@/hooks/useSongSync";
 
 const LyricsDisplay = ({ children }: PropsWithChildren) => {
   // Read song data from atoms (populated by useSongSync in parent)
@@ -20,20 +20,20 @@ const LyricsDisplay = ({ children }: PropsWithChildren) => {
     duration,
     currentTime,
     isPlaying
-  } : null;
+  } : undefined;
 
-  const { data: artworks } = useArtworks(song!);
+  const { data: artworks } = useArtworkFromSource(song);
 
   const [currentArtworkUrl, setCurrentArtworkUrl] = useState("");
 
   useEffect(() => {
     if (artworks && artworks.length > 0) {
       const randomIndex = Math.floor(Math.random() * artworks.length);
-      setCurrentArtworkUrl(artworks[randomIndex].url);
+      setCurrentArtworkUrl(artworks[randomIndex]);
 
       const intervalId = setInterval(() => {
         const newRandomIndex = Math.floor(Math.random() * artworks.length);
-        setCurrentArtworkUrl(artworks[newRandomIndex].url);
+        setCurrentArtworkUrl(artworks[newRandomIndex]);
       }, 10000); // 10000 milliseconds = 10 seconds
 
       return () => clearInterval(intervalId);
