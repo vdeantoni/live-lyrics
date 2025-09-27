@@ -9,12 +9,12 @@ import { SimulatedMusicSource } from '@/sources/simulatedMusicSource'
 export const availableSources: SourceConfig[] = [
   {
     type: 'http',
-    name: 'Local Server',
+    name: 'Server',
     options: { baseUrl: 'http://127.0.0.1:4000' },
   },
   {
     type: 'simulated',
-    name: 'Simulated Player',
+    name: 'Player',
     options: {},
   },
 ]
@@ -22,7 +22,7 @@ export const availableSources: SourceConfig[] = [
 /**
  * Current source configuration atom
  */
-export const currentSourceConfigAtom = atom<SourceConfig>(availableSources[0])
+export const currentSourceConfigAtom = atom<SourceConfig>(availableSources[1])
 
 /**
  * Factory function to create music source instances

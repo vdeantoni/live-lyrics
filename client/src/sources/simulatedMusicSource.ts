@@ -149,7 +149,7 @@ export class SimulatedMusicSource implements MusicSource {
   }
 
   getName(): string {
-    return "Simulated Player";
+    return "Player";
   }
 
   async isAvailable(): Promise<boolean> {

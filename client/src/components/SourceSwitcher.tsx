@@ -1,41 +1,38 @@
 import { useAtomValue, useSetAtom } from 'jotai'
-import { Button } from '@/components/ui/button'
 import {
   availableSources,
   currentSourceConfigAtom,
   switchSourceAtom
 } from '@/atoms/sourceAtoms'
-import { Wifi, WifiOff, Cpu } from 'lucide-react'
+import { Switch } from '@/components/ui/switch'
 
 const SourceSwitcher = () => {
   const currentConfig = useAtomValue(currentSourceConfigAtom)
   const switchSource = useSetAtom(switchSourceAtom)
 
-  const getSourceIcon = (type: string) => {
-    switch (type) {
-      case 'http':
-        return <Wifi className="w-4 h-4" />
-      case 'simulated':
-        return <Cpu className="w-4 h-4" />
-      default:
-        return <WifiOff className="w-4 h-4" />
+  const isServerMode = currentConfig.type === 'http'
+
+  const handleToggle = (checked: boolean) => {
+    // checked = true means Server mode (http)
+    // checked = false means Player mode (simulated) - default
+    const targetSource = availableSources.find(source =>
+      checked ? source.type === 'http' : source.type === 'simulated'
+    )
+    if (targetSource) {
+      switchSource(targetSource)
     }
   }
 
   return (
-    <div className="flex gap-2">
-      {availableSources.map((source) => (
-        <Button
-          key={source.type}
-          size="sm"
-          variant={currentConfig.type === source.type ? "default" : "outline"}
-          onClick={() => switchSource(source)}
-          className="flex items-center gap-2"
-        >
-          {getSourceIcon(source.type)}
-          {source.name}
-        </Button>
-      ))}
+    <div className="flex items-center space-x-3">
+      <Switch
+        id="server-mode"
+        checked={isServerMode}
+        onCheckedChange={handleToggle}
+      />
+      <label htmlFor="server-mode" className="text-sm font-medium text-zinc-300 cursor-pointer">
+        Server Mode
+      </label>
     </div>
   )
 }
