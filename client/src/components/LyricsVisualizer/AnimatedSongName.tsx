@@ -165,7 +165,7 @@ const AnimatedSongName = ({
     >
       <motion.h2
         ref={textRef}
-        className="text-2xl font-semibold whitespace-nowrap"
+        className="text-2xl font-semibold whitespace-nowrap text-center"
         animate={controls}
         onUpdate={(latest) => {
           if (typeof latest.x === "number") {
