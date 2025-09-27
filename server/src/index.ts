@@ -64,17 +64,38 @@ app.get("/music", async (c) => {
 });
 
 app.post("/music", async (c) => {
-  const { playing, currentTime } = await c.req.json();
+  const body = await c.req.json();
   const commands: string[] = [];
 
-  if (playing === true) {
-    commands.push("play");
-  } else if (playing === false) {
-    commands.push("pause");
+  // Handle new action-based format
+  if (body.action) {
+    switch (body.action) {
+      case "play":
+        commands.push("play");
+        break;
+      case "pause":
+        commands.push("pause");
+        break;
+      case "seek":
+        if (body.time !== undefined) {
+          commands.push(`set player position to ${body.time}`);
+        }
+        break;
+    }
   }
+  // Handle old format for backward compatibility
+  else {
+    const { playing, currentTime } = body;
 
-  if (currentTime !== undefined) {
-    commands.push(`set player position to ${currentTime}`);
+    if (playing === true) {
+      commands.push("play");
+    } else if (playing === false) {
+      commands.push("pause");
+    }
+
+    if (currentTime !== undefined) {
+      commands.push(`set player position to ${currentTime}`);
+    }
   }
 
   if (commands.length > 0) {
@@ -90,7 +111,7 @@ app.post("/music", async (c) => {
       if (error || stderr) {
         console.error(`Error executing AppleScript: ${error || stderr}`);
       } else {
-        console.log(`Music app command executed`);
+        console.log(`Music app command executed: ${commands.join(", ")}`);
       }
     });
   }

@@ -2,6 +2,7 @@ import { QueryClient } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { createAsyncStoragePersister } from "@tanstack/query-async-storage-persister";
+import { Provider as JotaiProvider } from "jotai";
 import LyricsVisualizer from "@/components/LyricsVisualizer/LyricsVisualizer";
 
 // Create a client with aggressive caching
@@ -16,19 +17,21 @@ const persister = createAsyncStoragePersister({
 
 function App() {
   return (
-    <PersistQueryClientProvider
-      client={queryClient}
-      persistOptions={{
-        persister,
-        maxAge: 1000 * 60 * 60 * 24 * 365, // 1 year - keep persisted data for a year
-        buster: "v1", // Cache version - increment to invalidate old caches
-      }}
-    >
-      <div className="flex flex-col h-full w-full items-center m-auto p-2 lg:p-4 xl-p-8">
-        <LyricsVisualizer />
-      </div>
-      <ReactQueryDevtools initialIsOpen={false} />
-    </PersistQueryClientProvider>
+    <JotaiProvider>
+      <PersistQueryClientProvider
+        client={queryClient}
+        persistOptions={{
+          persister,
+          maxAge: 1000 * 60 * 60 * 24 * 365, // 1 year - keep persisted data for a year
+          buster: "v1", // Cache version - increment to invalidate old caches
+        }}
+      >
+        <div className="flex flex-col h-full w-full items-center m-auto p-2 lg:p-4 xl-p-8">
+          <LyricsVisualizer />
+        </div>
+        <ReactQueryDevtools initialIsOpen={false} />
+      </PersistQueryClientProvider>
+    </JotaiProvider>
   );
 }
 
