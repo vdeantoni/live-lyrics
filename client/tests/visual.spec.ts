@@ -5,7 +5,7 @@ test('it should match the screenshot in portrait mode', async ({ page }) => {
   await page.goto('/');
 
   // Wait for the song name to be visible to ensure the player has loaded.
-  const songName = page.getByText('The Most Beautiful Girl (In The Room)');
+  const songName = page.getByText('Bohemian Rhapsody');
   await expect(songName).toBeVisible();
 
   // Wait for a short period to allow animations to settle
@@ -19,7 +19,7 @@ test('it should match the screenshot in landscape mode', async ({ page }) => {
   await page.goto('/');
 
   // Wait for the song name to be visible to ensure the player has loaded.
-  const songName = page.getByText('The Most Beautiful Girl (In The Room)');
+  const songName = page.getByText('Bohemian Rhapsody');
   await expect(songName).toBeVisible();
 
   // Wait for a short period to allow animations to settle
