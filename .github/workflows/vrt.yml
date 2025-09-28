@@ -2,8 +2,12 @@ name: Visual Regression Tests
 
 on: [pull_request]
 
+permissions:
+  contents: read
+
 jobs:
   lost-pixel:
+    timeout-minutes: 30
     runs-on: ubuntu-latest
     name: Lost Pixel
 
@@ -35,31 +39,34 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('client/package-lock.json', 'client/pnpm-lock.yaml', 'client/package.json') }}-browsers
+          restore-keys: |
+            ${{ runner.os }}-playwright-browsers
+            ${{ runner.os }}-playwright-
+
       - name: Build client
         run: pnpm --filter client build
+
+      - name: Install Playwright browsers
+        run: pnpm --filter client test:e2e:install:ci
+        env:
+          PLAYWRIGHT_BROWSERS_PATH: ~/.cache/ms-playwright
 
       - name: Start server
         run: pnpm --filter client preview &
 
       - name: Wait for server
-        run: npx wait-on http://172.17.0.1:4173 --timeout 30000
+        run: npx wait-on http://127.0.0.1:4173 --timeout 30000
 
-      - name: Cache Playwright browsers
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/ms-playwright
-          key: ${{ runner.os }}-playwright-${{ hashFiles('client/package.json') }}
-          restore-keys: |
-            ${{ runner.os }}-playwright-
-
-      - name: Install Playwright browsers
-        run: pnpm --filter client test:e2e:install:ci
+      - name: Create lost-pixel directory
+        run: mkdir -p client/lost-pixel
 
       - name: Run Playwright tests
         run: pnpm --filter client test:e2e:visual
-
-      - name: Create lost-pixel directory if it doesn't exist
-        run: mkdir -p client/lost-pixel
 
       - name: Copy Lost Pixel config to root
         run: cp client/lostpixel.config.ts ./lostpixel.config.ts
@@ -68,3 +75,17 @@ jobs:
         uses: lost-pixel/lost-pixel@v3.22.0
         env:
           LOST_PIXEL_API_KEY: ${{ secrets.LOST_PIXEL_API_KEY }}
+
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: visual-test-screenshots
+          path: client/lost-pixel/
+          retention-days: 30
+
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report-visual
+          path: client/playwright-report/
+          retention-days: 30

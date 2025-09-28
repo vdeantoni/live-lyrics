@@ -21,8 +21,9 @@ A beautiful web application that displays synchronized lyrics for songs currentl
 - **Frontend**: React 19, TypeScript, Vite, Tailwind CSS v4, Framer Motion
 - **Backend**: Node.js, Hono framework, AppleScript integration
 - **State Management**: TanStack React Query, Jotai
-- **Build System**: Turborepo monorepo with optimized caching
-- **Testing**: Vitest (unit), Playwright (E2E), Lost Pixel (visual regression)
+- **Build System**: Turborepo monorepo with optimized task pipeline and caching
+- **Testing**: Vitest (unit/integration), Playwright (E2E functional), Lost Pixel (visual regression)
+- **CI/CD**: GitHub Actions with advanced caching for dependencies and browsers
 
 ## 📋 Requirements
 
@@ -76,14 +77,24 @@ cd client && pnpm test:ui
 
 ### End-to-End Tests
 ```bash
-# Install browser dependencies (Chromium for CI optimization)
+# Install all browsers (local development)
+cd client && pnpm test:e2e:install
+
+# Install Chromium only (CI optimization)
 cd client && pnpm test:e2e:install:ci
 
-# Run visual regression tests
+# Run all E2E tests
+cd client && pnpm test:e2e
+
+# Run visual regression tests only
 cd client && pnpm test:e2e:visual
 
-# Run functional tests
+# Run functional tests only
 cd client && pnpm test:e2e:functional
+
+# Interactive test debugging
+cd client && pnpm test:e2e:ui
+cd client && pnpm test:e2e:debug
 ```
 
 ### Code Quality
@@ -108,8 +119,12 @@ live-lyrics/
 │   │   ├── components/     # React components
 │   │   │   ├── LyricsVisualizer/  # Main lyrics display components
 │   │   │   └── ui/         # Reusable UI components
-│   │   └── test/           # Unit tests
-│   └── tests/              # E2E tests (Playwright)
+│   └── tests/              # Test suites (organized by type)
+│       ├── unit/           # Unit tests (Vitest)
+│       ├── integration/    # Integration tests (Vitest)
+│       └── e2e/            # End-to-end tests (Playwright)
+│           ├── functional/ # Functional E2E tests
+│           └── visual/     # Visual regression tests
 ├── server/                 # Node.js backend API
 │   └── src/
 │       └── index.ts        # Hono server with AppleScript integration
@@ -154,9 +169,11 @@ live-lyrics/
 ### Pre-commit Hooks
 
 The project uses Husky to run quality checks before each commit:
-- **Format check**: Ensures code is properly formatted
-- **Lint check**: Ensures no linting errors
-- **Test**: Ensures all tests pass
+- **Format check**: Ensures code is properly formatted (`pnpm format:check`)
+- **Lint check**: Ensures no linting errors (`pnpm lint:check`)
+- **Test**: Ensures all tests pass (`pnpm test`)
+
+These checks leverage Turborepo's caching system for faster execution.
 
 ## 🤝 Contributing
 
@@ -172,8 +189,38 @@ The project uses Husky to run quality checks before each commit:
 
 - The app requires macOS and Apple Music for full functionality
 - Tests use a simulated player environment for cross-platform compatibility
-- Visual regression tests run automatically in CI/CD
+- Visual regression tests run automatically in CI/CD via Lost Pixel
 - Use `[data-testid="..."]` attributes for test selectors
+- GitHub Actions include advanced caching for faster CI/CD builds:
+  - pnpm store caching for dependencies
+  - Playwright browser caching for E2E tests
+  - Turborepo task caching for optimized builds
+
+## 🚀 CI/CD Workflows
+
+The project includes three GitHub Actions workflows:
+
+### Main CI (`ci.yml`)
+Runs on pushes to main branch:
+- **Tests Job**: Unit and integration tests with Turborepo caching
+- **E2E Job**: Functional Playwright tests with browser caching
+- **Artifacts**: Playwright reports uploaded for 30 days
+
+### Pull Request CI (`pr.yml`)
+Runs on pull requests for quick feedback
+
+### Visual Regression Testing (`vrt.yml`)
+Runs on pull requests:
+- **Lost Pixel Integration**: Automated visual regression detection
+- **Screenshot Comparison**: Compares UI changes against baselines
+- **Artifacts**: Visual test results and Playwright reports
+- **Cloud Integration**: Results available in Lost Pixel dashboard
+
+### Caching Strategy
+All workflows implement multi-level caching:
+- **Dependencies**: pnpm store cached by lockfile hash
+- **Browsers**: Playwright browsers cached by package.json hash
+- **Build Outputs**: Turborepo handles task-level caching
 
 ## 📝 License
 
