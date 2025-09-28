@@ -30,7 +30,7 @@ test.describe("Visual Regression Tests", () => {
 
     // Generate screenshot for Lost Pixel
     await page.screenshot({
-      path: "lost-pixel/homepage-portrait.png",
+      path: "../lost-pixel/homepage-portrait.png",
       fullPage: true,
     });
   });
@@ -45,7 +45,7 @@ test.describe("Visual Regression Tests", () => {
 
     // Generate screenshot for Lost Pixel
     await page.screenshot({
-      path: "lost-pixel/homepage-landscape.png",
+      path: "../lost-pixel/homepage-landscape.png",
       fullPage: true,
     });
   });
@@ -58,14 +58,14 @@ test.describe("Visual Regression Tests", () => {
     // Screenshot player in paused state
     await page.waitForTimeout(1000);
     await page.locator('[data-testid="player"]').screenshot({
-      path: "lost-pixel/player-paused.png",
+      path: "../lost-pixel/player-paused.png",
     });
 
     // Click play and screenshot playing state
     await page.click('[data-testid="play-pause-button"]');
     await page.waitForTimeout(1000); // Let UI update
     await page.locator('[data-testid="player"]').screenshot({
-      path: "lost-pixel/player-playing.png",
+      path: "../lost-pixel/player-playing.png",
     });
   });
 
@@ -79,7 +79,7 @@ test.describe("Visual Regression Tests", () => {
 
     // Screenshot just the lyrics display area
     await page.locator('[data-testid="lyrics-display"]').screenshot({
-      path: "lost-pixel/lyrics-display.png",
+      path: "../lost-pixel/lyrics-display.png",
     });
   });
 });
