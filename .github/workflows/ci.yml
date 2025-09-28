@@ -77,8 +77,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.cache/ms-playwright
-          key: ${{ runner.os }}-playwright-${{ hashFiles('**/pnpm-lock.yaml') }}
+          key: ${{ runner.os }}-playwright-${{ hashFiles('client/package-lock.json', 'client/pnpm-lock.yaml', 'client/package.json') }}-browsers
           restore-keys: |
+            ${{ runner.os }}-playwright-browsers
             ${{ runner.os }}-playwright-
 
       - name: Build client
@@ -86,6 +87,8 @@ jobs:
 
       - name: Install Playwright browsers
         run: pnpm --filter client test:e2e:install:ci
+        env:
+          PLAYWRIGHT_BROWSERS_PATH: ~/.cache/ms-playwright
 
       - name: Start server
         run: pnpm --filter client preview &
