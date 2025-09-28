@@ -22,11 +22,11 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
-      - name: Run format
-        run: pnpm format
+      - name: Check formatting
+        run: pnpm format:check
 
-      - name: Run lint
-        run: pnpm lint
+      - name: Check linting
+        run: pnpm lint:check
 
       - name: Run tests
         run: pnpm test
