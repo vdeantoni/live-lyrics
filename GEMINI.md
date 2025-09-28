@@ -25,15 +25,35 @@ This is a [Turborepo](https://turbo.build/) monorepo project. Use these commands
 
 ### Testing commands:
 
+#### Unit & Integration Tests (Vitest)
 - `cd client && pnpm test`: Run Vitest tests once
 - `cd client && pnpm test:watch`: Run Vitest tests in watch mode
 - `cd client && pnpm test:ui`: Open Vitest UI
 - `cd client && pnpm test:coverage`: Generate coverage reports
-- `cd client && pnpm test:e2e:install:ci`: Install Chromium for CI (optimized for performance)
-- `cd client && pnpm test:e2e:visual`: Run visual regression tests with Playwright
-- `cd client && pnpm test:e2e:functional`: Run functional E2E tests (app, lyrics, player components)
-- Visual regression testing in CI/CD is handled by Lost Pixel (not suitable for local use)
-- Legacy Playwright test files exist in `client/tests/` but are not currently functional
+
+**Running Single Tests**:
+- Run specific test file: `cd client && npx vitest src/test/Player.test.tsx`
+- Run tests matching pattern: `cd client && npx vitest --reporter=verbose --run Player`
+- Run with coverage for specific file: `cd client && npx vitest --coverage src/test/utils.test.ts`
+
+#### End-to-End Tests (Playwright)
+- `cd client && pnpm test:e2e`: Run all Playwright E2E tests
+- `cd client && pnpm test:e2e:ui`: Run Playwright tests with UI mode
+- `cd client && pnpm test:e2e:debug`: Run Playwright tests in debug mode
+- `cd client && pnpm test:e2e:install`: Install all Playwright browsers with dependencies
+- `cd client && pnpm test:e2e:install:ci`: Install Chromium only for CI (performance optimized)
+- `cd client && pnpm test:e2e:visual`: Run visual regression tests that generate Lost Pixel screenshots
+- `cd client && pnpm test:e2e:functional`: Run functional E2E tests (app behavior, component interactions)
+
+**Running Single E2E Tests**:
+- Run specific test file: `cd client && npx playwright test tests/e2e/player.spec.ts`
+- Run specific test by name: `cd client && npx playwright test --grep "should display song information"`
+- Run tests for specific browser: `cd client && npx playwright test --project=chromium`
+- Run in headed mode: `cd client && npx playwright test --headed tests/e2e/lyrics.spec.ts`
+
+#### Visual Regression Testing
+- Visual regression testing in CI/CD is handled by Lost Pixel (not suitable for local development)
+- Local visual test validation can be done with `cd client && pnpm test:e2e:visual`
 
 ## Architecture
 
@@ -48,7 +68,13 @@ This is a [Turborepo](https://turbo.build/) monorepo project. Use these commands
 Both client and server compile to `dist/` directories:
 - **Client**: Vite builds to `client/dist/` (static assets)
 - **Server**: TypeScript compiles to `server/dist/` (Node.js modules)
-- **Caching**: Turbo cache based on actual Git-tracked file patterns for optimal performance
+- **Caching**: Turbo cache based on Git-tracked file patterns for optimal performance
+
+**Turborepo Task Configuration**:
+- **build**: Includes `src/**`, `public/**`, `index.html`, package files, and configs
+- **lint**: Tracks `src/**`, package.json, ESLint configs, and TypeScript configs
+- **test**: Monitors `src/**`, `tests/**`, and all test-related configuration files
+- **format**: Watches source files, JSON, CSS, MD files, and Prettier configuration
 
 ### Server (server/)
 
@@ -95,6 +121,25 @@ Both client and server compile to `dist/` directories:
 4. React Query provides caching and persistence across sessions
 5. Components render synchronized lyrics with current playback position
 
+### Music Source Architecture
+
+**Source Abstraction System**:
+The app uses a pluggable source architecture with multiple music providers:
+
+**Available Sources**:
+- **HTTP Source** (`HttpMusicSource`): Connects to local server for real Apple Music integration
+- **Simulated Source** (`SimulatedMusicSource`): In-memory demo player with classic songs playlist
+
+**Source Management**:
+- Configurable via `sourceAtoms.ts` with Jotai state management
+- UI source switcher allows runtime switching between sources
+- Each source implements `MusicSource` interface for consistent API
+
+**Provider Ecosystem**:
+- **Lyrics Providers**: `HttpLyricsProvider` (local + LrcLib API), `SimulatedLyricsProvider`
+- **Artwork Providers**: `ITunesArtworkProvider` for album cover fetching
+- Sources can combine multiple providers for comprehensive functionality
+
 ## Development & Troubleshooting
 
 ### Pre-commit Hooks
@@ -136,26 +181,39 @@ The `turbo.json` configuration uses Git-tracked file patterns as inputs for opti
 
 ### Testing Infrastructure
 
-**Unit Tests (Vitest)**:
-- Located in `client/src/test/`
-- Run with `pnpm test`
-- Configured to exclude Playwright tests via `vitest.config.ts`
+**Test Organization**:
+Tests are organized in structured directories:
+- `client/src/test/`: Unit tests for individual components and utilities
+- `client/tests/integration/`: Integration tests for component interactions
+- `client/tests/e2e/`: Playwright E2E tests organized by functionality
+- `client/tests/setup/`: Test configuration and setup files
+
+**Unit & Integration Tests (Vitest)**:
+- Run with `pnpm test` or workspace-specific `cd client && pnpm test`
+- Configuration: `vitest.config.ts` with test includes/excludes
+- Setup: `client/src/test/setup.ts` with global mocks and testing library imports
+- Uses jsdom environment with React Testing Library
+- Excludes E2E tests via configuration to avoid conflicts
+- Supports coverage reporting and interactive UI mode
 
 **E2E Tests (Playwright)**:
-- **Performance Optimization**: CI uses Chromium-only (`test:e2e:install:ci`), local development uses all browsers
-- **Test Categories**:
-  - Visual: `test:e2e:visual` - Generates screenshots for Lost Pixel
-  - Functional: `test:e2e:functional` - Tests app behavior and interactions
-- **Configuration**: `playwright.config.ts` with CI-optimized settings
-- **Selectors**: Uses `[data-testid="..."]` for reliable element targeting
-- **Environment**: Configured for simulated player with mocked lyrics API
+- **Performance Optimization**: CI uses Chromium-only (`test:e2e:install:ci`), local development supports all browsers
+- **Test Structure**:
+  - `tests/e2e/app.spec.ts` - Application layout and responsiveness
+  - `tests/e2e/lyrics.spec.ts` - Lyrics display and synchronization
+  - `tests/e2e/player.spec.ts` - Player controls and interactions
+- **Configuration**: `playwright.config.ts` with CI-optimized settings and multiple browser support
+- **Test Directory**: `./tests/e2e` (configured in Playwright config)
+- **Environment**: Runs against preview server (port 4173) with simulated player data
+- **Selectors**: Uses `[data-testid="..."]` attributes for reliable element targeting
 
 **Visual Regression (Lost Pixel)**:
-- **Approach**: Custom shots generated by Playwright tests in `./lost-pixel/`
-- **Configuration**: `client/lostpixel.config.ts` with custom shots path
-- **Viewports**: Portrait (768x1024) and landscape (1024x768)
-- **CI/CD Only**: Not suitable for local development
-- **Project ID**: Configured with Lost Pixel cloud service
+- **Configuration**: `client/lostpixel.config.ts` defines custom shots path and project settings
+- **Approach**: Playwright visual tests generate screenshots in `./client/lost-pixel/`
+- **Workflow**: CI copies config to root before running Lost Pixel analysis
+- **Project ID**: `cmg2v3o380sw0zhcswscbcr96` with API key authentication
+- **Viewports**: Supports multiple device orientations (portrait/landscape)
+- **CI/CD Only**: Not designed for local development use
 
 ### TypeScript Configuration
 
@@ -166,33 +224,78 @@ Both workspaces use consistent TypeScript setup:
 
 ### CI/CD Workflow
 
-**Three-Workflow Approach** for optimized performance:
+**Three-Workflow Architecture** for optimized performance and separation of concerns:
 
 1. **PR Workflow** (`.github/workflows/pr.yml`):
-   - Quality checks: format:check, lint:check
-   - Fast feedback on pull requests
-   - No heavy testing to reduce PR friction
+   - **Trigger**: On pull request
+   - **Purpose**: Fast feedback with essential quality checks
+   - **Jobs**: Format check, lint check, unit/integration tests
+   - **Performance**: Lightweight to reduce PR friction and provide quick feedback
 
 2. **CI Workflow** (`.github/workflows/ci.yml`):
-   - Functional testing: unit tests and E2E functional tests
-   - Runs on push to main and PR merge
-   - Uses Chromium-only for faster execution
+   - **Trigger**: On push to main branch
+   - **Purpose**: Comprehensive testing after code integration
+   - **Jobs**:
+     - Unit/integration tests across all workspaces
+     - Functional E2E testing with Playwright
+   - **Optimization**: Uses Chromium-only for faster E2E execution
+   - **Infrastructure**: Runs on Ubuntu with Node.js 20 and pnpm
 
 3. **Visual Regression Testing** (`.github/workflows/vrt.yml`):
-   - Lost Pixel visual regression testing
-   - Separate workflow to isolate visual testing concerns
-   - Generates and compares screenshots
+   - **Trigger**: On pull request (separate from main CI for isolation)
+   - **Purpose**: Visual regression testing with Lost Pixel
+   - **Workflow**:
+     - Builds client and starts preview server
+     - Runs Playwright visual tests to generate screenshots
+     - Copies Lost Pixel config from client to root directory
+     - Executes Lost Pixel comparison against cloud baselines
+   - **Authentication**: Uses `LOST_PIXEL_API_KEY` secret for cloud service
 
 **Performance Optimizations**:
-- CI uses `test:e2e:install:ci` (Chromium-only) vs local development (all browsers)
-- Separate workflows prevent blocking PRs on visual test failures
-- Optimized caching for dependencies and build artifacts
+- **Browser Optimization**: CI uses `test:e2e:install:ci` (Chromium-only) vs local `test:e2e:install` (all browsers)
+- **Workflow Separation**: Visual tests isolated to prevent blocking PRs on screenshot differences
+- **Caching Strategy**: Leverages Turborepo caching and GitHub Actions cache for dependencies
+- **Parallel Execution**: Jobs run in parallel where possible for faster feedback
 
 ### macOS Development
 
 - **Required**: macOS with Music app for AppleScript integration
+- **Node.js**: Version 20+ recommended (tested with v24.8.0)
+- **Package Manager**: pnpm v9.6.0+ required for workspace management
 - **Server Development**: Uses `ts-node-dev` for hot reloading TypeScript
 - **Client Development**: Uses Vite's HMR for instant updates
+
+### Technology Stack
+
+**Frontend Dependencies**:
+- React 19.1.0 with TypeScript
+- Tailwind CSS v4.1.11 with Vite plugin
+- Framer Motion 12.23+ for animations
+- TanStack React Query 5.83+ for server state management
+- Jotai 2.15+ for local state management
+- Radix UI primitives for accessible components
+- Lucide React for consistent iconography
+- Liricle 4.2.0 for LRC lyrics parsing
+
+**Backend Dependencies**:
+- Hono 4.8+ (lightweight web framework)
+- @hono/node-server 1.15+ for Node.js integration
+- Node.js with TypeScript compilation
+- AppleScript integration via `osascript` system calls
+
+**Development Tools**:
+- Vite 7.0+ for frontend build tooling
+- Vitest 3.2+ for unit testing with coverage support
+- Playwright 1.55+ for E2E testing
+- Lost Pixel 3.22+ for visual regression testing
+- ESLint 9.30+ with TypeScript support
+- Prettier 3.6+ with Tailwind CSS plugin
+- Husky 9.1+ for Git hooks
+- Turborepo 2.0+ for monorepo management
+
+**Package Management**:
+- pnpm 9.6+ as package manager
+- Node.js 20+ (tested with v24.8.0)
 
 # important-instruction-reminders
 Do what has been asked; nothing more, nothing less.
