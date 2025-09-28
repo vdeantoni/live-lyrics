@@ -19,6 +19,19 @@ jobs:
       - name: Set up pnpm
         uses: pnpm/action-setup@v4
 
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Cache pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
       - name: Install dependencies
         run: pnpm install
 
@@ -30,6 +43,14 @@ jobs:
 
       - name: Wait for server
         run: npx wait-on http://172.17.0.1:4173 --timeout 30000
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('client/package.json') }}
+          restore-keys: |
+            ${{ runner.os }}-playwright-
 
       - name: Install Playwright browsers
         run: pnpm --filter client test:e2e:install:ci
