@@ -1,0 +1,7 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+# Run format, lint, and test with Turborepo caching
+pnpm format
+pnpm lint
+pnpm test

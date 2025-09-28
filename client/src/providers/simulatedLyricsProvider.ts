@@ -1,12 +1,12 @@
-import type { Song } from '@/lib/api'
-import type { LyricsProvider } from '@/types/musicSource'
+import type { Song } from "@/lib/api";
+import type { LyricsProvider } from "@/types/musicSource";
 
 /**
  * Simulated lyrics provider with hardcoded demo lyrics
  */
 export class SimulatedLyricsProvider implements LyricsProvider {
   private lyricsDatabase: Record<string, string> = {
-    'bohemian-rhapsody-queen': `[00:00.00] Is this the real life?
+    "bohemian-rhapsody-queen": `[00:00.00] Is this the real life?
 [00:03.50] Is this just fantasy?
 [00:07.00] Caught in a landslide
 [00:09.50] No escape from reality
@@ -25,7 +25,7 @@ export class SimulatedLyricsProvider implements LyricsProvider {
 [00:55.50] Mama, life had just begun
 [00:59.00] But now I've gone and thrown it all away`,
 
-    'stairway-to-heaven-led-zeppelin': `[00:00.00] There's a lady who's sure
+    "stairway-to-heaven-led-zeppelin": `[00:00.00] There's a lady who's sure
 [00:04.00] All that glitters is gold
 [00:08.00] And she's buying a stairway to heaven
 [00:16.00] When she gets there she knows
@@ -39,7 +39,7 @@ export class SimulatedLyricsProvider implements LyricsProvider {
 [01:04.00] There's a songbird who sings
 [01:08.00] Sometimes all of our thoughts are misgiven`,
 
-    'hotel-california-eagles': `[00:00.00] Welcome to the Hotel California
+    "hotel-california-eagles": `[00:00.00] Welcome to the Hotel California
 [00:04.00] Such a lovely place
 [00:06.50] (Such a lovely place)
 [00:08.00] Such a lovely face
@@ -55,7 +55,7 @@ export class SimulatedLyricsProvider implements LyricsProvider {
 [00:48.00] Some dance to remember
 [00:52.00] Some dance to forget`,
 
-    'imagine-john-lennon': `[00:00.00] Imagine there's no heaven
+    "imagine-john-lennon": `[00:00.00] Imagine there's no heaven
 [00:06.00] It's easy if you try
 [00:12.00] No hell below us
 [00:18.00] Above us only sky
@@ -72,7 +72,7 @@ export class SimulatedLyricsProvider implements LyricsProvider {
 [01:24.00] I hope someday you'll join us
 [01:30.00] And the world will be as one`,
 
-    'sweet-child-o-mine-guns-n-roses': `[00:00.00] She's got a smile that it seems to me
+    "sweet-child-o-mine-guns-n-roses": `[00:00.00] She's got a smile that it seems to me
 [00:04.00] Reminds me of childhood memories
 [00:08.00] Where everything was as fresh as the bright blue sky
 [00:16.00] Now and then when I see her face
@@ -84,53 +84,53 @@ export class SimulatedLyricsProvider implements LyricsProvider {
 [00:48.00] She's got eyes of the bluest skies
 [00:52.00] As if they thought of rain
 [00:56.00] I hate to look into those eyes
-[01:00.00] And see an ounce of pain`
-  }
+[01:00.00] And see an ounce of pain`,
+  };
 
   private getSongKey(song: Song): string {
     // Create a normalized key for the song
-    const name = song.name?.toLowerCase().replace(/[^a-z0-9]/g, '-') || ''
-    const artist = song.artist?.toLowerCase().replace(/[^a-z0-9]/g, '-') || ''
-    return `${name}-${artist}`
+    const name = song.name?.toLowerCase().replace(/[^a-z0-9]/g, "-") || "";
+    const artist = song.artist?.toLowerCase().replace(/[^a-z0-9]/g, "-") || "";
+    return `${name}-${artist}`;
   }
 
   async getLyrics(song: Song): Promise<string | null> {
     // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 100))
+    await new Promise((resolve) => setTimeout(resolve, 100));
 
-    const key = this.getSongKey(song)
-    return this.lyricsDatabase[key] || null
+    const key = this.getSongKey(song);
+    return this.lyricsDatabase[key] || null;
   }
 
   getId(): string {
-    return 'simulated-lyrics'
+    return "simulated-lyrics";
   }
 
   getName(): string {
-    return 'Simulated Lyrics'
+    return "Simulated Lyrics";
   }
 
   async supportsLyrics(song: Song): Promise<boolean> {
-    const key = this.getSongKey(song)
-    return key in this.lyricsDatabase
+    const key = this.getSongKey(song);
+    return key in this.lyricsDatabase;
   }
 
   async isAvailable(): Promise<boolean> {
-    return true // Always available
+    return true; // Always available
   }
 
   /**
    * Add lyrics to the simulated database
    */
   addLyrics(song: Song, lyrics: string): void {
-    const key = this.getSongKey(song)
-    this.lyricsDatabase[key] = lyrics
+    const key = this.getSongKey(song);
+    this.lyricsDatabase[key] = lyrics;
   }
 
   /**
    * Get all available songs with lyrics
    */
   getAvailableSongs(): string[] {
-    return Object.keys(this.lyricsDatabase)
+    return Object.keys(this.lyricsDatabase);
   }
 }

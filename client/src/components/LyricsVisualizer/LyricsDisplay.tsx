@@ -1,6 +1,13 @@
 import { useEffect, useState, type PropsWithChildren } from "react";
 import { useAtomValue } from "jotai";
-import { songNameAtom, artistAtom, albumAtom, durationAtom, currentTimeAtom, isPlayingAtom } from "@/atoms/playerAtoms";
+import {
+  songNameAtom,
+  artistAtom,
+  albumAtom,
+  durationAtom,
+  currentTimeAtom,
+  isPlayingAtom,
+} from "@/atoms/playerAtoms";
 import { useArtworkFromSource } from "@/hooks/useSongSync";
 
 const LyricsDisplay = ({ children }: PropsWithChildren) => {
@@ -13,14 +20,17 @@ const LyricsDisplay = ({ children }: PropsWithChildren) => {
   const isPlaying = useAtomValue(isPlayingAtom);
 
   // Construct song object for artwork API
-  const song = songName && artist ? {
-    name: songName,
-    artist,
-    album: album || '',
-    duration,
-    currentTime,
-    isPlaying
-  } : undefined;
+  const song =
+    songName && artist
+      ? {
+          name: songName,
+          artist,
+          album: album || "",
+          duration,
+          currentTime,
+          isPlaying,
+        }
+      : undefined;
 
   const { data: artworks } = useArtworkFromSource(song);
 
