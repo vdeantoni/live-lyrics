@@ -51,16 +51,33 @@ const Player = () => {
   };
 
   return (
-    <div className="flex w-full flex-col gap-4 landscape:flex-row">
+    <div
+      data-testid="player"
+      className="flex w-full flex-col gap-4 landscape:flex-row"
+    >
       <div className="flex max-h-20 min-h-14 flex-col landscape:max-w-[30%]">
-        <AnimatedSongName className="flex-1" songName={songName} />
-        <h3 className="text-muted-foreground self-center">{artist}</h3>
+        <AnimatedSongName
+          data-testid="song-name"
+          className="flex-1"
+          songName={songName}
+        />
+        <h3
+          data-testid="artist-name"
+          className="text-muted-foreground self-center"
+        >
+          {artist}
+        </h3>
       </div>
       <div className="flex flex-1 items-center gap-3">
-        <span id="current-time" className="min-w-10 text-center text-sm">
+        <span
+          id="current-time"
+          data-testid="current-time"
+          className="min-w-10 text-center text-sm"
+        >
           {formatTime(currentTime)}
         </span>
         <Slider
+          data-testid="progress-slider"
           value={[currentTime]}
           min={0}
           max={duration || 0}
@@ -70,7 +87,11 @@ const Player = () => {
           onPointerDown={handleSliderPointerDown}
           onPointerUp={handleSliderPointerUp}
         />
-        <span id="total-duration" className="min-w-10 text-center text-sm">
+        <span
+          id="total-duration"
+          data-testid="duration"
+          className="min-w-10 text-center text-sm"
+        >
           {formatTime(duration)}
         </span>
       </div>
@@ -89,14 +110,21 @@ const Player = () => {
         <div className="flex flex-1 items-center justify-center">
           {/* Play/Pause Button - Centered */}
           <Button
+            data-testid="play-pause-button"
             className="flex h-12 w-12 items-center justify-center rounded-full"
             onClick={handlePlayPause}
             aria-label={isPlaying ? "Pause" : "Play"}
           >
             {isPlaying ? (
-              <Pause style={{ width: "24px", height: "24px" }} />
+              <Pause
+                data-testid="pause-icon"
+                style={{ width: "24px", height: "24px" }}
+              />
             ) : (
-              <Play style={{ width: "24px", height: "24px" }} />
+              <Play
+                data-testid="play-icon"
+                style={{ width: "24px", height: "24px" }}
+              />
             )}
           </Button>
         </div>

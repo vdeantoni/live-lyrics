@@ -35,7 +35,31 @@
       ],
       "outputLogs": "new-only"
     },
+    "lint:check": {
+      "dependsOn": ["^build"],
+      "inputs": [
+        "src/**",
+        "package.json",
+        "eslint.config.*",
+        ".eslintrc*",
+        "tsconfig*.json"
+      ],
+      "outputLogs": "new-only"
+    },
     "format": {
+      "inputs": [
+        "src/**/*.{js,jsx,ts,tsx}",
+        "**/*.{json,css,md}",
+        "!node_modules/**",
+        "!dist/**",
+        ".prettierrc",
+        "prettier.config.*",
+        "package.json"
+      ],
+      "outputs": [],
+      "outputLogs": "new-only"
+    },
+    "format:check": {
       "inputs": [
         "src/**/*.{js,jsx,ts,tsx}",
         "**/*.{json,css,md}",
