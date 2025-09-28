@@ -1,11 +1,13 @@
-name: CI
+name: CI Tests
 
-on: [pull_request]
+on:
+  push:
+    branches: [main]
 
 jobs:
   test:
     runs-on: ubuntu-latest
-    name: Test
+    name: Tests
 
     steps:
       - name: Checkout repository
@@ -57,8 +59,8 @@ jobs:
       - name: Build
         run: pnpm build
 
-      - name: Run Playwright tests
-        run: pnpm --filter client test:e2e
+      - name: Run Playwright functional tests
+        run: pnpm --filter client test:e2e:functional
 
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}

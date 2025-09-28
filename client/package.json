@@ -20,7 +20,9 @@
     "test:e2e:chromium": "playwright test --project=chromium",
     "test:e2e:debug": "playwright test --debug",
     "test:e2e:codegen": "playwright codegen",
-    "test:e2e:install": "playwright install --with-deps"
+    "test:e2e:install": "playwright install --with-deps",
+    "test:e2e:visual": "playwright test tests/visual.spec.ts",
+    "test:e2e:functional": "playwright test tests/app.spec.ts tests/lyrics.spec.ts tests/player.spec.ts"
   },
   "dependencies": {
     "@radix-ui/react-aspect-ratio": "^1.1.7",

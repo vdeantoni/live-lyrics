@@ -1,15 +1,7 @@
 node_modules
 .turbo
 *.log
+.DS_Store
 
 # Output
 dist/
-
-# Test related
-test-results/
-coverage/
-
-# Playwright reports
-playwright-report/
-test-results/
-.DS_Store
