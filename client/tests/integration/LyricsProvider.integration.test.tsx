@@ -37,7 +37,7 @@ vi.mock("jotai", async () => {
 });
 
 // Mock child components
-vi.mock("../components/LyricsVisualizer/LyricsContent", () => ({
+vi.mock("@/components/LyricsVisualizer/LyricsContent", () => ({
   default: ({ lyricsData }: { lyricsData: unknown }) => (
     <div data-testid="lyrics-content">
       {lyricsData ? "Lyrics loaded" : "No lyrics"}
@@ -45,11 +45,11 @@ vi.mock("../components/LyricsVisualizer/LyricsContent", () => ({
   ),
 }));
 
-vi.mock("../components/LyricsVisualizer/NoLyricsFound", () => ({
+vi.mock("@/components/LyricsVisualizer/NoLyricsFound", () => ({
   default: () => <div data-testid="no-lyrics">No lyrics found</div>,
 }));
 
-import LyricsProvider from "../components/LyricsVisualizer/LyricsProvider";
+import LyricsProvider from "@/components/LyricsVisualizer/LyricsProvider";
 import { useLyricsFromSource } from "@/hooks/useSongSync";
 import { useAtomValue } from "jotai";
 

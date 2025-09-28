@@ -26,13 +26,13 @@ vi.mock("jotai", async () => {
 });
 
 // Mock the AnimatedSongName component
-vi.mock("../components/LyricsVisualizer/AnimatedSongName", () => ({
+vi.mock("@/components/LyricsVisualizer/AnimatedSongName", () => ({
   default: ({ songName }: { songName: string }) => (
     <div data-testid="animated-song-name">{songName} -</div>
   ),
 }));
 
-import Player from "../components/LyricsVisualizer/Player";
+import Player from "@/components/LyricsVisualizer/Player";
 import { useAtomValue, useSetAtom } from "jotai";
 
 describe("Player", () => {

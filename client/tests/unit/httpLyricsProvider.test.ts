@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { HttpLyricsProvider } from "../providers/httpLyricsProvider";
+import { HttpLyricsProvider } from "@/providers/httpLyricsProvider";
 import type { Song } from "@/lib/api";
 
 // Mock the fetch function

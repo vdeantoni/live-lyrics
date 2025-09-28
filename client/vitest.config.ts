@@ -7,12 +7,16 @@ export default defineConfig({
   test: {
     globals: true,
     environment: "jsdom",
-    setupFiles: ["./src/test/setup.ts"],
+    setupFiles: ["./tests/setup/setup.ts"],
     css: true,
+    include: [
+      "./tests/unit/**/*.{test,spec}.{js,ts,tsx}",
+      "./tests/integration/**/*.{test,spec}.{js,ts,tsx}",
+    ],
     exclude: [
       "**/node_modules/**",
       "**/dist/**",
-      "**/tests/**", // Exclude Playwright tests
+      "**/tests/e2e/**", // Exclude Playwright E2E tests
     ],
   },
   resolve: {
