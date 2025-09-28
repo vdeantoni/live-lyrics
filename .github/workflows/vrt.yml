@@ -42,7 +42,7 @@ jobs:
         run: pnpm --filter client preview &
 
       - name: Wait for server
-        run: npx wait-on http://172.17.0.1:4173 --timeout 30000
+        run: npx wait-on http://127.0.0.1:4173 --timeout 30000
 
       - name: Cache Playwright browsers
         uses: actions/cache@v4
