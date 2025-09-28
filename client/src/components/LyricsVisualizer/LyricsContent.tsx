@@ -32,6 +32,8 @@ const LyricsContent: React.FC<LyricsContentProps> = ({
       return (
         <div
           key={`${lyricsData.tags?.ti || "song"}-${index}-${line.text.slice(0, 10)}`} // More unique key
+          data-testid="lyrics-line"
+          data-current={isActive ? "true" : "false"}
           data-line-index={index} // Add data attribute for easier detection
           data-line-text={line.text.substring(0, 20)} // Add data attribute for text matching
           className={`my-3 transform cursor-pointer py-2.5 text-center font-normal opacity-50 transition-all duration-300 ${
@@ -367,6 +369,7 @@ const LyricsContent: React.FC<LyricsContentProps> = ({
 
   return (
     <div
+      data-testid="lyrics-container"
       ref={contentRef}
       className="h-full w-full overflow-auto scroll-smooth px-6 lg:px-8 xl:px-10 [&::-webkit-scrollbar]:hidden"
     >

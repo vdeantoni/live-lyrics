@@ -28,6 +28,7 @@ const SourceSwitcher = () => {
 
   return (
     <motion.div
+      data-testid="source-switcher"
       className="flex cursor-pointer items-center overflow-hidden rounded-full border border-white/10 bg-black/40 px-4 py-2 shadow-lg backdrop-blur-md"
       onHoverStart={() => setIsHovered(true)}
       onHoverEnd={() => setIsHovered(false)}

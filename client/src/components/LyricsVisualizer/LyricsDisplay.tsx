@@ -51,9 +51,13 @@ const LyricsDisplay = ({ children }: PropsWithChildren) => {
   }, [artworks]);
 
   return (
-    <div className="relative h-full w-full overflow-hidden">
+    <div
+      data-testid="lyrics-display"
+      className="relative h-full w-full overflow-hidden"
+    >
       {/* Background Image Layer with Effects */}
       <div
+        data-testid="lyrics-background"
         className="absolute inset-0 bg-cover bg-center transition-all duration-1000 ease-in-out"
         style={{
           backgroundImage: `url(${currentArtworkUrl})`,

@@ -6,7 +6,7 @@
   "type": "commonjs",
   "scripts": {
     "dev": "ts-node-dev --respawn src/index.ts",
-    "build": "tsc src/index.ts",
+    "build": "tsc",
     "format": "prettier --write ."
   },
   "keywords": [],
