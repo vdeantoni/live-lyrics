@@ -55,11 +55,11 @@ jobs:
       - name: Install Playwright browsers
         run: pnpm --filter client test:e2e:install:ci
 
+      - name: Create lost-pixel directory
+        run: mkdir -p client/lost-pixel
+
       - name: Run Playwright tests
         run: pnpm --filter client test:e2e:visual
-
-      - name: Create lost-pixel directory if it doesn't exist
-        run: mkdir -p client/lost-pixel
 
       - name: Copy Lost Pixel config to root
         run: cp client/lostpixel.config.ts ./lostpixel.config.ts
