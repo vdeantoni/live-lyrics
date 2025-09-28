@@ -31,12 +31,14 @@ const LyricsContent: React.FC<LyricsContentProps> = ({
 
       return (
         <div
-          key={`${lyricsData.tags?.ti || 'song'}-${index}-${line.text.slice(0, 10)}`} // More unique key
+          key={`${lyricsData.tags?.ti || "song"}-${index}-${line.text.slice(0, 10)}`} // More unique key
+          data-testid="lyrics-line"
+          data-current={isActive ? "true" : "false"}
           data-line-index={index} // Add data attribute for easier detection
           data-line-text={line.text.substring(0, 20)} // Add data attribute for text matching
-          className={`text-center font-normal my-3 opacity-50 transition-all duration-300 py-2.5 cursor-pointer transform ${
+          className={`my-3 transform cursor-pointer py-2.5 text-center font-normal opacity-50 transition-all duration-300 ${
             isActive
-              ? "font-bold opacity-100 scale-110 [text-shadow:0_0_10px_#fff,4px_4px_8px_rgba(0,0,0,0.5)]"
+              ? "scale-110 font-bold opacity-100 [text-shadow:0_0_10px_#fff,4px_4px_8px_rgba(0,0,0,0.5)]"
               : ""
           }`}
           style={{
@@ -69,8 +71,8 @@ const LyricsContent: React.FC<LyricsContentProps> = ({
       }
     };
 
-    container.addEventListener('scroll', handleScroll);
-    return () => container.removeEventListener('scroll', handleScroll);
+    container.addEventListener("scroll", handleScroll);
+    return () => container.removeEventListener("scroll", handleScroll);
   }, [lyricsData]);
 
   // Restore scroll position when lyrics data loads (immediate)
@@ -89,7 +91,11 @@ const LyricsContent: React.FC<LyricsContentProps> = ({
         // Use a second requestAnimationFrame to ensure scroll is complete
         requestAnimationFrame(() => {
           // Only check for active line if there actually is one (not at time 0)
-          if (!activeLine || (activeLine.index === undefined && activeLine.time === undefined)) return;
+          if (
+            !activeLine ||
+            (activeLine.index === undefined && activeLine.time === undefined)
+          )
+            return;
 
           // Wait longer for React to fully update the DOM with active classes
           setTimeout(() => {
@@ -99,7 +105,7 @@ const LyricsContent: React.FC<LyricsContentProps> = ({
             // First try to find by class name
             for (let i = 0; i < container.children.length; i++) {
               const child = container.children[i] as HTMLElement;
-              if (child.className.includes('font-bold opacity-100 scale-110')) {
+              if (child.className.includes("font-bold opacity-100 scale-110")) {
                 activeLineElement = child;
                 break;
               }
@@ -107,7 +113,9 @@ const LyricsContent: React.FC<LyricsContentProps> = ({
 
             // Fallback: try to find by index if activeLine has an index
             if (!activeLineElement && activeLine.index !== undefined) {
-              const potentialElement = container.children[activeLine.index] as HTMLElement;
+              const potentialElement = container.children[
+                activeLine.index
+              ] as HTMLElement;
               if (potentialElement) {
                 activeLineElement = potentialElement;
               }
@@ -117,7 +125,9 @@ const LyricsContent: React.FC<LyricsContentProps> = ({
             if (!activeLineElement) {
               for (let i = 0; i < container.children.length; i++) {
                 const child = container.children[i] as HTMLElement;
-                if (child.textContent?.includes(activeLine.text.substring(0, 20))) {
+                if (
+                  child.textContent?.includes(activeLine.text.substring(0, 20))
+                ) {
                   activeLineElement = child;
                   break;
                 }
@@ -138,11 +148,17 @@ const LyricsContent: React.FC<LyricsContentProps> = ({
             const lineBottomInViewport = lineTopInViewport + activeLineHeight;
 
             // If active line is not visible, scroll to it
-            if (lineTopInViewport < 0 || lineBottomInViewport > containerHeight) {
+            if (
+              lineTopInViewport < 0 ||
+              lineBottomInViewport > containerHeight
+            ) {
               const idealScrollTop =
                 activeLineTop - containerHeight / 2 + activeLineHeight / 2 + 64;
               const maxScrollTop = container.scrollHeight - containerHeight;
-              const targetScrollTop = Math.max(0, Math.min(idealScrollTop, maxScrollTop));
+              const targetScrollTop = Math.max(
+                0,
+                Math.min(idealScrollTop, maxScrollTop),
+              );
 
               container.scrollTo({
                 top: targetScrollTop,
@@ -174,7 +190,7 @@ const LyricsContent: React.FC<LyricsContentProps> = ({
       // First try to find by class name
       for (let i = 0; i < container.children.length; i++) {
         const child = container.children[i] as HTMLElement;
-        if (child.className.includes('font-bold opacity-100 scale-110')) {
+        if (child.className.includes("font-bold opacity-100 scale-110")) {
           activeLineElement = child;
           break;
         }
@@ -182,7 +198,9 @@ const LyricsContent: React.FC<LyricsContentProps> = ({
 
       // Fallback: try to find by index if activeLine has an index
       if (!activeLineElement && activeLine.index !== undefined) {
-        const potentialElement = container.children[activeLine.index] as HTMLElement;
+        const potentialElement = container.children[
+          activeLine.index
+        ] as HTMLElement;
         if (potentialElement) {
           activeLineElement = potentialElement;
         }
@@ -219,7 +237,10 @@ const LyricsContent: React.FC<LyricsContentProps> = ({
       // 4. Clamp the scroll position to valid bounds
       // We can't scroll above 0 or past the maximum scrollable position.
       const maxScrollTop = container.scrollHeight - containerHeight;
-      const targetScrollTop = Math.max(0, Math.min(idealScrollTop, maxScrollTop));
+      const targetScrollTop = Math.max(
+        0,
+        Math.min(idealScrollTop, maxScrollTop),
+      );
 
       // 5. Scroll to the calculated position
       container.scrollTo({
@@ -253,7 +274,7 @@ const LyricsContent: React.FC<LyricsContentProps> = ({
       // First try to find by class name
       for (let i = 0; i < container.children.length; i++) {
         const child = container.children[i] as HTMLElement;
-        if (child.className.includes('font-bold opacity-100 scale-110')) {
+        if (child.className.includes("font-bold opacity-100 scale-110")) {
           activeLineElement = child;
           break;
         }
@@ -261,7 +282,9 @@ const LyricsContent: React.FC<LyricsContentProps> = ({
 
       // Fallback: try to find by index if activeLine has an index
       if (!activeLineElement && activeLine.index !== undefined) {
-        const potentialElement = container.children[activeLine.index] as HTMLElement;
+        const potentialElement = container.children[
+          activeLine.index
+        ] as HTMLElement;
         if (potentialElement) {
           activeLineElement = potentialElement;
         }
@@ -288,7 +311,10 @@ const LyricsContent: React.FC<LyricsContentProps> = ({
       const idealScrollTop =
         activeLineTop - containerHeight / 2 + activeLineHeight / 2 + 64;
       const maxScrollTop = container.scrollHeight - containerHeight;
-      const targetScrollTop = Math.max(0, Math.min(idealScrollTop, maxScrollTop));
+      const targetScrollTop = Math.max(
+        0,
+        Math.min(idealScrollTop, maxScrollTop),
+      );
 
       container.scrollTo({
         top: targetScrollTop,
@@ -343,12 +369,13 @@ const LyricsContent: React.FC<LyricsContentProps> = ({
 
   return (
     <div
+      data-testid="lyrics-container"
       ref={contentRef}
-      className="w-full h-full px-6 lg:px-8 xl:px-10 overflow-auto scroll-smooth [&::-webkit-scrollbar]:hidden"
+      className="h-full w-full overflow-auto scroll-smooth px-6 lg:px-8 xl:px-10 [&::-webkit-scrollbar]:hidden"
     >
       <div
         ref={cursorRef}
-        className="absolute w-1 h-1 rounded-md bg-current opacity-20 transition-all duration-300"
+        className="absolute h-1 w-1 rounded-md bg-current opacity-20 transition-all duration-300"
       />
       {lines}
     </div>

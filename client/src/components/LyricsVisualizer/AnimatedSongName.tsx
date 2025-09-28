@@ -152,12 +152,14 @@ const AnimatedSongName = ({
       controls.stop();
       controls.set({ x: 0 });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOverflowing, controls]);
 
   if (!songName) return null;
 
   return (
     <div
+      data-testid={"song-name"}
       ref={containerRef}
       className={`overflow-hidden ${className}`}
       onMouseEnter={handleMouseEnter}
@@ -165,7 +167,7 @@ const AnimatedSongName = ({
     >
       <motion.h2
         ref={textRef}
-        className="text-2xl font-semibold whitespace-nowrap text-center"
+        className="whitespace-nowrap text-center text-2xl font-semibold"
         animate={controls}
         onUpdate={(latest) => {
           if (typeof latest.x === "number") {

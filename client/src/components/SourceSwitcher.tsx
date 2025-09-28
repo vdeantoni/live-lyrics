@@ -28,7 +28,8 @@ const SourceSwitcher = () => {
 
   return (
     <motion.div
-      className="flex items-center bg-black/40 backdrop-blur-md rounded-full px-4 py-2 border border-white/10 shadow-lg cursor-pointer overflow-hidden"
+      data-testid="source-switcher"
+      className="flex cursor-pointer items-center overflow-hidden rounded-full border border-white/10 bg-black/40 px-4 py-2 shadow-lg backdrop-blur-md"
       onHoverStart={() => setIsHovered(true)}
       onHoverEnd={() => setIsHovered(false)}
       whileHover={{
@@ -41,6 +42,7 @@ const SourceSwitcher = () => {
       }}
     >
       <Switch
+        data-testid="source-option"
         id="server-mode"
         checked={isServerMode}
         onCheckedChange={handleToggle}
@@ -50,7 +52,7 @@ const SourceSwitcher = () => {
         {isHovered && (
           <motion.label
             htmlFor="server-mode"
-            className="text-sm font-medium text-white/90 cursor-pointer select-none whitespace-nowrap ml-3"
+            className="ml-3 cursor-pointer select-none whitespace-nowrap text-sm font-medium text-white/90"
             initial={{ opacity: 0, width: 0, marginLeft: 0 }}
             animate={{ opacity: 1, width: "auto", marginLeft: 12 }}
             exit={{ opacity: 0, width: 0, marginLeft: 0 }}

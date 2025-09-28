@@ -1,12 +1,70 @@
 {
   "$schema": "https://turbo.build/schema.json",
-  "globalDependencies": ["**/.env.*"],
+  "globalDependencies": [
+    "**/.env.*"
+  ],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": ["dist/**", "*.js", "*.d.ts"]
+      "inputs": [
+        "src/**",
+        "public/**",
+        "index.html",
+        "package.json",
+        "tsconfig*.json",
+        "vite.config.*",
+        "components.json"
+      ],
+      "outputs": ["dist/**"]
     },
-    "lint": {},
+    "lint": {
+      "dependsOn": ["^build"],
+      "inputs": [
+        "src/**",
+        "package.json",
+        "eslint.config.*",
+        "tsconfig*.json"
+      ],
+      "outputs": [".eslintcache"]
+    },
+    "lint:check": {
+      "dependsOn": ["^build"],
+      "inputs": [
+        "src/**",
+        "package.json",
+        "eslint.config.*",
+        "tsconfig*.json"
+      ],
+      "outputs": [".eslintcache"]
+    },
+    "format": {
+      "inputs": [
+        "src/**",
+        "**/*.{json,css,md}",
+        ".prettierrc",
+        "package.json"
+      ]
+    },
+    "format:check": {
+      "inputs": [
+        "src/**",
+        "**/*.{json,css,md}",
+        ".prettierrc",
+        "package.json"
+      ]
+    },
+    "test": {
+      "dependsOn": ["^build"],
+      "inputs": [
+        "src/**",
+        "tests/**",
+        "package.json",
+        "tsconfig*.json",
+        "vite.config.*",
+        "vitest.config.*"
+      ],
+      "outputs": ["coverage/**"]
+    },
     "dev": {
       "cache": false,
       "persistent": true

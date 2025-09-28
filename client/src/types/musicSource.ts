@@ -1,4 +1,4 @@
-import type { Song } from '@/lib/api'
+import type { Song } from "@/lib/api";
 
 /**
  * Interface for lyrics providers that can fetch lyrics for songs
@@ -9,37 +9,37 @@ export interface LyricsProvider {
    * @param song - The song to get lyrics for
    * @returns Promise with lyrics content or null if not found
    */
-  getLyrics(song: Song): Promise<string | null>
+  getLyrics(song: Song): Promise<string | null>;
 
   /**
    * Get the unique identifier for this provider
    */
-  getId(): string
+  getId(): string;
 
   /**
    * Get a human-readable name for this provider
    */
-  getName(): string
+  getName(): string;
 
   /**
    * Check if this provider supports the given song
    * @param song - The song to check
    */
-  supportsLyrics(song: Song): Promise<boolean>
+  supportsLyrics(song: Song): Promise<boolean>;
 
   /**
    * Check if this provider is currently available
    */
-  isAvailable(): Promise<boolean>
+  isAvailable(): Promise<boolean>;
 }
 
 /**
  * Configuration for lyrics providers
  */
 export interface LyricsProviderConfig {
-  type: 'http' | 'simulated' | 'lrclib' | 'genius'
-  name: string
-  options?: Record<string, any>
+  type: "http" | "simulated" | "lrclib" | "genius";
+  name: string;
+  options?: Record<string, unknown>;
 }
 
 /**
@@ -51,22 +51,22 @@ export interface ArtworkProvider {
    * @param song - The song to get artwork for
    * @returns Promise with array of artwork URLs
    */
-  getArtwork(song: Song): Promise<string[]>
+  getArtwork(song: Song): Promise<string[]>;
 
   /**
    * Get the unique identifier for this provider
    */
-  getId(): string
+  getId(): string;
 
   /**
    * Get a human-readable name for this provider
    */
-  getName(): string
+  getName(): string;
 
   /**
    * Check if this provider is currently available
    */
-  isAvailable(): Promise<boolean>
+  isAvailable(): Promise<boolean>;
 }
 
 /**
@@ -76,65 +76,65 @@ export interface MusicSource {
   /**
    * Get current song information and playback state
    */
-  getSong(): Promise<Song>
+  getSong(): Promise<Song>;
 
   /**
    * Start or resume playback
    */
-  play(): Promise<void>
+  play(): Promise<void>;
 
   /**
    * Pause playback
    */
-  pause(): Promise<void>
+  pause(): Promise<void>;
 
   /**
    * Seek to a specific time position
    * @param time - Time in seconds
    */
-  seek(time: number): Promise<void>
+  seek(time: number): Promise<void>;
 
   /**
    * Get the unique identifier for this source
    */
-  getId(): string
+  getId(): string;
 
   /**
    * Get a human-readable name for this source
    */
-  getName(): string
+  getName(): string;
 
   /**
    * Check if this source is currently available/connected
    */
-  isAvailable(): Promise<boolean>
+  isAvailable(): Promise<boolean>;
 
   /**
    * Get the lyrics provider associated with this source
    */
-  getLyricsProvider(): LyricsProvider | null
+  getLyricsProvider(): LyricsProvider | null;
 
   /**
    * Get the artwork provider associated with this source
    */
-  getArtworkProvider(): ArtworkProvider | null
+  getArtworkProvider(): ArtworkProvider | null;
 }
 
 /**
  * Result type for source operations
  */
 export interface SourceOperationResult {
-  success: boolean
-  error?: string
+  success: boolean;
+  error?: string;
 }
 
 /**
  * Configuration for music sources with plugin support
  */
 export interface SourceConfig {
-  type: 'http' | 'simulated'
-  name: string
-  options?: Record<string, any>
-  lyricsProvider?: LyricsProviderConfig
-  artworkProvider?: LyricsProviderConfig
+  type: "http" | "simulated";
+  name: string;
+  options?: Record<string, unknown>;
+  lyricsProvider?: LyricsProviderConfig;
+  artworkProvider?: LyricsProviderConfig;
 }

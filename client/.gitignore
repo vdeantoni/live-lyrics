@@ -1,7 +1,8 @@
-# Build output
-dist/
 
-# Playwright reports
-playwright-report/
-test-results/
-.DS_Store
+# Playwright
+node_modules/
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/

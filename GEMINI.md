@@ -11,41 +11,59 @@ This project is a web-based application that displays the lyrics of the song cur
 This is a [Turborepo](https://turbo.build/) monorepo project. Use these commands:
 
 - `pnpm dev`: Starts the development server for both the client and the server
-- `pnpm build`: Builds the client and the server
-- `pnpm lint`: Lints the client and the server
+- `pnpm build`: Builds the client and the server (optimized with Turbo cache)
+- `pnpm lint`: Applies linting fixes automatically
+- `pnpm lint:check`: Checks linting without applying fixes (used in pre-commit)
+- `pnpm format`: Applies code formatting with Prettier
+- `pnpm format:check`: Checks formatting without applying fixes (used in pre-commit)
+- `pnpm test`: Runs tests across all workspaces
 
 ### Individual workspace commands:
+
 - Client: `cd client && pnpm dev` (Vite dev server on port 5173)
 - Server: `cd server && pnpm dev` (Node.js server on port 4000)
 
 ### Testing commands:
-- `cd client && pnpm test:visual`: Run Playwright visual regression tests (local testing)
-- `cd client && pnpm test:visual:update`: Update Playwright visual test snapshots
-- Visual regression testing in CI/CD is handled by Lost Pixel (not suitable for local use)
+
+- `cd client && pnpm test`: Run Vitest tests once
+- `cd client && pnpm test:watch`: Run Vitest tests in watch mode
+- `cd client && pnpm test:ui`: Open Vitest UI
+- `cd client && pnpm test:coverage`: Generate coverage reports
+- Visual regression testing is handled by Lost Pixel in CI/CD only
+- E2E testing via Playwright (`client/tests/`) configured for simulated player environment
 
 ## Architecture
 
 ### Monorepo Structure
-- **Root**: Turborepo configuration with shared scripts
+
+- **Root**: Turborepo configuration with optimized caching based on Git-tracked files
 - **client/**: React + Vite frontend application
 - **server/**: Node.js + Hono backend server
 
+### Build System
+
+Both client and server compile to `dist/` directories:
+- **Client**: Vite builds to `client/dist/` (static assets)
+- **Server**: TypeScript compiles to `server/dist/` (Node.js modules)
+- **Caching**: Turbo cache based on actual Git-tracked file patterns for optimal performance
+
 ### Server (server/)
+
 - **Framework**: Hono (lightweight web framework)
 - **Runtime**: Node.js with TypeScript
 - **Apple Music Integration**: Uses AppleScript via `osascript` to query macOS Music app
 - **API Endpoints**:
   - `GET /music`: Returns current song info (name, artist, album, currentTime, duration, playerState)
   - `POST /music`: Controls playback (play/pause, seek)
-- **Build**: Uses `tsc` for TypeScript compilation
-- **Dev**: Uses `ts-node-dev` for hot reloading
+- **Build**: TypeScript compiles `src/` → `dist/` with `rootDir` and `outDir` configuration
 
 ### Client (client/)
+
 - **Framework**: React 19 with TypeScript
 - **Build Tool**: Vite
 - **Styling**: Tailwind CSS v4 with custom CSS animations
 - **Animations**: Framer Motion for complex animations (song name scrolling)
-- **State Management**: @tanstack/react-query with persistent localStorage cache
+- **State Management**: @tanstack/react-query with persistent localStorage cache + Jotai atoms
 - **Icons**: Lucide React for consistent iconography
 - **UI Components**: Radix UI primitives (slider, aspect-ratio, button)
 - **Key Features**:
@@ -56,6 +74,7 @@ This is a [Turborepo](https://turbo.build/) monorepo project. Use these commands
   - Animated song name scrolling with hover pause/resume
 
 ### Component Architecture
+
 - **LyricsVisualizer/**: Main lyrics display component hierarchy
   - `LyricsVisualizer.tsx`: Root container with layout orchestration
   - `LyricsProvider.tsx`: Data fetching, state management, and lyrics processing
@@ -66,42 +85,85 @@ This is a [Turborepo](https://turbo.build/) monorepo project. Use these commands
 - **ui/**: Reusable UI components (buttons, sliders, skeletons)
 
 ### Data Flow
+
 1. Server polls macOS Music app via AppleScript every request
 2. Client queries server every 300ms using React Query
 3. Client fetches additional data (artwork, lyrics) from external APIs
 4. React Query provides caching and persistence across sessions
 5. Components render synchronized lyrics with current playback position
 
-## Development Notes
+## Development & Troubleshooting
 
-- **macOS Only**: Server requires macOS and the Music app for AppleScript integration
-- **TypeScript**: Both client and server use TypeScript
-- **Linting**: ESLint configured for both workspaces
-- **Formatting**: Prettier for code formatting
-- **Hot Reloading**: Available in both client (Vite) and server (ts-node-dev)
-- **Testing**: Lost Pixel for visual regression testing in CI/CD, Playwright for local testing
-- **State Management**: Uses Jotai atoms for local state management and React Query for server state
+### Pre-commit Hooks
 
-## Visual Regression Testing Workflow
+Husky runs these checks before each commit (will **fail** the commit if issues exist):
+- `format:check`: Ensures code is properly formatted
+- `lint:check`: Ensures no linting errors
+- `test`: Ensures all tests pass
 
-This project uses **Lost Pixel** for visual regression testing in CI/CD to prevent unintended UI changes. Playwright is available for local testing and development.
+Use `pnpm format` and `pnpm lint` during development to auto-fix issues.
 
-### CI/CD Testing (Lost Pixel)
+### Turborepo Cache Optimization
 
-- **Configuration**: `lostpixel.config.ts` in the root defines test pages and viewports
-- **Baselines**: Managed automatically by Lost Pixel cloud service
-- **Workflow**: `.github/workflows/vrt.yml` runs Lost Pixel tests on every push/PR
-- **Results**: Visual diffs and reports are available in the Lost Pixel dashboard
+The `turbo.json` configuration uses Git-tracked file patterns as inputs for optimal cache performance:
 
-### Local Development (Playwright)
+**Cache Performance**:
+- ✅ Good: Builds cached when no relevant files changed (35ms builds)
+- ❌ Bad: Builds always run when files outside inputs change constantly
 
-- **Purpose**: Quick feedback during development with `pnpm test:visual`
-- **Snapshots**: Saved in `client/tests/visual.spec.ts-snapshots`
-- **Note**: Local snapshots may differ from CI due to OS differences - use for development feedback only
+**⚠️ Critical**: When adding new config files (e.g., `tailwind.config.js`, `postcss.config.js`), update the relevant `inputs` arrays in `turbo.json`. Otherwise, Turbo uses stale cache when these configs change.
 
-### Test Configuration
+**Example**: Adding `tailwind.config.js`:
+```json
+"build": {
+  "inputs": [
+    "src/**",
+    "package.json",
+    "tsconfig*.json",
+    "vite.config.*",
+    "tailwind.config.*"  // Add this
+  ]
+}
+```
 
-- **Portrait Mode**: 768x1024 viewport testing mobile layout
-- **Landscape Mode**: 1024x768 viewport testing desktop layout
-- **Base URL**: Tests run against preview server (port 4173)
-- **Test Pages**: Currently tests the home page in both orientations
+**Common Cache Issues**:
+- Generated files in `src/` (should be in `dist/` instead)
+- Using `**/*` patterns (too broad, includes temp files)
+- Missing config dependencies in inputs
+
+### Testing Notes
+
+**Unit Tests (Vitest)**:
+- Located in `client/src/test/`
+- Run with `pnpm test`
+- Configured to exclude Playwright tests via `vitest.config.ts`
+
+**E2E Tests (Playwright)**:
+- Located in `client/tests/`
+- Configured for simulated player environment
+- Tests use `[data-testid="..."]` selectors for reliability
+- Some tests skipped when incompatible with simulated environment
+
+**Visual Regression (Lost Pixel)**:
+- CI/CD only (not for local development)
+- Tests both portrait (768x1024) and landscape (1024x768) viewports
+- Configuration in `lostpixel.config.ts`
+
+### TypeScript Configuration
+
+Both workspaces use consistent TypeScript setup:
+- **Server**: Compiles `src/` → `dist/` with `rootDir` and `outDir`
+- **Client**: Uses Vite's TypeScript handling
+- **Shared**: `tsconfig*.json` patterns tracked in Turbo inputs
+
+### macOS Development
+
+- **Required**: macOS with Music app for AppleScript integration
+- **Server Development**: Uses `ts-node-dev` for hot reloading TypeScript
+- **Client Development**: Uses Vite's HMR for instant updates
+
+# important-instruction-reminders
+Do what has been asked; nothing more, nothing less.
+NEVER create files unless they're absolutely necessary for achieving your goal.
+ALWAYS prefer editing an existing file to creating a new one.
+NEVER proactively create documentation files (*.md) or README files. Only create documentation files if explicitly requested by the User.
