@@ -38,7 +38,10 @@ jobs:
         run: pnpm --filter client test:e2e:visual
 
       - name: Create lost-pixel directory if it doesn't exist
-        run: mkdir -p lost-pixel
+        run: mkdir -p client/lost-pixel
+
+      - name: Copy Lost Pixel config to root
+        run: cp client/lostpixel.config.ts ./lostpixel.config.ts
 
       - name: Lost Pixel
         uses: lost-pixel/lost-pixel@v3.22.0

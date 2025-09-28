@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { formatTime, cn } from "../lib/utils";
+import { formatTime, cn } from "@/lib/utils";
 
 describe("Utils", () => {
   describe("formatTime", () => {
