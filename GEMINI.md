@@ -32,9 +32,9 @@ This is a [Turborepo](https://turbo.build/) monorepo project. Use these commands
 - `cd client && pnpm test:coverage`: Generate coverage reports
 
 **Running Single Tests**:
-- Run specific test file: `cd client && npx vitest src/test/Player.test.tsx`
+- Run specific test file: `cd client && npx vitest tests/unit/Player.test.tsx`
 - Run tests matching pattern: `cd client && npx vitest --reporter=verbose --run Player`
-- Run with coverage for specific file: `cd client && npx vitest --coverage src/test/utils.test.ts`
+- Run with coverage for specific file: `cd client && npx vitest --coverage tests/unit/utils.test.ts`
 
 #### End-to-End Tests (Playwright)
 - `cd client && pnpm test:e2e`: Run all Playwright E2E tests
@@ -46,10 +46,10 @@ This is a [Turborepo](https://turbo.build/) monorepo project. Use these commands
 - `cd client && pnpm test:e2e:functional`: Run functional E2E tests (app behavior, component interactions)
 
 **Running Single E2E Tests**:
-- Run specific test file: `cd client && npx playwright test tests/e2e/player.spec.ts`
+- Run specific test file: `cd client && npx playwright test tests/e2e/functional/player.spec.ts`
 - Run specific test by name: `cd client && npx playwright test --grep "should display song information"`
 - Run tests for specific browser: `cd client && npx playwright test --project=chromium`
-- Run in headed mode: `cd client && npx playwright test --headed tests/e2e/lyrics.spec.ts`
+- Run in headed mode: `cd client && npx playwright test --headed tests/e2e/functional/lyrics.spec.ts`
 
 #### Visual Regression Testing
 - Visual regression testing in CI/CD is handled by Lost Pixel (not suitable for local development)
@@ -183,15 +183,16 @@ The `turbo.json` configuration uses Git-tracked file patterns as inputs for opti
 
 **Test Organization**:
 Tests are organized in structured directories:
-- `client/src/test/`: Unit tests for individual components and utilities
+- `client/tests/unit/`: Unit tests for individual components and utilities
 - `client/tests/integration/`: Integration tests for component interactions
-- `client/tests/e2e/`: Playwright E2E tests organized by functionality
+- `client/tests/e2e/functional/`: Playwright functional E2E tests by feature
+- `client/tests/e2e/visual/`: Playwright visual regression tests for Lost Pixel
 - `client/tests/setup/`: Test configuration and setup files
 
 **Unit & Integration Tests (Vitest)**:
 - Run with `pnpm test` or workspace-specific `cd client && pnpm test`
 - Configuration: `vitest.config.ts` with test includes/excludes
-- Setup: `client/src/test/setup.ts` with global mocks and testing library imports
+- Setup: `client/tests/setup/setup.ts` with global mocks and testing library imports
 - Uses jsdom environment with React Testing Library
 - Excludes E2E tests via configuration to avoid conflicts
 - Supports coverage reporting and interactive UI mode
@@ -199,9 +200,10 @@ Tests are organized in structured directories:
 **E2E Tests (Playwright)**:
 - **Performance Optimization**: CI uses Chromium-only (`test:e2e:install:ci`), local development supports all browsers
 - **Test Structure**:
-  - `tests/e2e/app.spec.ts` - Application layout and responsiveness
-  - `tests/e2e/lyrics.spec.ts` - Lyrics display and synchronization
-  - `tests/e2e/player.spec.ts` - Player controls and interactions
+  - `tests/e2e/functional/app.spec.ts` - Application layout and responsiveness
+  - `tests/e2e/functional/lyrics.spec.ts` - Lyrics display and synchronization
+  - `tests/e2e/functional/player.spec.ts` - Player controls and interactions
+  - `tests/e2e/visual/visual.spec.ts` - Visual regression screenshot generation
 - **Configuration**: `playwright.config.ts` with CI-optimized settings and multiple browser support
 - **Test Directory**: `./tests/e2e` (configured in Playwright config)
 - **Environment**: Runs against preview server (port 4173) with simulated player data
