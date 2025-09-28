@@ -13,24 +13,33 @@ This is a [Turborepo](https://turbo.build/) monorepo project. Use these commands
 - `pnpm dev`: Starts the development server for both the client and the server
 - `pnpm build`: Builds the client and the server
 - `pnpm lint`: Lints the client and the server
+- `pnpm format`: Formats code with Prettier across all workspaces
+- `pnpm test`: Runs tests across all workspaces
 
 ### Individual workspace commands:
+
 - Client: `cd client && pnpm dev` (Vite dev server on port 5173)
 - Server: `cd server && pnpm dev` (Node.js server on port 4000)
 
 ### Testing commands:
-- `cd client && pnpm test:visual`: Run Playwright visual regression tests (local testing)
-- `cd client && pnpm test:visual:update`: Update Playwright visual test snapshots
+
+- `cd client && pnpm test`: Run Vitest tests once
+- `cd client && pnpm test:watch`: Run Vitest tests in watch mode
+- `cd client && pnpm test:ui`: Open Vitest UI
+- `cd client && pnpm test:coverage`: Generate coverage reports
 - Visual regression testing in CI/CD is handled by Lost Pixel (not suitable for local use)
+- Legacy Playwright test files exist in `client/tests/` but are not currently functional
 
 ## Architecture
 
 ### Monorepo Structure
-- **Root**: Turborepo configuration with shared scripts
+
+- **Root**: Turborepo configuration with shared scripts and optimized caching
 - **client/**: React + Vite frontend application
 - **server/**: Node.js + Hono backend server
 
 ### Server (server/)
+
 - **Framework**: Hono (lightweight web framework)
 - **Runtime**: Node.js with TypeScript
 - **Apple Music Integration**: Uses AppleScript via `osascript` to query macOS Music app
@@ -41,6 +50,7 @@ This is a [Turborepo](https://turbo.build/) monorepo project. Use these commands
 - **Dev**: Uses `ts-node-dev` for hot reloading
 
 ### Client (client/)
+
 - **Framework**: React 19 with TypeScript
 - **Build Tool**: Vite
 - **Styling**: Tailwind CSS v4 with custom CSS animations
@@ -56,6 +66,7 @@ This is a [Turborepo](https://turbo.build/) monorepo project. Use these commands
   - Animated song name scrolling with hover pause/resume
 
 ### Component Architecture
+
 - **LyricsVisualizer/**: Main lyrics display component hierarchy
   - `LyricsVisualizer.tsx`: Root container with layout orchestration
   - `LyricsProvider.tsx`: Data fetching, state management, and lyrics processing
@@ -66,6 +77,7 @@ This is a [Turborepo](https://turbo.build/) monorepo project. Use these commands
 - **ui/**: Reusable UI components (buttons, sliders, skeletons)
 
 ### Data Flow
+
 1. Server polls macOS Music app via AppleScript every request
 2. Client queries server every 300ms using React Query
 3. Client fetches additional data (artwork, lyrics) from external APIs
@@ -76,15 +88,17 @@ This is a [Turborepo](https://turbo.build/) monorepo project. Use these commands
 
 - **macOS Only**: Server requires macOS and the Music app for AppleScript integration
 - **TypeScript**: Both client and server use TypeScript
-- **Linting**: ESLint configured for both workspaces
-- **Formatting**: Prettier for code formatting
+- **Linting**: ESLint configured for client workspace only
+- **Formatting**: Prettier for code formatting with Tailwind CSS plugin
 - **Hot Reloading**: Available in both client (Vite) and server (ts-node-dev)
-- **Testing**: Lost Pixel for visual regression testing in CI/CD, Playwright for local testing
+- **Testing**: Vitest for unit testing, Lost Pixel for visual regression testing in CI/CD only
 - **State Management**: Uses Jotai atoms for local state management and React Query for server state
+- **Pre-commit Hooks**: Husky runs `format`, `lint`, and `test` before each commit
+- **Turborepo Caching**: Optimized task pipeline with proper input/output tracking for faster builds
 
 ## Visual Regression Testing Workflow
 
-This project uses **Lost Pixel** for visual regression testing in CI/CD to prevent unintended UI changes. Playwright is available for local testing and development.
+This project uses **Lost Pixel** for visual regression testing in CI/CD to prevent unintended UI changes.
 
 ### CI/CD Testing (Lost Pixel)
 
@@ -93,15 +107,15 @@ This project uses **Lost Pixel** for visual regression testing in CI/CD to preve
 - **Workflow**: `.github/workflows/vrt.yml` runs Lost Pixel tests on every push/PR
 - **Results**: Visual diffs and reports are available in the Lost Pixel dashboard
 
-### Local Development (Playwright)
-
-- **Purpose**: Quick feedback during development with `pnpm test:visual`
-- **Snapshots**: Saved in `client/tests/visual.spec.ts-snapshots`
-- **Note**: Local snapshots may differ from CI due to OS differences - use for development feedback only
-
 ### Test Configuration
 
 - **Portrait Mode**: 768x1024 viewport testing mobile layout
 - **Landscape Mode**: 1024x768 viewport testing desktop layout
 - **Base URL**: Tests run against preview server (port 4173)
 - **Test Pages**: Currently tests the home page in both orientations
+
+# important-instruction-reminders
+Do what has been asked; nothing more, nothing less.
+NEVER create files unless they're absolutely necessary for achieving your goal.
+ALWAYS prefer editing an existing file to creating a new one.
+NEVER proactively create documentation files (*.md) or README files. Only create documentation files if explicitly requested by the User.

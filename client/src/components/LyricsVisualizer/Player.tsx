@@ -51,13 +51,13 @@ const Player = () => {
   };
 
   return (
-    <div className="flex flex-col landscape:flex-row w-full gap-4">
-      <div className="flex flex-col min-h-14 max-h-20 landscape:max-w-[30%]">
+    <div className="flex w-full flex-col gap-4 landscape:flex-row">
+      <div className="flex max-h-20 min-h-14 flex-col landscape:max-w-[30%]">
         <AnimatedSongName className="flex-1" songName={songName} />
         <h3 className="text-muted-foreground self-center">{artist}</h3>
       </div>
       <div className="flex flex-1 items-center gap-3">
-        <span id="current-time" className="text-sm min-w-10 text-center">
+        <span id="current-time" className="min-w-10 text-center text-sm">
           {formatTime(currentTime)}
         </span>
         <Slider
@@ -65,12 +65,12 @@ const Player = () => {
           min={0}
           max={duration || 0}
           step={0.1}
-          className="bg-zinc-700 rounded-md"
+          className="rounded-md bg-zinc-700"
           onValueChange={handleSliderChange}
           onPointerDown={handleSliderPointerDown}
           onPointerUp={handleSliderPointerUp}
         />
-        <span id="total-duration" className="text-sm min-w-10 text-center">
+        <span id="total-duration" className="min-w-10 text-center text-sm">
           {formatTime(duration)}
         </span>
       </div>
@@ -79,18 +79,19 @@ const Player = () => {
         <Button
           size="sm"
           variant="ghost"
-          className="rounded-full p-2 h-10 w-10"
+          className="h-10 w-10 rounded-full p-2"
           aria-label="Search lyrics"
           onClick={() => console.log("Search clicked")}
         >
           <Search />
         </Button>
 
-        <div className="flex-1 flex items-center justify-center">
+        <div className="flex flex-1 items-center justify-center">
           {/* Play/Pause Button - Centered */}
           <Button
-            className="rounded-full h-12 w-12 flex items-center justify-center"
+            className="flex h-12 w-12 items-center justify-center rounded-full"
             onClick={handlePlayPause}
+            aria-label={isPlaying ? "Pause" : "Play"}
           >
             {isPlaying ? (
               <Pause style={{ width: "24px", height: "24px" }} />
@@ -104,7 +105,7 @@ const Player = () => {
         <Button
           size="sm"
           variant="ghost"
-          className="rounded-full p-2 h-10 w-10"
+          className="h-10 w-10 rounded-full p-2"
           aria-label="View playlists"
           onClick={() => console.log("Playlists clicked")}
         >

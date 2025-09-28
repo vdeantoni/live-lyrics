@@ -1,5 +1,9 @@
 import type { Song } from "@/lib/api";
-import type { MusicSource, LyricsProvider, ArtworkProvider } from "@/types/musicSource";
+import type {
+  MusicSource,
+  LyricsProvider,
+  ArtworkProvider,
+} from "@/types/musicSource";
 import { SimulatedLyricsProvider } from "@/providers/simulatedLyricsProvider";
 import { ITunesArtworkProvider } from "@/providers/itunesArtworkProvider";
 

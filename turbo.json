@@ -1,15 +1,76 @@
 {
   "$schema": "https://turbo.build/schema.json",
-  "globalDependencies": ["**/.env.*"],
+  "globalDependencies": [
+    "**/.env.*",
+    ".prettierrc",
+    "turbo.json"
+  ],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": ["dist/**", "*.js", "*.d.ts"]
+      "inputs": [
+        "src/**",
+        "public/**",
+        "index.html",
+        "package.json",
+        "tsconfig*.json",
+        "vite.config.*",
+        "tailwind.config.*"
+      ],
+      "outputs": [
+        "dist/**",
+        "src/**/*.js",
+        "src/**/*.d.ts"
+      ],
+      "outputLogs": "new-only"
     },
-    "lint": {},
+    "lint": {
+      "dependsOn": ["^build"],
+      "inputs": [
+        "src/**",
+        "package.json",
+        "eslint.config.*",
+        ".eslintrc*",
+        "tsconfig*.json"
+      ],
+      "outputLogs": "new-only"
+    },
+    "format": {
+      "inputs": [
+        "src/**/*.{js,jsx,ts,tsx}",
+        "**/*.{json,css,md}",
+        "!node_modules/**",
+        "!dist/**",
+        ".prettierrc",
+        "prettier.config.*",
+        "package.json"
+      ],
+      "outputs": [],
+      "outputLogs": "new-only"
+    },
+    "test": {
+      "dependsOn": ["^build"],
+      "inputs": [
+        "src/**/*.{ts,tsx}",
+        "test/**/*.{ts,tsx}",
+        "tests/**/*.{ts,tsx}",
+        "**/*.test.{ts,tsx}",
+        "**/*.spec.{ts,tsx}",
+        "package.json",
+        "tsconfig*.json",
+        "vite.config.*",
+        "vitest.config.*"
+      ],
+      "outputs": [
+        "coverage/**"
+      ],
+      "outputLogs": "new-only"
+    },
     "dev": {
       "cache": false,
-      "persistent": true
+      "persistent": true,
+      "dependsOn": [],
+      "inputs": []
     }
   }
 }

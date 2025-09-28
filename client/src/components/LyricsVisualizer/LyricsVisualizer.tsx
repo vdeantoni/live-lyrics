@@ -9,10 +9,10 @@ const LyricsVisualizer = () => {
   useSongSync();
 
   return (
-    <div className="flex flex-col w-full h-full bg-zinc-800 rounded-2xl shadow-xl p-6 gap-4 mx-auto">
+    <div className="mx-auto flex h-full w-full flex-col gap-4 rounded-2xl bg-zinc-800 p-6 shadow-xl">
       <LyricsDisplay>
         {/* Floating source switcher overlay */}
-        <div className="absolute top-4 right-4 z-20">
+        <div className="absolute right-4 top-4 z-20">
           <SourceSwitcher />
         </div>
         <LyricsProvider />

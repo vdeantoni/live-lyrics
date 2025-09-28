@@ -1,15 +1,17 @@
-import {
-  type LineData,
-  type WordData,
-  type LyricsData,
-} from "@/lib/api";
+import { type LineData, type WordData, type LyricsData } from "@/lib/api";
 import { useEffect, useState, useRef, useCallback } from "react";
 import LyricsContent from "./LyricsContent";
 import NoLyricsFound from "./NoLyricsFound";
 import Liricle from "liricle";
 import { useLyricsFromSource } from "@/hooks/useSongSync";
 import { useAtomValue } from "jotai";
-import { songNameAtom, artistAtom, albumAtom, durationAtom, currentTimeAtom } from "@/atoms/playerAtoms";
+import {
+  songNameAtom,
+  artistAtom,
+  albumAtom,
+  durationAtom,
+  currentTimeAtom,
+} from "@/atoms/playerAtoms";
 
 const LyricsProvider = () => {
   // Read song data from atoms (populated by useSongSync in parent)
@@ -20,16 +22,24 @@ const LyricsProvider = () => {
   const currentTime = useAtomValue(currentTimeAtom);
 
   // Construct song object for lyrics provider
-  const song = songName && artist ? {
-    name: songName,
-    artist,
-    album: album || '',
-    duration,
-    currentTime,
-    isPlaying: false // Not needed for lyrics fetching
-  } : undefined;
+  const song =
+    songName && artist
+      ? {
+          name: songName,
+          artist,
+          album: album || "",
+          duration,
+          currentTime,
+          isPlaying: false, // Not needed for lyrics fetching
+        }
+      : undefined;
 
-  const { data: lrcContent, isLoading, isFetching, isSuccess } = useLyricsFromSource(song);
+  const {
+    data: lrcContent,
+    isLoading,
+    isFetching,
+    isSuccess,
+  } = useLyricsFromSource(song);
 
   const liricleRef = useRef<Liricle | null>(null);
   const [lyricsData, setLyricsData] = useState<LyricsData | null>(null);
@@ -43,7 +53,7 @@ const LyricsProvider = () => {
 
   // Delay showing "No Lyrics Found" to prevent flash during source switches
   useEffect(() => {
-    if (isSuccess && (!lrcContent || lrcContent.trim() === '')) {
+    if (isSuccess && (!lrcContent || lrcContent.trim() === "")) {
       const timer = setTimeout(() => setShowNoLyrics(true), 500); // 500ms delay
       return () => clearTimeout(timer);
     } else {
@@ -99,7 +109,7 @@ const LyricsProvider = () => {
   // Show loading state while fetching lyrics or if query hasn't completed successfully yet
   if (isLoading || isFetching || !isSuccess) {
     return (
-      <div className="flex items-center justify-center h-full min-h-96">
+      <div className="flex h-full min-h-96 items-center justify-center">
         <div className="text-zinc-400">Loading lyrics...</div>
       </div>
     );
