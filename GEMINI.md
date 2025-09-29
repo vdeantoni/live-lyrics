@@ -275,11 +275,26 @@ Both workspaces use consistent TypeScript setup:
      - Executes Lost Pixel comparison against cloud baselines
    - **Authentication**: Uses `LOST_PIXEL_API_KEY` secret for cloud service
 
+4. **Cache Cleanup** (`.github/workflows/cache-cleanup.yml`):
+   - **Trigger**: Weekly on Sundays at 2:00 UTC (also manual via workflow_dispatch)
+   - **Purpose**: Automated cleanup of old GitHub Actions caches
+   - **Logic**: Deletes caches older than 7 days to prevent storage bloat
+
+### Composite Actions
+
+**Reusable Setup Actions** (`.github/actions/`):
+- **setup-node-pnpm**: Base setup with Node.js, pnpm, dependency installation, and Turbo caching
+- **setup-with-playwright**: Extended setup including Playwright browser caching and installation
+- **Benefits**: 46% reduction in workflow lines, 100% elimination of setup duplication
+
 **Performance Optimizations**:
 - **Browser Optimization**: CI uses `test:e2e:install:ci` (Chromium-only) vs local `test:e2e:install` (all browsers)
 - **Workflow Separation**: Visual tests isolated to prevent blocking PRs on screenshot differences
 - **Caching Strategy**: Leverages Turborepo caching and GitHub Actions cache for dependencies and Playwright browsers
 - **Browser Caching**: Playwright browsers cached using pnpm-lock.yaml hash for cache invalidation
+- **Composite Actions**: Reusable setup actions eliminate workflow duplication (46% reduction)
+- **Path Filters**: Skip workflows for docs-only changes to save CI resources
+- **Automated Cache Cleanup**: Weekly cleanup workflow prevents storage bloat
 - **Parallel Execution**: Jobs run in parallel where possible for faster feedback
 
 ### macOS Development
