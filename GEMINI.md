@@ -253,7 +253,7 @@ Both workspaces use consistent TypeScript setup:
 1. **PR Workflow** (`.github/workflows/pr.yml`):
    - **Trigger**: On pull request
    - **Purpose**: Fast feedback with essential quality checks
-   - **Jobs**: Format check, lint check, unit/integration tests
+   - **Jobs**: Three parallel jobs (format, lint, test) for faster execution
    - **Performance**: Lightweight to reduce PR friction and provide quick feedback
 
 2. **CI Workflow** (`.github/workflows/ci.yml`):

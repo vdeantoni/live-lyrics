@@ -1,65 +1,48 @@
-import { type LineData, type WordData, type LyricsData } from "@/lib/api";
-import { useEffect, useState, useRef, useCallback } from "react";
+import { type LineData, type WordData, type LyricsData } from "@/types";
+import { useEffect, useState, useRef } from "react";
 import LyricsContent from "./LyricsContent";
 import NoLyricsFound from "./NoLyricsFound";
 import Liricle from "liricle";
-import { useLyrics } from "@/hooks/useSongSync";
-import { useAtomValue } from "jotai";
+import { useLyricsSync } from "@/hooks/useLyricsSync";
+import { useAtomValue, useSetAtom } from "jotai";
 import {
-  songNameAtom,
-  artistAtom,
-  albumAtom,
-  durationAtom,
+  songInfoAtom,
   currentTimeAtom,
+  rawLrcContentAtom,
+  lyricsDataAtom,
+  activeLineAtom,
+  activeWordAtom,
 } from "@/atoms/playerAtoms";
 
 const LyricsProvider = () => {
-  // Read song data from atoms (populated by useSongSync in parent)
-  const songName = useAtomValue(songNameAtom);
-  const artist = useAtomValue(artistAtom);
-  const album = useAtomValue(albumAtom);
-  const duration = useAtomValue(durationAtom);
+  // Read data from atoms
+  const songInfo = useAtomValue(songInfoAtom);
   const currentTime = useAtomValue(currentTimeAtom);
+  const rawLrcContent = useAtomValue(rawLrcContentAtom);
 
-  // Construct song object for lyrics provider
-  const song =
-    songName && artist
-      ? {
-          name: songName,
-          artist,
-          album: album || "",
-          duration,
-          currentTime,
-          isPlaying: false, // Not needed for lyrics fetching
-        }
-      : undefined;
-
-  const {
-    data: lrcContent,
-    isLoading,
-    isFetching,
-    isSuccess,
-  } = useLyrics(song);
+  // Action atoms
+  const setLyricsData = useSetAtom(lyricsDataAtom);
+  const setActiveLine = useSetAtom(activeLineAtom);
+  const setActiveWord = useSetAtom(activeWordAtom);
 
   const liricleRef = useRef<Liricle | null>(null);
-  const [lyricsData, setLyricsData] = useState<LyricsData | null>(null);
-  const [activeLine, setActiveLine] = useState<LineData | null>(null);
-  const [activeWord, setActiveWord] = useState<WordData | null>(null);
   const [showNoLyrics, setShowNoLyrics] = useState(false);
 
-  const handleLineClick = useCallback((line: LineData) => {
-    console.log(`Clicked line: ${line.text} at time ${line.time}`);
-  }, []);
+  // Trigger lyrics fetching (syncs to rawLrcContentAtom)
+  useLyricsSync();
 
   // Delay showing "No Lyrics Found" to prevent flash during source switches
   useEffect(() => {
-    if (isSuccess && (!lrcContent || lrcContent.trim() === "")) {
+    if (
+      rawLrcContent !== null &&
+      (!rawLrcContent || rawLrcContent.trim() === "")
+    ) {
       const timer = setTimeout(() => setShowNoLyrics(true), 500); // 500ms delay
       return () => clearTimeout(timer);
     } else {
       setShowNoLyrics(false);
     }
-  }, [isSuccess, lrcContent]);
+  }, [rawLrcContent, setShowNoLyrics]);
 
   // Initialize liricle when LRC content is available
   useEffect(() => {
@@ -67,7 +50,7 @@ const LyricsProvider = () => {
     setActiveLine(null);
     setActiveWord(null);
 
-    if (!lrcContent) {
+    if (!rawLrcContent) {
       setLyricsData(null);
       return;
     }
@@ -87,7 +70,7 @@ const LyricsProvider = () => {
     });
 
     // Load the raw LRC content directly
-    liricle.load({ text: lrcContent });
+    liricle.load({ text: rawLrcContent });
 
     return () => {
       liricleRef.current = null;
@@ -95,7 +78,7 @@ const LyricsProvider = () => {
       setActiveLine(null);
       setActiveWord(null);
     };
-  }, [lrcContent]);
+  }, [rawLrcContent, setLyricsData, setActiveLine, setActiveWord]);
 
   // Sync with current time
   useEffect(() => {
@@ -104,10 +87,10 @@ const LyricsProvider = () => {
     liricleRef.current.sync(currentTime);
   }, [currentTime]);
 
-  if (!song) return null;
+  if (!songInfo.name || !songInfo.artist) return null;
 
-  // Show loading state while fetching lyrics or if query hasn't completed successfully yet
-  if (isLoading || isFetching || !isSuccess) {
+  // Show loading state while waiting for lyrics content to be fetched
+  if (rawLrcContent === null) {
     return (
       <div className="flex h-full min-h-96 items-center justify-center">
         <div className="text-zinc-400">Loading lyrics...</div>
@@ -117,17 +100,10 @@ const LyricsProvider = () => {
 
   // Only show NoLyricsFound after delay and when we definitively have no lyrics
   if (showNoLyrics) {
-    return <NoLyricsFound songName={songName} artist={artist} />;
+    return <NoLyricsFound songName={songInfo.name} artist={songInfo.artist} />;
   }
 
-  return (
-    <LyricsContent
-      lyricsData={lyricsData}
-      activeLine={activeLine}
-      activeWord={activeWord}
-      onLineClick={handleLineClick}
-    />
-  );
+  return <LyricsContent />;
 };
 
 export default LyricsProvider;

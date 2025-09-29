@@ -1,7 +1,4 @@
-import type {
-  ArtworkProviderRegistryEntry,
-  ArtworkProvider,
-} from "@/types/settings";
+import type { ArtworkProviderRegistryEntry, ArtworkProvider } from "@/types";
 
 /**
  * Registry for available artwork providers

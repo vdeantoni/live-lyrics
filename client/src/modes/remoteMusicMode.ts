@@ -1,5 +1,5 @@
-import type { Song } from "@/lib/api";
-import type { MusicMode } from "@/types/settings";
+import type { Song } from "@/types";
+import type { MusicMode } from "@/types";
 
 /**
  * Remote music mode - communicates with Apple Music via local server

@@ -1,19 +1,30 @@
-import React, { useEffect, useRef, useState } from "react";
-import type { LyricsData, LineData, WordData } from "@/lib/api";
+import React, { useEffect, useRef, useState, useCallback } from "react";
+import type { LineData } from "@/types";
+import { useAtomValue, useSetAtom } from "jotai";
+import {
+  lyricsDataAtom,
+  activeLineAtom,
+  activeWordAtom,
+  seekAtom,
+} from "@/atoms/playerAtoms";
 
-interface LyricsContentProps {
-  lyricsData: LyricsData | null;
-  activeLine: LineData | null;
-  activeWord: WordData | null;
-  onLineClick?: (line: LineData) => void;
-}
+const LyricsContent: React.FC = () => {
+  // Use atoms for lyrics state
+  const lyricsData = useAtomValue(lyricsDataAtom);
+  const activeLine = useAtomValue(activeLineAtom);
+  const activeWord = useAtomValue(activeWordAtom);
+  const seek = useSetAtom(seekAtom);
 
-const LyricsContent: React.FC<LyricsContentProps> = ({
-  lyricsData,
-  activeLine,
-  activeWord,
-  onLineClick,
-}) => {
+  // Click handler using seek atom
+  const handleLineClick = useCallback(
+    (line: LineData) => {
+      if (line.time !== undefined) {
+        seek(line.time);
+      }
+    },
+    [seek],
+  );
+
   const contentRef = useRef<HTMLDivElement>(null);
   const cursorRef = useRef<HTMLDivElement>(null);
   const [lines, setLines] = useState<React.ReactElement[]>([]);
@@ -38,15 +49,13 @@ const LyricsContent: React.FC<LyricsContentProps> = ({
           data-line-text={line.text.substring(0, 20)} // Add data attribute for text matching
           className={`my-3 transform cursor-pointer py-2.5 text-center font-normal opacity-50 transition-all duration-300 ${
             isActive
-              ? "scale-110 font-bold opacity-100 [text-shadow:0_0_10px_#fff,4px_4px_8px_rgba(0,0,0,0.5)]"
+              ? "font-black opacity-100 [letter-spacing:0.02em] [text-shadow:0_0_15px_#fff,0_0_30px_#fff,2px_2px_4px_rgba(0,0,0,0.8)]"
               : ""
           }`}
           style={{
-            fontSize: isActive
-              ? "clamp(1.75rem, 4vw, 10rem)"
-              : "clamp(1.5rem, 3.5vw, 6rem)",
+            fontSize: "clamp(1.5rem, 3.5vw, 6rem)", // Same size for all lines
           }}
-          onClick={() => onLineClick?.({ ...line, index })}
+          onClick={() => handleLineClick({ ...line, index })}
         >
           {lyricsData.enhanced && line.words
             ? line.words.map((word, wordIndex) => (
@@ -58,7 +67,7 @@ const LyricsContent: React.FC<LyricsContentProps> = ({
     });
 
     setLines(newLines);
-  }, [lyricsData, activeLine, onLineClick]);
+  }, [lyricsData, activeLine, handleLineClick]);
 
   // Save scroll position when scrolling manually or naturally
   useEffect(() => {

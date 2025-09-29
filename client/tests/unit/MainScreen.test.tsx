@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { Provider as JotaiProvider } from "jotai";
 import MainScreen from "@/components/Player/MainScreen";
+import { isSettingsOpenAtom, toggleSettingsAtom } from "@/atoms/settingsAtoms";
 
 // Mock the child components
 vi.mock("@/components/Player/LyricsScreen", () => ({
@@ -10,12 +11,6 @@ vi.mock("@/components/Player/LyricsScreen", () => ({
 
 vi.mock("@/components/Player/SettingsScreen", () => ({
   default: () => <div data-testid="settings-screen">Settings Screen</div>,
-}));
-
-// Mock settings atoms
-vi.mock("@/atoms/settingsAtoms", () => ({
-  isSettingsOpenAtom: { toString: () => "isSettingsOpenAtom" },
-  toggleSettingsAtom: { toString: () => "toggleSettingsAtom" },
 }));
 
 // Mock jotai hooks
@@ -37,8 +32,7 @@ describe("MainScreen", () => {
     vi.clearAllMocks();
 
     vi.mocked(useSetAtom).mockImplementation((atom) => {
-      const atomString = atom.toString();
-      if (atomString === "toggleSettingsAtom") {
+      if (atom === toggleSettingsAtom) {
         return mockToggleSettings;
       }
       return vi.fn();
@@ -47,8 +41,7 @@ describe("MainScreen", () => {
 
   it("renders lyrics screen when settings are closed", () => {
     vi.mocked(useAtomValue).mockImplementation((atom) => {
-      const atomString = atom.toString();
-      if (atomString === "isSettingsOpenAtom") return false;
+      if (atom === isSettingsOpenAtom) return false;
       return undefined;
     });
 
@@ -65,8 +58,7 @@ describe("MainScreen", () => {
 
   it("renders settings screen when settings are open", () => {
     vi.mocked(useAtomValue).mockImplementation((atom) => {
-      const atomString = atom.toString();
-      if (atomString === "isSettingsOpenAtom") return true;
+      if (atom === isSettingsOpenAtom) return true;
       return undefined;
     });
 
@@ -84,8 +76,7 @@ describe("MainScreen", () => {
 
   it("handles settings button click", () => {
     vi.mocked(useAtomValue).mockImplementation((atom) => {
-      const atomString = atom.toString();
-      if (atomString === "isSettingsOpenAtom") return false;
+      if (atom === isSettingsOpenAtom) return false;
       return undefined;
     });
 
@@ -103,8 +94,7 @@ describe("MainScreen", () => {
 
   it("has proper accessibility labels", () => {
     vi.mocked(useAtomValue).mockImplementation((atom) => {
-      const atomString = atom.toString();
-      if (atomString === "isSettingsOpenAtom") return false;
+      if (atom === isSettingsOpenAtom) return false;
       return undefined;
     });
 

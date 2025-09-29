@@ -1,8 +1,15 @@
 import { useEffect } from "react";
-import { useSetAtom } from "jotai";
-import { toggleSettingsAtom } from "@/atoms/settingsAtoms";
-import type { Song } from "@/lib/api";
-import type { MusicMode } from "@/types/settings";
+import { useAtomValue, useSetAtom } from "jotai";
+import {
+  currentMusicModeAtom,
+  toggleSettingsAtom,
+} from "@/atoms/settingsAtoms";
+import {
+  lyricsDataAtom,
+  songInfoAtom,
+  currentTimeAtom,
+  durationAtom,
+} from "@/atoms/playerAtoms";
 
 /**
  * Global keyboard shortcuts hook for the music player
@@ -10,14 +17,16 @@ import type { MusicMode } from "@/types/settings";
  * Shortcuts:
  * - Space: Play/Pause
  * - Left/Right arrows: Seek backward/forward (5s)
- * - Shift + Left/Right arrows: Fast seek (15s)
+ * - Up/Down arrows: Navigate to previous/next lyrics line
  * - C: Toggle settings screen
  */
-export const useKeyboardShortcuts = (
-  musicMode?: MusicMode | null,
-  songData?: Song,
-) => {
+export const useKeyboardShortcuts = () => {
+  const musicMode = useAtomValue(currentMusicModeAtom);
   const toggleSettings = useSetAtom(toggleSettingsAtom);
+  const lyricsData = useAtomValue(lyricsDataAtom);
+  const songInfo = useAtomValue(songInfoAtom);
+  const currentTime = useAtomValue(currentTimeAtom);
+  const duration = useAtomValue(durationAtom);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -30,13 +39,26 @@ export const useKeyboardShortcuts = (
         return;
       }
 
-      const { key, shiftKey } = event;
+      const { key } = event;
+
+      // Helper function to find current line index based on current time
+      const getCurrentLineIndex = (): number => {
+        if (!lyricsData) return -1;
+
+        // Find the line that should be active at current time
+        for (let i = lyricsData.lines.length - 1; i >= 0; i--) {
+          if (lyricsData.lines[i].time <= currentTime) {
+            return i;
+          }
+        }
+        return 0; // Default to first line if none found
+      };
 
       switch (key.toLowerCase()) {
         case " ": // Space - Play/Pause
           event.preventDefault();
-          if (musicMode && songData) {
-            if (songData.isPlaying) {
+          if (musicMode && songInfo) {
+            if (songInfo.isPlaying) {
               musicMode.pause();
             } else {
               musicMode.play();
@@ -51,22 +73,44 @@ export const useKeyboardShortcuts = (
 
         case "arrowleft": // Left Arrow - Seek backward
           event.preventDefault();
-          if (musicMode && songData) {
-            const seekAmount = shiftKey ? 15 : 5; // 15s with shift, 5s without
-            const newTime = Math.max(0, songData.currentTime - seekAmount);
+          if (musicMode) {
+            const newTime = Math.max(0, currentTime - 5);
             musicMode.seek(newTime);
           }
           break;
 
         case "arrowright": // Right Arrow - Seek forward
           event.preventDefault();
-          if (musicMode && songData) {
-            const seekAmount = shiftKey ? 15 : 5; // 15s with shift, 5s without
-            const newTime = Math.min(
-              songData.duration,
-              songData.currentTime + seekAmount,
-            );
+          if (musicMode) {
+            const newTime = Math.min(duration, currentTime + 5);
             musicMode.seek(newTime);
+          }
+          break;
+
+        case "arrowup": // Up Arrow - Previous lyrics line
+          event.preventDefault();
+          if (musicMode && lyricsData && lyricsData.lines.length > 0) {
+            const currentIndex = getCurrentLineIndex();
+            const prevIndex = Math.max(0, currentIndex - 1);
+            const prevLine = lyricsData.lines[prevIndex];
+            if (prevLine) {
+              musicMode.seek(prevLine.time);
+            }
+          }
+          break;
+
+        case "arrowdown": // Down Arrow - Next lyrics line
+          event.preventDefault();
+          if (musicMode && lyricsData && lyricsData.lines.length > 0) {
+            const currentIndex = getCurrentLineIndex();
+            const nextIndex = Math.min(
+              lyricsData.lines.length - 1,
+              currentIndex + 1,
+            );
+            const nextLine = lyricsData.lines[nextIndex];
+            if (nextLine) {
+              musicMode.seek(nextLine.time);
+            }
           }
           break;
       }
@@ -79,5 +123,5 @@ export const useKeyboardShortcuts = (
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [musicMode, songData, toggleSettings]);
+  }, [musicMode, lyricsData, songInfo, currentTime, duration, toggleSettings]);
 };

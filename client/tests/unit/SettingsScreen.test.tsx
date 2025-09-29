@@ -2,11 +2,21 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { Provider as JotaiProvider } from "jotai";
 import SettingsScreen from "@/components/Player/SettingsScreen";
+import { act } from "react";
+
+// Import actual atoms
+import {
+  modeIdAtom,
+  lyricsProviderIdAtom,
+  artworkProviderIdAtom,
+} from "@/atoms/settingsAtoms";
 
 // Mock the registries
 vi.mock("@/registries/lyricsProviderRegistry", () => ({
   lyricsProviderRegistry: {
-    getAll: vi.fn().mockReturnValue([
+    register: vi.fn(),
+    get: vi.fn(),
+    getAll: vi.fn(() => [
       {
         id: "lrclib",
         name: "LrcLib",
@@ -20,12 +30,16 @@ vi.mock("@/registries/lyricsProviderRegistry", () => ({
         factory: () => ({ isAvailable: () => Promise.resolve(false) }),
       },
     ]),
+    has: vi.fn(),
+    getAvailable: vi.fn(() => Promise.resolve([])),
   },
 }));
 
 vi.mock("@/registries/artworkProviderRegistry", () => ({
   artworkProviderRegistry: {
-    getAll: vi.fn().mockReturnValue([
+    register: vi.fn(),
+    get: vi.fn(),
+    getAll: vi.fn(() => [
       {
         id: "itunes",
         name: "iTunes",
@@ -33,14 +47,9 @@ vi.mock("@/registries/artworkProviderRegistry", () => ({
         factory: () => ({ isAvailable: () => Promise.resolve(true) }),
       },
     ]),
+    has: vi.fn(),
+    getAvailable: vi.fn(() => Promise.resolve([])),
   },
-}));
-
-// Mock settings atoms
-vi.mock("@/atoms/settingsAtoms", () => ({
-  modeIdAtom: { toString: () => "modeIdAtom" },
-  lyricsProviderIdAtom: { toString: () => "lyricsProviderIdAtom" },
-  artworkProviderIdAtom: { toString: () => "artworkProviderIdAtom" },
 }));
 
 // Mock jotai hooks
@@ -65,13 +74,12 @@ describe("SettingsScreen", () => {
 
     // Setup mock implementations
     vi.mocked(useAtomValue).mockImplementation((atom) => {
-      const atomString = atom.toString();
-      switch (atomString) {
-        case "modeIdAtom":
+      switch (atom) {
+        case modeIdAtom:
           return "local";
-        case "lyricsProviderIdAtom":
+        case lyricsProviderIdAtom:
           return "lrclib";
-        case "artworkProviderIdAtom":
+        case artworkProviderIdAtom:
           return "itunes";
         default:
           return undefined;
@@ -79,13 +87,12 @@ describe("SettingsScreen", () => {
     });
 
     vi.mocked(useSetAtom).mockImplementation((atom) => {
-      const atomString = atom.toString();
-      switch (atomString) {
-        case "modeIdAtom":
+      switch (atom) {
+        case modeIdAtom:
           return mockSetModeId;
-        case "lyricsProviderIdAtom":
+        case lyricsProviderIdAtom:
           return mockSetLyricsProviderId;
-        case "artworkProviderIdAtom":
+        case artworkProviderIdAtom:
           return mockSetArtworkProviderId;
         default:
           return vi.fn();
@@ -93,26 +100,29 @@ describe("SettingsScreen", () => {
     });
   });
 
-  it("renders settings screen correctly", () => {
-    render(
-      <JotaiProvider>
-        <SettingsScreen />
-      </JotaiProvider>,
-    );
+  const renderComponent = async () => {
+    let result;
+    await act(async () => {
+      result = render(
+        <JotaiProvider>
+          <SettingsScreen />
+        </JotaiProvider>,
+      );
+      // Wait for provider availability checks
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    return result;
+  };
 
+  it("renders settings screen correctly", async () => {
+    await renderComponent();
     expect(screen.getByTestId("settings-screen")).toBeInTheDocument();
     expect(screen.getByText("Settings")).toBeInTheDocument();
     expect(screen.getByText("Configure your music player")).toBeInTheDocument();
-    // Close button is now in MainScreen, not SettingsScreen
   });
 
-  it("displays music mode section", () => {
-    render(
-      <JotaiProvider>
-        <SettingsScreen />
-      </JotaiProvider>,
-    );
-
+  it("displays music mode section", async () => {
+    await renderComponent();
     expect(screen.getByText("Music Mode")).toBeInTheDocument();
     expect(screen.getByText("Local Mode")).toBeInTheDocument();
     expect(
@@ -120,29 +130,18 @@ describe("SettingsScreen", () => {
     ).toBeInTheDocument();
   });
 
-  // Test removed as close button is now handled in MainScreen component
-
-  it("handles mode toggle", () => {
-    render(
-      <JotaiProvider>
-        <SettingsScreen />
-      </JotaiProvider>,
-    );
-
+  it("handles mode toggle", async () => {
+    await renderComponent();
     const modeToggle = screen.getByRole("switch");
-    fireEvent.click(modeToggle);
-
+    await act(async () => {
+      fireEvent.click(modeToggle);
+    });
     expect(mockSetModeId).toHaveBeenCalledWith("remote");
   });
 
   it("displays provider sections", async () => {
-    render(
-      <JotaiProvider>
-        <SettingsScreen />
-      </JotaiProvider>,
-    );
+    await renderComponent();
 
-    // Wait for providers to load
     await waitFor(() => {
       expect(screen.getByText("Lyrics Provider")).toBeInTheDocument();
       expect(screen.getByText("Artwork Provider")).toBeInTheDocument();

@@ -1,27 +1,25 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { Provider as JotaiProvider } from "jotai";
-import type { UseQueryResult } from "@tanstack/react-query";
 import LyricsScreen from "@/components/Player/LyricsScreen";
+import {
+  songNameAtom,
+  artistAtom,
+  albumAtom,
+  durationAtom,
+  currentTimeAtom,
+  isPlayingAtom,
+  artworkUrlsAtom,
+} from "@/atoms/playerAtoms";
 
 // Mock the child components
 vi.mock("@/components/LyricsVisualizer/LyricsProvider", () => ({
   default: () => <div data-testid="lyrics-provider">Lyrics Provider</div>,
 }));
 
-// Mock player atoms
-vi.mock("@/atoms/playerAtoms", () => ({
-  songNameAtom: { toString: () => "songNameAtom" },
-  artistAtom: { toString: () => "artistAtom" },
-  albumAtom: { toString: () => "albumAtom" },
-  durationAtom: { toString: () => "durationAtom" },
-  currentTimeAtom: { toString: () => "currentTimeAtom" },
-  isPlayingAtom: { toString: () => "isPlayingAtom" },
-}));
-
-// Mock the useArtwork hook
-vi.mock("@/hooks/useSongSync", () => ({
-  useArtwork: vi.fn(),
+// Mock the useArtworkSync hook
+vi.mock("@/hooks/useArtworkSync", () => ({
+  useArtworkSync: vi.fn(),
 }));
 
 // Mock jotai hooks
@@ -34,36 +32,7 @@ vi.mock("jotai", async () => {
 });
 
 import { useAtomValue } from "jotai";
-import { useArtwork } from "@/hooks/useSongSync";
-
-// Helper to create proper UseQueryResult mocks
-const createMockQueryResult = (
-  overrides: Partial<UseQueryResult<string[], Error>>,
-): UseQueryResult<string[], Error> =>
-  ({
-    data: undefined,
-    isLoading: false,
-    isFetching: false,
-    isSuccess: false,
-    isError: false,
-    isPending: false,
-    status: "pending" as const,
-    fetchStatus: "idle" as const,
-    error: null,
-    dataUpdatedAt: 0,
-    errorUpdatedAt: 0,
-    failureCount: 0,
-    failureReason: null,
-    errorUpdateCount: 0,
-    isFetched: false,
-    isFetchedAfterMount: false,
-    isInitialLoading: false,
-    isPlaceholderData: false,
-    isRefetching: false,
-    isStale: false,
-    refetch: vi.fn(),
-    ...overrides,
-  }) as UseQueryResult<string[], Error>;
+import { useArtworkSync } from "@/hooks/useArtworkSync";
 
 describe("LyricsScreen", () => {
   beforeEach(() => {
@@ -71,37 +40,31 @@ describe("LyricsScreen", () => {
 
     // Setup default mock returns
     vi.mocked(useAtomValue).mockImplementation((atom) => {
-      const atomString = atom.toString();
-      switch (atomString) {
-        case "songNameAtom":
+      switch (atom) {
+        case songNameAtom:
           return "Bohemian Rhapsody";
-        case "artistAtom":
+        case artistAtom:
           return "Queen";
-        case "albumAtom":
+        case albumAtom:
           return "A Night at the Opera";
-        case "durationAtom":
+        case durationAtom:
           return 355;
-        case "currentTimeAtom":
+        case currentTimeAtom:
           return 0;
-        case "isPlayingAtom":
+        case isPlayingAtom:
           return false;
+        case artworkUrlsAtom:
+          return [
+            "https://example.com/artwork1.jpg",
+            "https://example.com/artwork2.jpg",
+          ];
         default:
           return undefined;
       }
     });
 
-    // Mock useArtwork to return artwork URLs
-    vi.mocked(useArtwork).mockReturnValue(
-      createMockQueryResult({
-        data: [
-          "https://example.com/artwork1.jpg",
-          "https://example.com/artwork2.jpg",
-        ],
-        isLoading: false,
-        isSuccess: true,
-        status: "success",
-      }),
-    );
+    // Mock useArtworkSync hook
+    vi.mocked(useArtworkSync).mockReturnValue(undefined);
   });
 
   it("renders lyrics screen correctly", () => {
@@ -118,19 +81,18 @@ describe("LyricsScreen", () => {
 
   it("renders when no song is playing", () => {
     vi.mocked(useAtomValue).mockImplementation((atom) => {
-      const atomString = atom.toString();
-      switch (atomString) {
-        case "songNameAtom":
+      switch (atom) {
+        case songNameAtom:
           return "";
-        case "artistAtom":
+        case artistAtom:
           return "";
-        case "albumAtom":
+        case albumAtom:
           return "";
-        case "durationAtom":
+        case durationAtom:
           return 0;
-        case "currentTimeAtom":
+        case currentTimeAtom:
           return 0;
-        case "isPlayingAtom":
+        case isPlayingAtom:
           return false;
         default:
           return undefined;
@@ -148,13 +110,26 @@ describe("LyricsScreen", () => {
   });
 
   it("handles loading artwork state", () => {
-    vi.mocked(useArtwork).mockReturnValue(
-      createMockQueryResult({
-        data: undefined,
-        isLoading: true,
-        status: "pending",
-      }),
-    );
+    vi.mocked(useAtomValue).mockImplementation((atom) => {
+      switch (atom) {
+        case songNameAtom:
+          return "Bohemian Rhapsody";
+        case artistAtom:
+          return "Queen";
+        case albumAtom:
+          return "A Night at the Opera";
+        case durationAtom:
+          return 355;
+        case currentTimeAtom:
+          return 0;
+        case isPlayingAtom:
+          return false;
+        case artworkUrlsAtom:
+          return []; // No artwork yet
+        default:
+          return undefined;
+      }
+    });
 
     render(
       <JotaiProvider>
@@ -167,14 +142,26 @@ describe("LyricsScreen", () => {
   });
 
   it("handles no artwork available", () => {
-    vi.mocked(useArtwork).mockReturnValue(
-      createMockQueryResult({
-        data: [],
-        isLoading: false,
-        isSuccess: true,
-        status: "success",
-      }),
-    );
+    vi.mocked(useAtomValue).mockImplementation((atom) => {
+      switch (atom) {
+        case songNameAtom:
+          return "Bohemian Rhapsody";
+        case artistAtom:
+          return "Queen";
+        case albumAtom:
+          return "A Night at the Opera";
+        case durationAtom:
+          return 355;
+        case currentTimeAtom:
+          return 0;
+        case isPlayingAtom:
+          return false;
+        case artworkUrlsAtom:
+          return []; // Empty array
+        default:
+          return undefined;
+      }
+    });
 
     render(
       <JotaiProvider>

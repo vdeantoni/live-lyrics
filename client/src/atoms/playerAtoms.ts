@@ -1,5 +1,5 @@
 import { atom } from "jotai";
-import type { Song } from "@/lib/api";
+import type { Song, LyricsData, LineData, WordData } from "@/types";
 import { currentMusicModeAtom } from "@/atoms/settingsAtoms";
 
 // Base atoms for player state
@@ -9,6 +9,15 @@ export const isPlayingAtom = atom(false);
 export const songNameAtom = atom<string | undefined>(undefined);
 export const artistAtom = atom<string | undefined>(undefined);
 export const albumAtom = atom<string | undefined>(undefined);
+
+// Lyrics atoms
+export const rawLrcContentAtom = atom<string | null>(null);
+export const lyricsDataAtom = atom<LyricsData | null>(null);
+export const activeLineAtom = atom<LineData | null>(null);
+export const activeWordAtom = atom<WordData | null>(null);
+
+// Artwork atoms
+export const artworkUrlsAtom = atom<string[]>([]);
 
 // UI state atoms
 export const isDraggingAtom = atom(false);
@@ -27,9 +36,9 @@ export const canUpdateFromServerAtom = atom((get) => {
 
 // Song info atom (derived from individual atoms)
 export const songInfoAtom = atom((get) => ({
-  name: get(songNameAtom),
-  artist: get(artistAtom),
-  album: get(albumAtom),
+  name: get(songNameAtom) || "",
+  artist: get(artistAtom) || "",
+  album: get(albumAtom) || "",
   currentTime: get(currentTimeAtom),
   duration: get(durationAtom),
   isPlaying: get(isPlayingAtom),
