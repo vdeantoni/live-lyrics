@@ -1,7 +1,4 @@
-import type {
-  LyricsProviderRegistryEntry,
-  LyricsProvider,
-} from "@/types/settings";
+import type { LyricsProviderRegistryEntry, LyricsProvider } from "@/types";
 
 /**
  * Registry for available lyrics providers

@@ -1,4 +1,4 @@
-import type { MusicModeRegistryEntry, MusicMode } from "@/types/settings";
+import type { MusicModeRegistryEntry, MusicMode } from "@/types";
 
 /**
  * Registry for available music modes

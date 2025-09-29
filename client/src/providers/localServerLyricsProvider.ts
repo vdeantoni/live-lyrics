@@ -1,5 +1,5 @@
-import type { Song } from "@/lib/api";
-import type { LyricsProvider } from "@/types/settings";
+import type { Song } from "@/types";
+import type { LyricsProvider } from "@/types";
 
 /**
  * Local server lyrics provider

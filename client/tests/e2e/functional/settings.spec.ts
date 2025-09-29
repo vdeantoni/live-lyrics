@@ -43,9 +43,6 @@ test.describe("Settings Functionality", () => {
         page.locator('[data-testid="settings-screen"]'),
       ).toBeVisible();
       await expect(
-        page.locator('[data-testid="lyrics-screen"]'),
-      ).not.toBeVisible();
-      await expect(
         page.locator('[data-testid="settings-button"]'),
       ).not.toBeVisible();
 

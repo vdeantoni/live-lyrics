@@ -10,14 +10,6 @@ import SettingsScreen from "@/components/Player/SettingsScreen";
 // Mock components that might have CSS issues
 vi.mock("@/hooks/useSongSync", () => ({
   useSongSync: vi.fn(() => ({
-    songData: {
-      name: "Test Song",
-      artist: "Test Artist",
-      album: "Test Album",
-      duration: 180,
-      currentTime: 60,
-      isPlaying: true,
-    },
     musicMode: {
       getId: () => "test",
       getName: () => "Test Mode",
@@ -26,16 +18,14 @@ vi.mock("@/hooks/useSongSync", () => ({
       seek: vi.fn(),
     },
   })),
-  useLyrics: vi.fn(() => ({
-    data: null,
-    isLoading: false,
-    isSuccess: true,
-  })),
-  useArtwork: vi.fn(() => ({
-    data: [],
-    isLoading: false,
-    isSuccess: true,
-  })),
+}));
+
+vi.mock("@/hooks/useLyricsSync", () => ({
+  useLyricsSync: vi.fn(),
+}));
+
+vi.mock("@/hooks/useArtworkSync", () => ({
+  useArtworkSync: vi.fn(),
 }));
 
 // Mock keyboard shortcuts hook
@@ -47,20 +37,46 @@ vi.mock("@/hooks/useKeyboardShortcuts", () => ({
 import "@/registries/registerProviders";
 
 // Mock jotai hooks at module level
+import {
+  songInfoAtom,
+  currentTimeAtom,
+  durationAtom,
+  isPlayingAtom,
+  rawLrcContentAtom,
+  artworkUrlsAtom,
+} from "@/atoms/playerAtoms";
+import { isSettingsOpenAtom } from "@/atoms/settingsAtoms";
+
 vi.mock("jotai", async () => {
   const actual = await vi.importActual("jotai");
   return {
     ...actual,
     useAtomValue: vi.fn((atom) => {
-      // Return sensible defaults for all atoms to prevent NaN in CSS calc()
-      if (atom.toString().includes("currentTime")) return 0;
-      if (atom.toString().includes("duration")) return 100;
-      if (atom.toString().includes("isPlaying")) return false;
-      if (atom.toString().includes("songName")) return "Test Song";
-      if (atom.toString().includes("artist")) return "Test Artist";
-      if (atom.toString().includes("album")) return "Test Album";
-      if (atom.toString().includes("isSettingsOpen")) return false;
-      return undefined;
+      switch (atom) {
+        case songInfoAtom:
+          return {
+            name: "Test Song",
+            artist: "Test Artist",
+            album: "Test Album",
+            currentTime: 0,
+            duration: 100,
+            playerState: "paused",
+          };
+        case currentTimeAtom:
+          return 0;
+        case durationAtom:
+          return 100;
+        case isPlayingAtom:
+          return false;
+        case rawLrcContentAtom:
+          return null;
+        case artworkUrlsAtom:
+          return [];
+        case isSettingsOpenAtom:
+          return false;
+        default:
+          return undefined;
+      }
     }),
     useSetAtom: vi.fn(() => vi.fn()),
   };

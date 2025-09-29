@@ -5,7 +5,7 @@ import type {
   MusicMode,
   LyricsProvider,
   ArtworkProvider,
-} from "@/types/settings";
+} from "@/types";
 import { musicModeRegistry } from "@/registries/musicModeRegistry";
 import { lyricsProviderRegistry } from "@/registries/lyricsProviderRegistry";
 import { artworkProviderRegistry } from "@/registries/artworkProviderRegistry";

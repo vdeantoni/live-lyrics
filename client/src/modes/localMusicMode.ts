@@ -1,5 +1,5 @@
-import type { Song } from "@/lib/api";
-import type { MusicMode } from "@/types/settings";
+import type { Song } from "@/types";
+import type { MusicMode } from "@/types";
 
 /**
  * Local music mode - simulated player for testing and development

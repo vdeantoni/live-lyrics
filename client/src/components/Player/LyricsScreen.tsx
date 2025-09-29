@@ -1,55 +1,31 @@
 import { useEffect, useState } from "react";
 import { useAtomValue } from "jotai";
-import {
-  songNameAtom,
-  artistAtom,
-  albumAtom,
-  durationAtom,
-  currentTimeAtom,
-  isPlayingAtom,
-} from "@/atoms/playerAtoms";
-import { useArtwork } from "@/hooks/useSongSync";
+import { artworkUrlsAtom } from "@/atoms/playerAtoms";
+import { useArtworkSync } from "@/hooks/useArtworkSync";
 import LyricsProvider from "../LyricsVisualizer/LyricsProvider";
 
 const LyricsScreen = () => {
-  // Read song data from atoms (populated by useSongSync in parent)
-  const songName = useAtomValue(songNameAtom);
-  const artist = useAtomValue(artistAtom);
-  const album = useAtomValue(albumAtom);
-  const duration = useAtomValue(durationAtom);
-  const currentTime = useAtomValue(currentTimeAtom);
-  const isPlaying = useAtomValue(isPlayingAtom);
+  // Get artwork URLs from atom
+  const artworkUrls = useAtomValue(artworkUrlsAtom);
 
-  // Construct song object for artwork API
-  const song =
-    songName && artist
-      ? {
-          name: songName,
-          artist,
-          album: album || "",
-          duration,
-          currentTime,
-          isPlaying,
-        }
-      : undefined;
-
-  const { data: artworks } = useArtwork(song);
+  // Trigger artwork fetching (syncs to artworkUrlsAtom)
+  useArtworkSync();
 
   const [currentArtworkUrl, setCurrentArtworkUrl] = useState("");
 
   useEffect(() => {
-    if (artworks && artworks.length > 0) {
-      const randomIndex = Math.floor(Math.random() * artworks.length);
-      setCurrentArtworkUrl(artworks[randomIndex]);
+    if (artworkUrls && artworkUrls.length > 0) {
+      const randomIndex = Math.floor(Math.random() * artworkUrls.length);
+      setCurrentArtworkUrl(artworkUrls[randomIndex]);
 
       const intervalId = setInterval(() => {
-        const newRandomIndex = Math.floor(Math.random() * artworks.length);
-        setCurrentArtworkUrl(artworks[newRandomIndex]);
+        const newRandomIndex = Math.floor(Math.random() * artworkUrls.length);
+        setCurrentArtworkUrl(artworkUrls[newRandomIndex]);
       }, 10000); // 10000 milliseconds = 10 seconds
 
       return () => clearInterval(intervalId);
     }
-  }, [artworks]);
+  }, [artworkUrls]);
 
   return (
     <div

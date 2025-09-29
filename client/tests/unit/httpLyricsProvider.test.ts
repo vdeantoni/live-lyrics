@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { HttpLyricsProvider } from "@/providers/httpLyricsProvider";
-import type { Song } from "@/lib/api";
+import type { Song } from "@/types";
 
 // Mock the fetch function
 const mockFetch = vi.fn();

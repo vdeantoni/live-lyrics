@@ -1,5 +1,5 @@
-import type { Song } from "@/lib/api";
-import type { LyricsProvider } from "@/types/musicSource";
+import type { Song } from "@/types";
+import type { LyricsProvider } from "@/types";
 
 interface LRCLibTrack {
   id: number;
@@ -97,6 +97,10 @@ export class HttpLyricsProvider implements LyricsProvider {
 
   getName(): string {
     return "HTTP Server + LrcLib";
+  }
+
+  getDescription(): string {
+    return "Fetches lyrics from local server first, then falls back to LrcLib API";
   }
 
   async supportsLyrics(song: Song): Promise<boolean> {

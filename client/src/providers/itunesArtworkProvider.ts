@@ -1,5 +1,5 @@
-import type { Song } from "@/lib/api";
-import type { ArtworkProvider } from "@/types/settings";
+import type { Song } from "@/types";
+import type { ArtworkProvider } from "@/types";
 
 interface iTunesSearchResult {
   resultCount: number;
