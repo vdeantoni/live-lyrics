@@ -14,11 +14,13 @@ A beautiful web application that displays synchronized lyrics for songs currentl
 - **Responsive Design**: Optimized layouts for both portrait (mobile) and landscape (desktop) orientations
 - **Animated Song Information**: Smooth scrolling song names and artist information
 - **Playback Controls**: Control your music directly from the web interface
+- **Multiple Provider Management**: Drag-and-drop provider reordering with priority-based fallback system
+- **Comprehensive Settings**: Full settings panel with player switching and provider configuration
 - **Multiple Lyrics Sources**: Integrates with external APIs for comprehensive lyrics coverage
 
 ## 🛠 Tech Stack
 
-- **Frontend**: React 19, TypeScript, Vite, Tailwind CSS v4, Framer Motion
+- **Frontend**: React 19, TypeScript, Vite, Tailwind CSS v4, Framer Motion, @dnd-kit
 - **Backend**: Node.js, Hono framework, AppleScript integration
 - **State Management**: TanStack React Query, Jotai
 - **Build System**: Turborepo monorepo with optimized task pipeline and caching
@@ -118,6 +120,8 @@ live-lyrics/
 │   ├── src/
 │   │   ├── components/     # React components
 │   │   │   ├── LyricsVisualizer/  # Main lyrics display components
+│   │   │   ├── Player/     # Player controls and settings screen
+│   │   │   ├── Settings/   # Modular settings components with drag-and-drop
 │   │   │   └── ui/         # Reusable UI components
 │   └── tests/              # Test suites (organized by type)
 │       ├── unit/           # Unit tests (Vitest)
@@ -146,6 +150,8 @@ live-lyrics/
 - **LyricsDisplay**: Visual effects and background rendering
 - **LyricsContent**: Synchronized lyrics rendering
 - **Player**: Music controls with animated song information
+- **SettingsScreen**: Comprehensive settings panel with drag-and-drop provider management
+- **Settings Components**: Modular components for player, lyrics, and artwork provider configuration
 
 ## 🔧 Development
 
