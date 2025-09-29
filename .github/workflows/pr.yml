@@ -12,9 +12,9 @@ permissions:
   contents: read
 
 jobs:
-  test:
+  format:
     runs-on: ubuntu-latest
-    name: Test
+    name: Format
 
     steps:
       - name: Checkout repository
@@ -26,8 +26,30 @@ jobs:
       - name: Check formatting
         run: pnpm format:check
 
+  lint:
+    runs-on: ubuntu-latest
+    name: Lint
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js and pnpm
+        uses: ./.github/actions/setup-node-pnpm
+
       - name: Check linting
         run: pnpm lint:check
+
+  test:
+    runs-on: ubuntu-latest
+    name: Test
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js and pnpm
+        uses: ./.github/actions/setup-node-pnpm
 
       - name: Run tests
         run: pnpm test
