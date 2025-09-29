@@ -1,4 +1,5 @@
-# Run format check, lint check, and test with Turborepo caching
+# Run format check, lint check, build, and test with Turborepo caching
 pnpm format:check
 pnpm lint:check
+pnpm build
 pnpm test
