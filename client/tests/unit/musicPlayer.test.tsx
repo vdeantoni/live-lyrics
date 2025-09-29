@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { Provider as JotaiProvider } from "jotai";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import MusicPlayer from "@/components/Player/MusicPlayer";
+import Player from "@/components/Player/Player";
 import MainScreen from "@/components/Player/MainScreen";
 import PlayerControls from "@/components/Player/PlayerControls";
 import SettingsScreen from "@/components/Player/SettingsScreen";
@@ -44,12 +44,12 @@ import {
 } from "@/atoms/playerAtoms";
 import {
   isSettingsOpenAtom,
-  availableMusicPlayersAtom,
+  availablePlayersAtom,
   availableLyricsProvidersAtom,
   availableArtworkProvidersAtom,
   lyricsProvidersWithStatusAtom,
   artworkProvidersWithStatusAtom,
-  musicPlayersWithStatusAtom,
+  playersWithStatusAtom,
 } from "@/atoms/settingsAtoms";
 
 vi.mock("jotai", async () => {
@@ -79,7 +79,7 @@ vi.mock("jotai", async () => {
           return [];
         case isSettingsOpenAtom:
           return false;
-        case availableMusicPlayersAtom:
+        case availablePlayersAtom:
           return [
             { id: "local", name: "Local", description: "Simulated player" },
             { id: "remote", name: "Server", description: "Apple Music server" },
@@ -96,7 +96,7 @@ vi.mock("jotai", async () => {
           return [
             { id: "itunes", name: "iTunes", description: "iTunes Search API" },
           ];
-        case musicPlayersWithStatusAtom:
+        case playersWithStatusAtom:
           return [
             {
               id: "local",
@@ -137,7 +137,7 @@ vi.mock("jotai", async () => {
   };
 });
 
-describe("Music Player Components", () => {
+describe("Player Components", () => {
   const renderWithProvider = (component: React.ReactElement) => {
     const queryClient = new QueryClient({
       defaultOptions: {
@@ -154,8 +154,8 @@ describe("Music Player Components", () => {
     );
   };
 
-  it("should render MusicPlayer component", () => {
-    renderWithProvider(<MusicPlayer />);
+  it("should render Player component", () => {
+    renderWithProvider(<Player />);
     expect(screen.getByTestId("music-player")).toBeInTheDocument();
   });
 
@@ -177,6 +177,6 @@ describe("Music Player Components", () => {
     expect(screen.getByTestId("settings-screen")).toBeInTheDocument();
     // Close button is now in MainScreen, not SettingsScreen
     expect(screen.getByText("Settings")).toBeInTheDocument();
-    expect(screen.getByText("Configure your music player")).toBeInTheDocument();
+    expect(screen.getByText("Configure your player")).toBeInTheDocument();
   });
 });

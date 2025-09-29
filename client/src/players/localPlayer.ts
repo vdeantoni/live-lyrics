@@ -2,11 +2,11 @@ import type { Song } from "@/types";
 import type { Player } from "@/types";
 
 /**
- * Local music player
+ * Local player
  * Singleton pattern to maintain state across player switches
  */
-export class LocalMusicPlayer implements Player {
-  private static instance: LocalMusicPlayer | null = null;
+export class LocalPlayer implements Player {
+  private static instance: LocalPlayer | null = null;
 
   private currentTime: number = 0;
   private duration: number = 180; // 3 minutes default
@@ -63,25 +63,25 @@ export class LocalMusicPlayer implements Player {
 
   constructor() {
     // Return existing instance if it exists (singleton pattern)
-    if (LocalMusicPlayer.instance) {
-      return LocalMusicPlayer.instance;
+    if (LocalPlayer.instance) {
+      return LocalPlayer.instance;
     }
 
     // Initialize new instance
     this.startClock();
 
     // Store the instance
-    LocalMusicPlayer.instance = this;
+    LocalPlayer.instance = this;
 
     // Return this for proper singleton behavior
     return this;
   }
 
-  static getInstance(): LocalMusicPlayer {
-    if (!LocalMusicPlayer.instance) {
-      LocalMusicPlayer.instance = new LocalMusicPlayer();
+  static getInstance(): LocalPlayer {
+    if (!LocalPlayer.instance) {
+      LocalPlayer.instance = new LocalPlayer();
     }
-    return LocalMusicPlayer.instance;
+    return LocalPlayer.instance;
   }
 
   getId(): string {

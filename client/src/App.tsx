@@ -3,7 +3,7 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { createAsyncStoragePersister } from "@tanstack/query-async-storage-persister";
 import { Provider as JotaiProvider } from "jotai";
-import MusicPlayer from "@/components/Player/MusicPlayer";
+import Player from "@/components/Player/Player";
 
 // Create a client with aggressive caching
 const queryClient = new QueryClient();
@@ -27,7 +27,7 @@ function App() {
         }}
       >
         <div className="m-auto flex h-full w-full flex-col items-center p-2 lg:p-4 xl:p-8">
-          <MusicPlayer />
+          <Player />
         </div>
         <ReactQueryDevtools initialIsOpen={false} />
       </PersistQueryClientProvider>

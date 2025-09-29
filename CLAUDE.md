@@ -125,6 +125,14 @@ Both client and server compile to `dist/` directories:
   - `LyricsContent.tsx`: Actual lyrics rendering with synchronization
   - `Player.tsx`: Music playback controls with animated song name
   - `AnimatedSongName.tsx`: Framer Motion component for scrolling song titles
+- **Settings/**: Comprehensive settings system with drag-and-drop provider management
+  - `SettingsScreen.tsx`: Main settings panel with smooth slide animations
+  - `PlayerSection.tsx`: Music player selection (Local/Remote)
+  - `LyricsProviderSection.tsx`: Lyrics provider management with drag-and-drop reordering
+  - `ArtworkProviderSection.tsx`: Artwork provider management with drag-and-drop reordering
+  - `ProviderSection.tsx`: Reusable drag-and-drop provider list with @dnd-kit integration
+  - `SortableProviderItem.tsx`: Individual draggable provider items with status icons and loading states
+  - `ClearAppDataSection.tsx`: App data management with clear functionality
 - **ui/**: Reusable UI components (buttons, sliders, skeletons)
 
 ### User Interaction Features
@@ -142,6 +150,14 @@ Both client and server compile to `dist/` directories:
 - Gear button morphs to close button when settings open
 - Smart input field detection prevents keyboard shortcut conflicts
 
+**Provider Management**:
+- Drag-and-drop reordering using @dnd-kit with closestCenter collision detection
+- Individual provider availability checks with loading spinners
+- Toggle-based provider enabling/disabling
+- Priority-based provider fallback system
+- Real-time UI feedback during drag operations
+- Per-item loading states replacing section-wide Suspense boundaries
+
 ### Data Flow
 
 1. Server polls macOS Music app via AppleScript every request
@@ -155,21 +171,24 @@ Both client and server compile to `dist/` directories:
 **Atom-Based Provider System**:
 The app uses a centralized configuration-based architecture with multiple providers:
 
-**Available Music Players**:
-- **Remote Player** (`RemoteMusicPlayer`): Connects to local server for real Apple Music integration
-- **Local Player** (`LocalMusicPlayer`): In-memory player with classic songs playlist
+**Available Players**:
+- **Remote Player** (`RemotePlayer`): Connects to local server for real Apple Music integration
+- **Local Player** (`LocalPlayer`): In-memory player with classic songs playlist
 
 **Provider Management**:
 - Centralized configuration via `/src/config/providers.ts` with lazy loading
 - Settings management through Jotai atoms in `settingsAtoms.ts`
 - Dynamic provider loading eliminates side-effect imports
-- Each provider implements respective interfaces (`MusicPlayer`, `LyricsProvider`, `ArtworkProvider`)
+- Each provider implements respective interfaces (`Player`, `LyricsProvider`, `ArtworkProvider`)
+- Individual provider availability checks with loading states
+- Custom localStorage serialization for Set types in settings
+- Priority-based provider fallback with drag-and-drop reordering
 
 **Provider Ecosystem**:
-- **Music Players**: `RemoteMusicPlayer` (Apple Music), `LocalMusicPlayer` (simulated)
+- **Players**: `RemotePlayer` (Apple Music), `LocalPlayer` (simulated)
 - **Lyrics Providers**: `LrclibLyricsProvider`, `LocalServerLyricsProvider`, `SimulatedLyricsProvider`
 - **Artwork Providers**: `ITunesArtworkProvider` for album cover fetching
-- Providers are loaded dynamically using `loadMusicPlayer()`, `loadLyricsProvider()`, `loadArtworkProvider()`
+- Providers are loaded dynamically using `loadPlayer()`, `loadLyricsProvider()`, `loadArtworkProvider()`
 
 **Benefits of Atom-Based System**:
 - Eliminates registry side-effect imports (`import "@/registries/registerProviders"`)
@@ -241,7 +260,7 @@ Tests are organized in structured directories:
   - `tests/e2e/functional/app.spec.ts` - Application layout and responsiveness
   - `tests/e2e/functional/lyrics.spec.ts` - Lyrics display and synchronization
   - `tests/e2e/functional/player.spec.ts` - Player controls and interactions
-  - `tests/e2e/functional/settings.spec.ts` - Settings screen functionality and provider management
+  - `tests/e2e/functional/settings.spec.ts` - Settings screen functionality, drag-and-drop provider management, and individual loading states
   - `tests/e2e/functional/playlist.spec.ts` - Playlist navigation and song seeking
   - `tests/e2e/functional/error-handling.spec.ts` - Error scenarios and graceful degradation
   - `tests/e2e/functional/accessibility.spec.ts` - Keyboard navigation and WCAG compliance

@@ -1,26 +1,26 @@
 import { describe, it, expect } from "vitest";
-import { LocalMusicPlayer } from "@/players/localMusicPlayer";
-import { RemoteMusicPlayer } from "@/players/remoteMusicPlayer";
+import { LocalPlayer } from "@/players/localPlayer";
+import { RemotePlayer } from "@/players/remotePlayer";
 import { LrclibLyricsProvider } from "@/providers/lrclibLyricsProvider";
 import { ITunesArtworkProvider } from "@/providers/itunesArtworkProvider";
 
-describe("Music Players", () => {
-  it("should create local music player instance", () => {
-    const player = LocalMusicPlayer.getInstance();
+describe("Players", () => {
+  it("should create local player instance", () => {
+    const player = LocalPlayer.getInstance();
     expect(player.getId()).toBe("local");
     expect(player.getName()).toBe("Local");
     expect(player.getDescription()).toBe("Local player");
   });
 
-  it("should create remote music player instance", () => {
-    const player = new RemoteMusicPlayer();
+  it("should create remote player instance", () => {
+    const player = new RemotePlayer();
     expect(player.getId()).toBe("remote");
     expect(player.getName()).toBe("Remote");
     expect(player.getDescription()).toBe("Remote player");
   });
 
   it("should have local player always available", async () => {
-    const player = LocalMusicPlayer.getInstance();
+    const player = LocalPlayer.getInstance();
     const isAvailable = await player.isAvailable();
     expect(isAvailable).toBe(true);
   });

@@ -139,6 +139,11 @@ test.describe("Lyrics Display", () => {
       const lyricsDisplay = page.locator('[data-testid="lyrics-screen"]');
       await expect(lyricsDisplay).toBeVisible();
 
+      // Wait for lyrics to be visible after resize
+      await expect(
+        page.locator('[data-testid="lyrics-line"]').first(),
+      ).toBeVisible();
+
       const lyricsLines = page.locator('[data-testid="lyrics-line"]');
       const lineCount = await lyricsLines.count();
       expect(lineCount).toBeGreaterThan(10);

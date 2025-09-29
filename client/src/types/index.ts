@@ -42,15 +42,19 @@ export interface TagsData {
 
 // Application settings interface
 export interface AppSettings {
-  /** ID of the selected music player */
+  /** ID of the selected player */
   playerId: string;
-  /** ID of the selected lyrics provider */
-  lyricsProviderId: string;
-  /** ID of the selected artwork provider */
-  artworkProviderId: string;
+  /** Ordered list of lyrics provider IDs by priority (first = highest priority) */
+  lyricsProviderIds: string[];
+  /** Ordered list of artwork provider IDs by priority (first = highest priority) */
+  artworkProviderIds: string[];
+  /** Set of enabled lyrics provider IDs */
+  enabledLyricsProviders: Set<string>;
+  /** Set of enabled artwork provider IDs */
+  enabledArtworkProviders: Set<string>;
 }
 
-// Interface for music player (local vs remote server)
+// Interface for player (local vs remote server)
 export interface Player {
   /** Unique identifier for this player */
   getId(): string;
@@ -145,7 +149,7 @@ export interface SourceConfig {
 }
 
 // Registry entry types
-export interface MusicPlayerRegistryEntry {
+export interface PlayerRegistryEntry {
   id: string;
   name: string;
   description: string;

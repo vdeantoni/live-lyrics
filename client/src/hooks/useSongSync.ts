@@ -6,7 +6,7 @@ import { playerIdAtom } from "@/atoms/settingsAtoms";
 import { loadPlayer } from "@/config/providers";
 
 /**
- * Hook that syncs player state with data from the current music player
+ * Hook that syncs player state with data from the current player
  * Only updates atoms when user is not actively interacting with controls
  * Components should use individual atoms instead of returned values
  */
@@ -14,18 +14,18 @@ export const useSongSync = () => {
   const playerId = useAtomValue(playerIdAtom);
   const syncFromSource = useSetAtom(syncFromSourceAtom);
 
-  // Use React Query to fetch song data from the current music player
+  // Use React Query to fetch song data from the current player
   const { data: songData } = useQuery({
     queryKey: ["song", playerId],
     queryFn: async () => {
-      if (!playerId) throw new Error("No music player selected");
+      if (!playerId) throw new Error("No player selected");
 
       try {
-        const musicPlayer = await loadPlayer(playerId);
-        const songData = await musicPlayer.getSong();
+        const player = await loadPlayer(playerId);
+        const songData = await player.getSong();
         return songData;
       } catch (error) {
-        console.error(`Failed to load music player "${playerId}":`, error);
+        console.error(`Failed to load player "${playerId}":`, error);
         throw error;
       }
     },
