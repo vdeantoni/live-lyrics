@@ -14,7 +14,7 @@ import type { MusicMode } from "@/types/settings";
  * - C: Toggle settings screen
  */
 export const useKeyboardShortcuts = (
-  musicMode?: MusicMode,
+  musicMode?: MusicMode | null,
   songData?: Song,
 ) => {
   const toggleSettings = useSetAtom(toggleSettingsAtom);
