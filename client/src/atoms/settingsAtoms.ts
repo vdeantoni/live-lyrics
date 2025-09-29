@@ -6,12 +6,14 @@ import type {
   LyricsProvider,
   ArtworkProvider,
 } from "@/types";
-import { musicModeRegistry } from "@/registries/musicModeRegistry";
-import { lyricsProviderRegistry } from "@/registries/lyricsProviderRegistry";
-import { artworkProviderRegistry } from "@/registries/artworkProviderRegistry";
-
-// Import to ensure providers are registered
-import "@/registries/registerProviders";
+import {
+  getMusicModeConfigs,
+  getLyricsProviderConfigs,
+  getArtworkProviderConfigs,
+  loadMusicMode,
+  loadLyricsProvider,
+  loadArtworkProvider,
+} from "@/config/providers";
 
 /**
  * Default application settings
@@ -58,22 +60,161 @@ export const artworkProviderIdAtom = atom(
 );
 
 /**
- * Derived atoms for actual provider instances
+ * Configuration atoms - provide metadata without instantiating providers
  */
-export const currentMusicModeAtom = atom<MusicMode | null>((get) => {
-  const modeId = get(modeIdAtom);
-  return musicModeRegistry.get(modeId);
+export const availableMusicModesAtom = atom(() => getMusicModeConfigs());
+export const availableLyricsProvidersAtom = atom(() =>
+  getLyricsProviderConfigs(),
+);
+export const availableArtworkProvidersAtom = atom(() =>
+  getArtworkProviderConfigs(),
+);
+
+/**
+ * Async atoms for checking provider availability (for UI status)
+ */
+export const lyricsProvidersWithStatusAtom = atom(async (get) => {
+  const configs = get(availableLyricsProvidersAtom);
+  const statusPromises = configs.map(async (config) => {
+    try {
+      const provider = await loadLyricsProvider(config.id);
+      const isAvailable = await provider.isAvailable();
+      return { ...config, isAvailable };
+    } catch (error) {
+      console.error(`Failed to check availability for ${config.id}:`, error);
+      return { ...config, isAvailable: false };
+    }
+  });
+
+  return Promise.all(statusPromises);
 });
 
-export const currentLyricsProviderAtom = atom<LyricsProvider | null>((get) => {
-  const providerId = get(lyricsProviderIdAtom);
-  return lyricsProviderRegistry.get(providerId);
+export const artworkProvidersWithStatusAtom = atom(async (get) => {
+  const configs = get(availableArtworkProvidersAtom);
+  const statusPromises = configs.map(async (config) => {
+    try {
+      const provider = await loadArtworkProvider(config.id);
+      const isAvailable = await provider.isAvailable();
+      return { ...config, isAvailable };
+    } catch (error) {
+      console.error(`Failed to check availability for ${config.id}:`, error);
+      return { ...config, isAvailable: false };
+    }
+  });
+
+  return Promise.all(statusPromises);
 });
 
-export const currentArtworkProviderAtom = atom<ArtworkProvider | null>(
-  (get) => {
+export const musicModesWithStatusAtom = atom(async (get) => {
+  const configs = get(availableMusicModesAtom);
+  const statusPromises = configs.map(async (config) => {
+    try {
+      const mode = await loadMusicMode(config.id);
+      const isAvailable = await mode.isAvailable();
+      return { ...config, isAvailable };
+    } catch (error) {
+      console.error(`Failed to check availability for ${config.id}:`, error);
+      return { ...config, isAvailable: false };
+    }
+  });
+
+  return Promise.all(statusPromises);
+});
+
+/**
+ * Provider instance atoms with lazy loading and caching
+ */
+const musicModeInstancesAtom = atom<Map<string, MusicMode>>(new Map());
+
+export const currentMusicModeAtom = atom(
+  async (get): Promise<MusicMode | null> => {
+    const modeId = get(modeIdAtom);
+    const instances = get(musicModeInstancesAtom);
+
+    // Return cached instance if available
+    if (instances.has(modeId)) {
+      return instances.get(modeId)!;
+    }
+
+    try {
+      const provider = await loadMusicMode(modeId);
+      instances.set(modeId, provider);
+      return provider;
+    } catch (error) {
+      console.error(`Failed to load music mode "${modeId}":`, error);
+      return null;
+    }
+  },
+  (get, set, instance: MusicMode | null) => {
+    if (instance) {
+      const instances = new Map(get(musicModeInstancesAtom));
+      instances.set(instance.getId(), instance);
+      set(musicModeInstancesAtom, instances);
+    }
+  },
+);
+
+const lyricsProviderInstancesAtom = atom<Map<string, LyricsProvider>>(
+  new Map(),
+);
+
+export const currentLyricsProviderAtom = atom(
+  async (get): Promise<LyricsProvider | null> => {
+    const providerId = get(lyricsProviderIdAtom);
+    const instances = get(lyricsProviderInstancesAtom);
+
+    // Return cached instance if available
+    if (instances.has(providerId)) {
+      return instances.get(providerId)!;
+    }
+
+    try {
+      const provider = await loadLyricsProvider(providerId);
+      instances.set(providerId, provider);
+      return provider;
+    } catch (error) {
+      console.error(`Failed to load lyrics provider "${providerId}":`, error);
+      return null;
+    }
+  },
+  (get, set, instance: LyricsProvider | null) => {
+    if (instance) {
+      const instances = new Map(get(lyricsProviderInstancesAtom));
+      instances.set(instance.getId(), instance);
+      set(lyricsProviderInstancesAtom, instances);
+    }
+  },
+);
+
+const artworkProviderInstancesAtom = atom<Map<string, ArtworkProvider>>(
+  new Map(),
+);
+
+export const currentArtworkProviderAtom = atom(
+  async (get): Promise<ArtworkProvider | null> => {
     const providerId = get(artworkProviderIdAtom);
-    return artworkProviderRegistry.get(providerId);
+    const instances = get(artworkProviderInstancesAtom);
+
+    // Return cached instance if available
+    if (instances.has(providerId)) {
+      return instances.get(providerId)!;
+    }
+
+    try {
+      const provider = await loadArtworkProvider(providerId);
+      instances.set(providerId, provider);
+      return provider;
+    } catch (error) {
+      console.error(`Failed to load artwork provider "${providerId}":`, error);
+      return null;
+    }
+  },
+  (get, set, instance: ArtworkProvider | null) => {
+    if (instance) {
+      const instances = new Map(get(artworkProviderInstancesAtom));
+      instances.set(instance.getId(), instance);
+      set(artworkProviderInstancesAtom, instances);
+    }
   },
 );
 

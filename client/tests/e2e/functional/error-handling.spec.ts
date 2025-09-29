@@ -142,6 +142,9 @@ test.describe("Error Handling", () => {
         !error.includes("Failed to fetch") && // Network errors are expected in tests
         !error.includes("Loading chunk"), // Dynamic import errors in dev mode
     );
+    if (criticalErrors.length > 0) {
+      console.log("Critical Errors Found:", criticalErrors);
+    }
     expect(criticalErrors.length).toBe(0);
   });
 

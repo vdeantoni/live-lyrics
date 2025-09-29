@@ -1,15 +1,13 @@
 import { useEffect } from "react";
 import { useAtomValue, useSetAtom } from "jotai";
-import {
-  currentMusicModeAtom,
-  toggleSettingsAtom,
-} from "@/atoms/settingsAtoms";
+import { modeIdAtom, toggleSettingsAtom } from "@/atoms/settingsAtoms";
 import {
   lyricsDataAtom,
   songInfoAtom,
   currentTimeAtom,
   durationAtom,
 } from "@/atoms/playerAtoms";
+import { loadMusicMode } from "@/config/providers";
 
 /**
  * Global keyboard shortcuts hook for the music player
@@ -21,7 +19,7 @@ import {
  * - C: Toggle settings screen
  */
 export const useKeyboardShortcuts = () => {
-  const musicMode = useAtomValue(currentMusicModeAtom);
+  const modeId = useAtomValue(modeIdAtom);
   const toggleSettings = useSetAtom(toggleSettingsAtom);
   const lyricsData = useAtomValue(lyricsDataAtom);
   const songInfo = useAtomValue(songInfoAtom);
@@ -29,7 +27,7 @@ export const useKeyboardShortcuts = () => {
   const duration = useAtomValue(durationAtom);
 
   useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
+    const handleKeyDown = async (event: KeyboardEvent) => {
       // Don't trigger shortcuts if user is typing in an input field
       if (
         event.target instanceof HTMLInputElement ||
@@ -54,14 +52,28 @@ export const useKeyboardShortcuts = () => {
         return 0; // Default to first line if none found
       };
 
+      // Helper function to get music mode instance
+      const getMusicMode = async () => {
+        if (!modeId) return null;
+        try {
+          return await loadMusicMode(modeId);
+        } catch (error) {
+          console.error("Failed to load music mode:", error);
+          return null;
+        }
+      };
+
       switch (key.toLowerCase()) {
         case " ": // Space - Play/Pause
           event.preventDefault();
-          if (musicMode && songInfo) {
-            if (songInfo.isPlaying) {
-              musicMode.pause();
-            } else {
-              musicMode.play();
+          if (modeId && songInfo) {
+            const musicMode = await getMusicMode();
+            if (musicMode) {
+              if (songInfo.isPlaying) {
+                await musicMode.pause();
+              } else {
+                await musicMode.play();
+              }
             }
           }
           break;
@@ -73,43 +85,55 @@ export const useKeyboardShortcuts = () => {
 
         case "arrowleft": // Left Arrow - Seek backward
           event.preventDefault();
-          if (musicMode) {
-            const newTime = Math.max(0, currentTime - 5);
-            musicMode.seek(newTime);
+          if (modeId) {
+            const musicMode = await getMusicMode();
+            if (musicMode) {
+              const newTime = Math.max(0, currentTime - 5);
+              await musicMode.seek(newTime);
+            }
           }
           break;
 
         case "arrowright": // Right Arrow - Seek forward
           event.preventDefault();
-          if (musicMode) {
-            const newTime = Math.min(duration, currentTime + 5);
-            musicMode.seek(newTime);
+          if (modeId) {
+            const musicMode = await getMusicMode();
+            if (musicMode) {
+              const newTime = Math.min(duration, currentTime + 5);
+              await musicMode.seek(newTime);
+            }
           }
           break;
 
         case "arrowup": // Up Arrow - Previous lyrics line
           event.preventDefault();
-          if (musicMode && lyricsData && lyricsData.lines.length > 0) {
-            const currentIndex = getCurrentLineIndex();
-            const prevIndex = Math.max(0, currentIndex - 1);
-            const prevLine = lyricsData.lines[prevIndex];
-            if (prevLine) {
-              musicMode.seek(prevLine.time);
+          if (modeId && lyricsData && lyricsData.lines.length > 0) {
+            const musicMode = await getMusicMode();
+            if (musicMode) {
+              const currentIndex = getCurrentLineIndex();
+              const prevIndex = Math.max(0, currentIndex - 1);
+              const prevLine = lyricsData.lines[prevIndex];
+              if (prevLine) {
+                await musicMode.seek(prevLine.time);
+              }
             }
           }
           break;
 
         case "arrowdown": // Down Arrow - Next lyrics line
           event.preventDefault();
-          if (musicMode && lyricsData && lyricsData.lines.length > 0) {
-            const currentIndex = getCurrentLineIndex();
-            const nextIndex = Math.min(
-              lyricsData.lines.length - 1,
-              currentIndex + 1,
-            );
-            const nextLine = lyricsData.lines[nextIndex];
-            if (nextLine) {
-              musicMode.seek(nextLine.time);
+          if (modeId && lyricsData && lyricsData.lines.length > 0) {
+            const musicMode = await getMusicMode();
+            if (musicMode) {
+              const currentIndex = getCurrentLineIndex();
+              const nextIndex = Math.min(
+                lyricsData.lines.length - 1,
+                currentIndex + 1,
+              );
+              const nextLine = lyricsData.lines[nextIndex];
+              if (nextLine) {
+                await musicMode.seek(nextLine.time);
+              }
             }
           }
           break;
@@ -123,5 +147,5 @@ export const useKeyboardShortcuts = () => {
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [musicMode, lyricsData, songInfo, currentTime, duration, toggleSettings]);
+  }, [modeId, lyricsData, songInfo, currentTime, duration, toggleSettings]);
 };

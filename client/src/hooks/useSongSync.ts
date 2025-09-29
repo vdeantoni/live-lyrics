@@ -2,7 +2,8 @@ import { useAtomValue, useSetAtom } from "jotai";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { syncFromSourceAtom } from "@/atoms/playerAtoms";
-import { currentMusicModeAtom } from "@/atoms/settingsAtoms";
+import { modeIdAtom } from "@/atoms/settingsAtoms";
+import { loadMusicMode } from "@/config/providers";
 
 /**
  * Hook that syncs player state with data from the current music mode
@@ -10,18 +11,25 @@ import { currentMusicModeAtom } from "@/atoms/settingsAtoms";
  * Components should use individual atoms instead of returned values
  */
 export const useSongSync = () => {
-  const musicMode = useAtomValue(currentMusicModeAtom);
+  const modeId = useAtomValue(modeIdAtom);
   const syncFromSource = useSetAtom(syncFromSourceAtom);
 
   // Use React Query to fetch song data from the current music mode
   const { data: songData } = useQuery({
-    queryKey: ["song", musicMode?.getId()],
+    queryKey: ["song", modeId],
     queryFn: async () => {
-      if (!musicMode) throw new Error("No music mode available");
-      const songData = await musicMode.getSong();
-      return songData;
+      if (!modeId) throw new Error("No music mode selected");
+
+      try {
+        const musicMode = await loadMusicMode(modeId);
+        const songData = await musicMode.getSong();
+        return songData;
+      } catch (error) {
+        console.error(`Failed to load music mode "${modeId}":`, error);
+        throw error;
+      }
     },
-    enabled: !!musicMode,
+    enabled: !!modeId,
     refetchInterval: 300, // Keep the frequent polling for real-time sync
     staleTime: 0, // Always consider stale - refetch immediately
     gcTime: 0, // Don't cache in memory at all

@@ -9,48 +9,13 @@ import {
   modeIdAtom,
   lyricsProviderIdAtom,
   artworkProviderIdAtom,
+  availableMusicModesAtom,
+  availableLyricsProvidersAtom,
+  availableArtworkProvidersAtom,
+  lyricsProvidersWithStatusAtom,
+  artworkProvidersWithStatusAtom,
+  musicModesWithStatusAtom,
 } from "@/atoms/settingsAtoms";
-
-// Mock the registries
-vi.mock("@/registries/lyricsProviderRegistry", () => ({
-  lyricsProviderRegistry: {
-    register: vi.fn(),
-    get: vi.fn(),
-    getAll: vi.fn(() => [
-      {
-        id: "lrclib",
-        name: "LrcLib",
-        description: "Community lyrics database",
-        factory: () => ({ isAvailable: () => Promise.resolve(true) }),
-      },
-      {
-        id: "local",
-        name: "Local Server",
-        description: "Local server with LrcLib fallback",
-        factory: () => ({ isAvailable: () => Promise.resolve(false) }),
-      },
-    ]),
-    has: vi.fn(),
-    getAvailable: vi.fn(() => Promise.resolve([])),
-  },
-}));
-
-vi.mock("@/registries/artworkProviderRegistry", () => ({
-  artworkProviderRegistry: {
-    register: vi.fn(),
-    get: vi.fn(),
-    getAll: vi.fn(() => [
-      {
-        id: "itunes",
-        name: "iTunes",
-        description: "iTunes Search API",
-        factory: () => ({ isAvailable: () => Promise.resolve(true) }),
-      },
-    ]),
-    has: vi.fn(),
-    getAvailable: vi.fn(() => Promise.resolve([])),
-  },
-}));
 
 // Mock jotai hooks
 vi.mock("jotai", async () => {
@@ -69,6 +34,45 @@ describe("SettingsScreen", () => {
   const mockSetLyricsProviderId = vi.fn();
   const mockSetArtworkProviderId = vi.fn();
 
+  const mockMusicModes = [
+    { id: "local", name: "Local", description: "Simulated player for testing" },
+    {
+      id: "remote",
+      name: "Server",
+      description: "Connect to Apple Music via local server",
+    },
+  ];
+
+  const mockLyricsProviders = [
+    { id: "lrclib", name: "LrcLib", description: "Community lyrics database" },
+    {
+      id: "local-server",
+      name: "Local Server",
+      description: "Local server with LrcLib fallback",
+    },
+    {
+      id: "simulated",
+      name: "Simulated",
+      description: "Hardcoded demo lyrics",
+    },
+  ];
+
+  const mockArtworkProviders = [
+    { id: "itunes", name: "iTunes", description: "iTunes Search API" },
+  ];
+
+  const mockMusicModesWithStatus = mockMusicModes.map((mode) => ({
+    ...mode,
+    isAvailable: true,
+  }));
+  const mockLyricsProvidersWithStatus = mockLyricsProviders.map((provider) => ({
+    ...provider,
+    isAvailable: true,
+  }));
+  const mockArtworkProvidersWithStatus = mockArtworkProviders.map(
+    (provider) => ({ ...provider, isAvailable: true }),
+  );
+
   beforeEach(() => {
     vi.clearAllMocks();
 
@@ -81,6 +85,18 @@ describe("SettingsScreen", () => {
           return "lrclib";
         case artworkProviderIdAtom:
           return "itunes";
+        case availableMusicModesAtom:
+          return mockMusicModes;
+        case availableLyricsProvidersAtom:
+          return mockLyricsProviders;
+        case availableArtworkProvidersAtom:
+          return mockArtworkProviders;
+        case musicModesWithStatusAtom:
+          return mockMusicModesWithStatus;
+        case lyricsProvidersWithStatusAtom:
+          return mockLyricsProvidersWithStatus;
+        case artworkProvidersWithStatusAtom:
+          return mockArtworkProvidersWithStatus;
         default:
           return undefined;
       }
