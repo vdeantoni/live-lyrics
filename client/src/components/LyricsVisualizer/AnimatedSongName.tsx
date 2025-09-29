@@ -11,14 +11,14 @@ const ANIMATION_CONSTANTS = {
   RESUME_DELAY_AFTER_HOVER: 0.5, // seconds
 } as const;
 
-interface AnimatedSongNameProps {
+interface AnimatedSongNameProps extends React.HTMLAttributes<HTMLDivElement> {
   songName?: string;
-  className?: string;
 }
 
 const AnimatedSongName = ({
-  songName,
+  songName = "",
   className = "",
+  ...rest
 }: AnimatedSongNameProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLHeadingElement>(null);
@@ -155,14 +155,13 @@ const AnimatedSongName = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOverflowing, controls]);
 
-  if (!songName) return null;
-
   return (
     <div
       ref={containerRef}
       className={`overflow-hidden ${className}`}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
+      {...rest}
     >
       <motion.h2
         ref={textRef}
@@ -188,5 +187,7 @@ const AnimatedSongName = ({
     </div>
   );
 };
+
+AnimatedSongName.displayName = "AnimatedSongName";
 
 export default AnimatedSongName;

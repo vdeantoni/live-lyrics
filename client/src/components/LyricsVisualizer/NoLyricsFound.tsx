@@ -32,9 +32,7 @@ const NoLyricsFound = ({ songName, artist }: NoLyricsFoundProps) => {
       )}
 
       <div className="space-y-1 text-sm text-zinc-500">
-        <p>• Try switching to Simulated Player for demo lyrics</p>
-        <p>• Check if your local server has a /lyrics endpoint</p>
-        <p>• Some songs may not be available in our lyrics database</p>
+        <p>• Some songs may not be available in the selected provider</p>
       </div>
     </div>
   );

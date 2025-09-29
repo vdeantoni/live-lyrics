@@ -127,8 +127,8 @@ Both client and server compile to `dist/` directories:
 The app uses a pluggable source architecture with multiple music providers:
 
 **Available Sources**:
-- **HTTP Source** (`HttpMusicSource`): Connects to local server for real Apple Music integration
-- **Simulated Source** (`SimulatedMusicSource`): In-memory demo player with classic songs playlist
+- **Server Source** (`HttpMusicSource`): Connects to local server for real Apple Music integration
+- **Local Source** (`SimulatedMusicSource`): In-memory demo player with classic songs playlist
 
 **Source Management**:
 - Configurable via `sourceAtoms.ts` with Jotai state management
@@ -199,15 +199,20 @@ Tests are organized in structured directories:
 
 **E2E Tests (Playwright)**:
 - **Performance Optimization**: CI uses Chromium-only (`test:e2e:install:ci`), local development supports all browsers
+- **Local Development Timeouts**: Environment-aware configuration with faster timeouts locally (5s test, 3s action) vs CI (30s test, 5s action)
 - **Test Structure**:
   - `tests/e2e/functional/app.spec.ts` - Application layout and responsiveness
   - `tests/e2e/functional/lyrics.spec.ts` - Lyrics display and synchronization
   - `tests/e2e/functional/player.spec.ts` - Player controls and interactions
+  - `tests/e2e/functional/settings.spec.ts` - Settings screen functionality and provider management
+  - `tests/e2e/functional/playlist.spec.ts` - Playlist navigation and song seeking
+  - `tests/e2e/functional/error-handling.spec.ts` - Error scenarios and graceful degradation
+  - `tests/e2e/functional/accessibility.spec.ts` - Keyboard navigation and WCAG compliance
   - `tests/e2e/visual/visual.spec.ts` - Visual regression screenshot generation
 - **Configuration**: `playwright.config.ts` with CI-optimized settings and multiple browser support
 - **Test Directory**: `./tests/e2e` (configured in Playwright config)
-- **Environment**: Runs against preview server (port 4173) with simulated player data
-- **Selectors**: Uses `[data-testid="..."]` attributes for reliable element targeting
+- **Environment**: Runs against preview server (port 5173) with simulated player data
+- **Selectors**: Uses `[data-testid="..."]` attributes for reliable element targeting, with specific support for Radix UI components
 
 **Visual Regression (Lost Pixel)**:
 - **Configuration**: `client/lostpixel.config.ts` defines custom shots path and project settings
@@ -302,5 +307,7 @@ Both workspaces use consistent TypeScript setup:
 # important-instruction-reminders
 Do what has been asked; nothing more, nothing less.
 NEVER create files unless they're absolutely necessary for achieving your goal.
-ALWAYS prefer editing an existing file to creating a new one.
+ALWAYS prefer editing an existing file to creating a new one, UNLESS there are benefits to creating a new file (like better organization or performance).
 NEVER proactively create documentation files (*.md) or README files. Only create documentation files if explicitly requested by the User.
+itf=Go ahead and implement the fix.
+racc=Review all changes and commit (use separate commits if it makes logical sense).

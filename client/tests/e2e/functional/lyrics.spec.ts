@@ -22,7 +22,7 @@ test.describe("Lyrics Display", () => {
     await page.goto("/");
 
     // Wait for the simulated player to start and lyrics to load
-    await page.waitForSelector('[data-testid="lyrics-display"]');
+    await page.waitForSelector('[data-testid="lyrics-screen"]');
 
     // Wait for the player to be initialized and playing
     await page.waitForFunction(() => {
@@ -118,32 +118,6 @@ test.describe("Lyrics Display", () => {
     });
   });
 
-  test.describe("Source Switching", () => {
-    test("should show source switcher when multiple sources available", async ({
-      page,
-    }) => {
-      await page.setViewportSize({ width: 768, height: 1024 });
-
-      const sourceSwitcher = page.locator('[data-testid="source-switcher"]');
-      await expect(sourceSwitcher).toBeVisible();
-    });
-
-    test("should allow switching between lyrics sources", async ({ page }) => {
-      await page.setViewportSize({ width: 768, height: 1024 });
-
-      const sourceSwitcher = page.locator('[data-testid="source-switcher"]');
-      if (await sourceSwitcher.isVisible()) {
-        await sourceSwitcher.click();
-
-        const sourceOptions = page.locator('[data-testid="source-option"]');
-        // It's okay if source options don't exist - this is an optional feature
-        if ((await sourceOptions.count()) > 0) {
-          await expect(sourceOptions.first()).toBeVisible();
-        }
-      }
-    });
-  });
-
   test.describe("Visual Effects", () => {
     test("should show background effects with album artwork", async ({
       page,
@@ -157,12 +131,12 @@ test.describe("Lyrics Display", () => {
     test("should handle responsive design transitions", async ({ page }) => {
       // Start in portrait
       await page.setViewportSize({ width: 768, height: 1024 });
-      await page.waitForSelector('[data-testid="lyrics-display"]');
+      await page.waitForSelector('[data-testid="lyrics-screen"]');
 
       // Switch to landscape
       await page.setViewportSize({ width: 1024, height: 768 });
 
-      const lyricsDisplay = page.locator('[data-testid="lyrics-display"]');
+      const lyricsDisplay = page.locator('[data-testid="lyrics-screen"]');
       await expect(lyricsDisplay).toBeVisible();
 
       const lyricsLines = page.locator('[data-testid="lyrics-line"]');

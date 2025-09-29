@@ -37,7 +37,7 @@ export interface LyricsProvider {
  * Configuration for lyrics providers
  */
 export interface LyricsProviderConfig {
-  type: "http" | "simulated" | "lrclib" | "genius";
+  type: "remote" | "local" | "lrclib" | "genius";
   name: string;
   options?: Record<string, unknown>;
 }
@@ -132,7 +132,7 @@ export interface SourceOperationResult {
  * Configuration for music sources with plugin support
  */
 export interface SourceConfig {
-  type: "http" | "simulated";
+  type: "remote" | "local";
   name: string;
   options?: Record<string, unknown>;
   lyricsProvider?: LyricsProviderConfig;

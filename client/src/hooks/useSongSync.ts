@@ -1,24 +1,30 @@
 import { useAtomValue, useSetAtom } from "jotai";
 import { useQuery } from "@tanstack/react-query";
 import { syncFromSourceAtom } from "@/atoms/playerAtoms";
-import { currentMusicSourceAtom } from "@/atoms/sourceAtoms";
+import {
+  currentMusicModeAtom,
+  currentLyricsProviderAtom,
+  currentArtworkProviderAtom,
+} from "@/atoms/settingsAtoms";
 import { useEffect } from "react";
 import type { Song } from "@/lib/api";
 
 /**
- * Hook that syncs player state with data from the current music source
+ * Hook that syncs player state with data from the current music mode
  * Only updates atoms when user is not actively interacting with controls
  */
 export const useSongSync = () => {
-  const source = useAtomValue(currentMusicSourceAtom);
+  const musicMode = useAtomValue(currentMusicModeAtom);
   const syncFromSource = useSetAtom(syncFromSourceAtom);
 
-  // Use React Query to fetch song data from the current source
+  // Use React Query to fetch song data from the current music mode
   const { data: songData } = useQuery({
-    queryKey: ["song", source.getId()],
+    queryKey: ["song", musicMode?.getId()],
     queryFn: async () => {
-      return await source.getSong();
+      if (!musicMode) throw new Error("No music mode available");
+      return await musicMode.getSong();
     },
+    enabled: !!musicMode,
     refetchInterval: 300, // Keep the frequent polling for real-time sync
     staleTime: 0, // Always consider stale - refetch immediately
     gcTime: 0, // Don't cache in memory at all
@@ -30,22 +36,27 @@ export const useSongSync = () => {
     }
   }, [songData, syncFromSource]);
 
-  // Return the song data and source info for components that might need it
+  // Return the song data and mode info for components that might need it
   return {
     songData,
-    source,
+    musicMode,
   };
 };
 
 /**
- * Hook that fetches lyrics using the current music source's lyrics provider
+ * Hook that fetches lyrics using the current lyrics provider
  */
-export const useLyricsFromSource = (song?: Song) => {
-  const source = useAtomValue(currentMusicSourceAtom);
-  const lyricsProvider = source.getLyricsProvider();
+export const useLyrics = (song?: Song) => {
+  const lyricsProvider = useAtomValue(currentLyricsProviderAtom);
 
   return useQuery({
-    queryKey: ["lyrics", source.getId(), song?.name, song?.artist, song?.album],
+    queryKey: [
+      "lyrics",
+      lyricsProvider?.getId(),
+      song?.name,
+      song?.artist,
+      song?.album,
+    ],
     queryFn: async (): Promise<string> => {
       if (!song || !lyricsProvider) {
         return "";
@@ -61,16 +72,15 @@ export const useLyricsFromSource = (song?: Song) => {
 };
 
 /**
- * Hook that fetches artwork using the current music source's artwork provider
+ * Hook that fetches artwork using the current artwork provider
  */
-export const useArtworkFromSource = (song?: Song) => {
-  const source = useAtomValue(currentMusicSourceAtom);
-  const artworkProvider = source.getArtworkProvider();
+export const useArtwork = (song?: Song) => {
+  const artworkProvider = useAtomValue(currentArtworkProviderAtom);
 
   return useQuery({
     queryKey: [
       "artwork",
-      source.getId(),
+      artworkProvider?.getId(),
       song?.name,
       song?.artist,
       song?.album,

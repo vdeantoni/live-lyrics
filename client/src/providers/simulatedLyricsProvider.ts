@@ -1,5 +1,5 @@
 import type { Song } from "@/lib/api";
-import type { LyricsProvider } from "@/types/musicSource";
+import type { LyricsProvider } from "@/types/settings";
 
 /**
  * Simulated lyrics provider with hardcoded demo lyrics
@@ -103,11 +103,15 @@ export class SimulatedLyricsProvider implements LyricsProvider {
   }
 
   getId(): string {
-    return "simulated-lyrics";
+    return "simulated";
   }
 
   getName(): string {
-    return "Simulated Lyrics";
+    return "Simulated";
+  }
+
+  getDescription(): string {
+    return "Hardcoded demo lyrics for classic songs";
   }
 
   async supportsLyrics(song: Song): Promise<boolean> {
