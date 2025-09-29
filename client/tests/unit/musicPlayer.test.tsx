@@ -50,6 +50,7 @@ import {
   lyricsProvidersWithStatusAtom,
   artworkProvidersWithStatusAtom,
   playersWithStatusAtom,
+  remotePlayerWithStatusAtom,
 } from "@/atoms/settingsAtoms";
 
 vi.mock("jotai", async () => {
@@ -129,6 +130,14 @@ vi.mock("jotai", async () => {
               isAvailable: true,
             },
           ];
+        case remotePlayerWithStatusAtom:
+          return {
+            id: "remote",
+            name: "Remote",
+            description: "Connect to a remote server",
+            isAvailable: true,
+            isLoading: false,
+          };
         default:
           return undefined;
       }
@@ -156,7 +165,7 @@ describe("Player Components", () => {
 
   it("should render Player component", () => {
     renderWithProvider(<Player />);
-    expect(screen.getByTestId("music-player")).toBeInTheDocument();
+    expect(screen.getByTestId("player")).toBeInTheDocument();
   });
 
   it("should render MainScreen with settings button", () => {

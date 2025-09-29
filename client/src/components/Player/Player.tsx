@@ -12,7 +12,7 @@ const Player = () => {
 
   return (
     <div
-      data-testid="music-player"
+      data-testid="player"
       className="mx-auto flex h-full w-full flex-col gap-4 rounded-2xl bg-zinc-800 p-6 shadow-xl"
     >
       <MainScreen />

@@ -4,7 +4,7 @@ import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client
 import { createAsyncStoragePersister } from "@tanstack/query-async-storage-persister";
 import { Provider as JotaiProvider } from "jotai";
 import Player from "@/components/Player/Player";
-import { useProviderAvailabilityStartup } from "@/hooks/useProviderAvailabilityStartup";
+import { useAvailabilityChecks } from "@/hooks/useAvailabilityChecks";
 
 // Create a client with aggressive caching
 const queryClient = new QueryClient();
@@ -19,7 +19,7 @@ const persister = createAsyncStoragePersister({
 // Inner component to use hooks inside Jotai Provider
 const AppContent = () => {
   // Check provider availability on app startup
-  useProviderAvailabilityStartup();
+  useAvailabilityChecks();
 
   return (
     <div className="m-auto flex h-full w-full flex-col items-center p-2 lg:p-4 xl:p-8">

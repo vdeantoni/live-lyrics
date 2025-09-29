@@ -2,6 +2,14 @@ import { test, expect } from "@playwright/test";
 
 test.describe("Settings Functionality", () => {
   test.beforeEach(async ({ page }) => {
+    await page.goto("/");
+
+    // Clear settings from localStorage to ensure a clean state for each test
+    await page.evaluate(() => localStorage.removeItem("LIVE_LYRICS_SETTINGS"));
+
+    // Reload the page to apply the cleared storage
+    await page.reload();
+
     // Mock lyrics API for simulated songs
     await page.route("**/get*", async (route) => {
       await route.fulfill({
@@ -12,15 +20,12 @@ test.describe("Settings Functionality", () => {
           lines: [
             { startTimeMs: 0, words: "Is this the real life?" },
             { startTimeMs: 15000, words: "Is this just fantasy?" },
-            { startTimeMs: 30000, words: "Caught in a landslide" },
-            { startTimeMs: 45000, words: "No escape from reality" },
           ],
         }),
       });
     });
 
-    await page.goto("/");
-    await page.waitForSelector('[data-testid="music-player"]');
+    await page.waitForSelector('[data-testid="player"]');
   });
 
   test.describe("Settings Screen", () => {
@@ -78,8 +83,7 @@ test.describe("Settings Functionality", () => {
       await expect(page.getByText("Configure your player")).toBeVisible();
 
       // Check player section
-      await expect(page.getByRole("heading", { name: "Player" })).toBeVisible();
-      await expect(page.getByText("Local Player")).toBeVisible();
+      await expect(page.getByText("Remote Player")).toBeVisible();
 
       // Check provider sections (these load with individual loading states)
       await expect(page.getByText("Lyrics Provider")).toBeVisible();
@@ -106,23 +110,50 @@ test.describe("Settings Functionality", () => {
       const lyricsSection = page.locator(
         '[data-testid="lyrics-provider-section"]',
       );
-      const dragHandles = lyricsSection.locator(
-        '[data-testid^="provider-drag-handle-"]',
+      const providerItems = lyricsSection.locator(
+        '[data-testid^="provider-item-"]',
       );
 
-      const dragHandleCount = await dragHandles.count();
-      if (dragHandleCount >= 2) {
-        // Get the first two drag handles
-        const firstHandle = dragHandles.nth(0);
-        const secondHandle = dragHandles.nth(1);
+      const itemCount = await providerItems.count();
+      if (itemCount >= 2) {
+        // Get the ID of the first item before dragging
+        const originalFirstItemId = await providerItems
+          .nth(0)
+          .getAttribute("data-testid");
 
-        // Perform drag and drop operation
-        await firstHandle.dragTo(secondHandle);
+        const firstHandle = lyricsSection
+          .locator('[data-testid^="provider-drag-handle-"]')
+          .nth(0);
+        const secondItem = providerItems.nth(1);
 
-        // The order should have changed (we can't easily verify the exact order change in E2E,
-        // but we can verify the UI responded to the drag operation)
-        await expect(dragHandles.nth(0)).toBeVisible();
-        await expect(dragHandles.nth(1)).toBeVisible();
+        const firstHandleBoundingBox = await firstHandle.boundingBox();
+        const secondItemBoundingBox = await secondItem.boundingBox();
+
+        if (firstHandleBoundingBox && secondItemBoundingBox) {
+          // Start the drag from the center of the first handle
+          await page.mouse.move(
+            firstHandleBoundingBox.x + firstHandleBoundingBox.width / 2,
+            firstHandleBoundingBox.y + firstHandleBoundingBox.height / 2,
+          );
+          await page.mouse.down();
+
+          // Drag over to the center of the second item
+          await page.mouse.move(
+            secondItemBoundingBox.x + secondItemBoundingBox.width / 2,
+            secondItemBoundingBox.y + secondItemBoundingBox.height / 2,
+            { steps: 5 }, // Simulate a smoother drag
+          );
+
+          // Release the mouse to drop
+          await page.mouse.up();
+        }
+
+        // Use expect.poll to wait for the DOM to update and assert the change
+        await expect
+          .poll(async () => {
+            return providerItems.nth(0).getAttribute("data-testid");
+          })
+          .not.toEqual(originalFirstItemId);
       }
     });
 
@@ -173,23 +204,26 @@ test.describe("Settings Functionality", () => {
 
       await page.waitForSelector('[data-testid="settings-screen"]');
 
-      // Find the player toggle switch
-      const playerToggle = page.locator('[role="switch"]').first();
+      // Wait for remote player item to be visible
+      await page.waitForSelector('[data-testid="remote-player-item"]');
 
-      // Initially should be unchecked (Local Player)
-      await expect(page.getByText("Local Player")).toBeVisible();
+      // Find the remote player toggle switch
+      const playerToggle = page.locator('[data-testid="remote-player-toggle"]');
+
+      // Initially should be unchecked (Local player mode)
+      await expect(playerToggle).not.toBeChecked();
 
       // Toggle to Remote Player
       await playerToggle.click();
 
-      // Should now show Remote Player
-      await expect(page.getByText("Remote Player")).toBeVisible();
+      // Should now be checked (Remote player mode)
+      await expect(playerToggle).toBeChecked();
 
       // Toggle back to Local Player
       await playerToggle.click();
 
-      // Should be back to Local Player
-      await expect(page.getByText("Local Player")).toBeVisible();
+      // Should be unchecked again (Local player mode)
+      await expect(playerToggle).not.toBeChecked();
     });
 
     test("should show provider availability status", async ({ page }) => {
@@ -219,6 +253,40 @@ test.describe("Settings Functionality", () => {
       );
       const activeCount = await activeProviders.count();
       expect(activeCount).toBeGreaterThan(0);
+    });
+
+    test("should show remote player availability status", async ({ page }) => {
+      await page.setViewportSize({ width: 768, height: 1024 });
+
+      // Open settings
+      const settingsButton = page.locator('[data-testid="settings-button"]');
+      await settingsButton.click();
+
+      await page.waitForSelector('[data-testid="settings-screen"]');
+
+      // Wait for remote player item to be visible
+      await page.waitForSelector('[data-testid="remote-player-item"]');
+
+      // Should have remote player status indicator
+      const playerStatus = page.locator('[data-testid="remote-player-status"]');
+      await expect(playerStatus).toBeVisible();
+
+      // Initially may show loading spinner, then should resolve to available/unavailable
+      await page.waitForFunction(
+        () => {
+          const statusElement = document.querySelector(
+            '[data-testid="remote-player-status"]',
+          );
+          return (
+            statusElement && !statusElement.innerHTML.includes("animate-spin")
+          );
+        },
+        {},
+        { timeout: 10000 },
+      );
+
+      // Should still be visible after loading
+      await expect(playerStatus).toBeVisible();
     });
   });
 

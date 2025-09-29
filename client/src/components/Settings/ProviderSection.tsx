@@ -40,7 +40,7 @@ export const ProviderSection = ({
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 10, // Prevent accidental drags - back to 8px for better UX
+        distance: 8,
       },
     }),
     useSensor(KeyboardSensor, {
@@ -74,7 +74,7 @@ export const ProviderSection = ({
         onDragEnd={handleDragEnd}
       >
         <SortableContext
-          items={providers}
+          items={providers.map((p) => p.id)}
           strategy={verticalListSortingStrategy}
         >
           <div

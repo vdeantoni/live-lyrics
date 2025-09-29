@@ -22,6 +22,8 @@ import {
   settingsAtom,
   checkLyricsProviderAvailabilityAtom,
   checkArtworkProviderAvailabilityAtom,
+  remotePlayerWithStatusAtom,
+  checkPlayerAvailabilityAtom,
 } from "@/atoms/settingsAtoms";
 
 // Mock React Query
@@ -55,6 +57,7 @@ describe("SettingsScreen", () => {
   const mockSetSettings = vi.fn();
   const mockCheckLyricsAvailability = vi.fn();
   const mockCheckArtworkAvailability = vi.fn();
+  const mockCheckPlayerAvailability = vi.fn();
   const mockQueryClient = {
     clear: vi.fn(),
   };
@@ -144,6 +147,14 @@ describe("SettingsScreen", () => {
           return mockLyricsProvidersWithStatus;
         case artworkProvidersWithStatusAtom:
           return mockArtworkProvidersWithStatus;
+        case remotePlayerWithStatusAtom:
+          return {
+            id: "remote",
+            name: "Server",
+            description: "Connect to a remote server",
+            isAvailable: true,
+            isLoading: false,
+          };
         default:
           return undefined;
       }
@@ -163,6 +174,8 @@ describe("SettingsScreen", () => {
           return mockCheckLyricsAvailability;
         case checkArtworkProviderAvailabilityAtom:
           return mockCheckArtworkAvailability;
+        case checkPlayerAvailabilityAtom:
+          return mockCheckPlayerAvailability;
         default:
           return vi.fn();
       }
@@ -192,16 +205,16 @@ describe("SettingsScreen", () => {
 
   it("displays player section", async () => {
     await renderComponent();
-    expect(screen.getByText("Player")).toBeInTheDocument();
-    expect(screen.getByText("Local")).toBeInTheDocument();
-    expect(screen.getByText("Local player")).toBeInTheDocument();
+    expect(screen.getByText("Remote Player")).toBeInTheDocument();
+    expect(screen.getByText("Server")).toBeInTheDocument();
+    expect(screen.getByText("Connect to a remote server")).toBeInTheDocument();
   });
 
   it("handles player toggle", async () => {
     await renderComponent();
-    const playerToggle = screen.getByTestId("music-player-toggle");
+    const remotePlayerToggle = screen.getByTestId("remote-player-toggle");
     await act(async () => {
-      fireEvent.click(playerToggle);
+      fireEvent.click(remotePlayerToggle);
     });
     expect(mockSetPlayerId).toHaveBeenCalledWith("remote");
   });

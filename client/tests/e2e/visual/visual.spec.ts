@@ -87,7 +87,7 @@ test.describe("Visual Regression Tests", () => {
   test("homepage portrait mode", async ({ page }) => {
     await page.setViewportSize({ width: 768, height: 1024 });
     await page.goto("/");
-    await page.waitForSelector('[data-testid="music-player"]');
+    await page.waitForSelector('[data-testid="player"]');
 
     // Wait for background image and lyrics to load completely
     await waitForBackgroundImage(page);
@@ -103,7 +103,7 @@ test.describe("Visual Regression Tests", () => {
   test("homepage landscape mode", async ({ page }) => {
     await page.setViewportSize({ width: 1024, height: 768 });
     await page.goto("/");
-    await page.waitForSelector('[data-testid="music-player"]');
+    await page.waitForSelector('[data-testid="player"]');
 
     // Wait for background image and lyrics to load completely
     await waitForBackgroundImage(page);
@@ -119,11 +119,11 @@ test.describe("Visual Regression Tests", () => {
   test("player component states", async ({ page }) => {
     await page.setViewportSize({ width: 768, height: 1024 });
     await page.goto("/");
-    await page.waitForSelector('[data-testid="music-player"]');
+    await page.waitForSelector('[data-testid="player"]');
 
     // Screenshot player in paused state
     await page.waitForTimeout(1000);
-    await page.locator('[data-testid="music-player"]').screenshot({
+    await page.locator('[data-testid="player"]').screenshot({
       path: "lost-pixel/player-paused.png",
     });
 
@@ -142,7 +142,7 @@ test.describe("Visual Regression Tests", () => {
     }
 
     await page.waitForTimeout(500); // Let UI update
-    await page.locator('[data-testid="music-player"]').screenshot({
+    await page.locator('[data-testid="player"]').screenshot({
       path: "lost-pixel/player-playing.png",
     });
   });
@@ -165,7 +165,7 @@ test.describe("Visual Regression Tests", () => {
   test("settings screen visual", async ({ page }) => {
     await page.setViewportSize({ width: 768, height: 1024 });
     await page.goto("/");
-    await page.waitForSelector('[data-testid="music-player"]');
+    await page.waitForSelector('[data-testid="player"]');
 
     // Open settings
     await page.click('[data-testid="settings-button"]');
@@ -183,7 +183,7 @@ test.describe("Visual Regression Tests", () => {
   test("mobile viewport visual", async ({ page }) => {
     await page.setViewportSize({ width: 320, height: 568 }); // iPhone SE
     await page.goto("/");
-    await page.waitForSelector('[data-testid="music-player"]');
+    await page.waitForSelector('[data-testid="player"]');
 
     // Wait for background image and lyrics to load completely
     await waitForBackgroundImage(page);
@@ -199,7 +199,7 @@ test.describe("Visual Regression Tests", () => {
   test("tablet landscape visual", async ({ page }) => {
     await page.setViewportSize({ width: 1024, height: 768 }); // iPad Landscape
     await page.goto("/");
-    await page.waitForSelector('[data-testid="music-player"]');
+    await page.waitForSelector('[data-testid="player"]');
 
     // Wait for background image and lyrics to load completely
     await waitForBackgroundImage(page);
