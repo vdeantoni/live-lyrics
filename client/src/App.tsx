@@ -4,6 +4,7 @@ import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client
 import { createAsyncStoragePersister } from "@tanstack/query-async-storage-persister";
 import { Provider as JotaiProvider } from "jotai";
 import Player from "@/components/Player/Player";
+import { useProviderAvailabilityStartup } from "@/hooks/useProviderAvailabilityStartup";
 
 // Create a client with aggressive caching
 const queryClient = new QueryClient();
@@ -14,6 +15,18 @@ const persister = createAsyncStoragePersister({
   key: "LIVE_LYRICS_CACHE", // Custom key for our app
   throttleTime: 1000, // Throttle writes to localStorage
 });
+
+// Inner component to use hooks inside Jotai Provider
+const AppContent = () => {
+  // Check provider availability on app startup
+  useProviderAvailabilityStartup();
+
+  return (
+    <div className="m-auto flex h-full w-full flex-col items-center p-2 lg:p-4 xl:p-8">
+      <Player />
+    </div>
+  );
+};
 
 function App() {
   return (
@@ -26,9 +39,7 @@ function App() {
           buster: "v1", // Cache version - increment to invalidate old caches
         }}
       >
-        <div className="m-auto flex h-full w-full flex-col items-center p-2 lg:p-4 xl:p-8">
-          <Player />
-        </div>
+        <AppContent />
         <ReactQueryDevtools initialIsOpen={false} />
       </PersistQueryClientProvider>
     </JotaiProvider>
