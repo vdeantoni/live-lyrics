@@ -1,8 +1,8 @@
 import { useAtomValue, useSetAtom } from "jotai";
 import { isSettingsOpenAtom, toggleSettingsAtom } from "@/atoms/settingsAtoms";
-import { Settings } from "lucide-react";
+import { Settings, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import LyricsScreen from "./LyricsScreen";
 import SettingsScreen from "./SettingsScreen";
 
@@ -12,39 +12,54 @@ const MainScreen = () => {
 
   return (
     <div className="relative flex-1 overflow-hidden rounded-xl">
-      {/* Settings Button - Only visible when settings are closed */}
-      {!isSettingsOpen && (
-        <div className="absolute right-4 top-4 z-30">
-          <Button
-            data-testid="settings-button"
-            size="sm"
-            variant="ghost"
-            className="h-10 w-10 rounded-full border border-white/10 bg-black/40 p-2 shadow-lg backdrop-blur-md hover:scale-105 hover:bg-black/60"
-            onClick={toggleSettings}
-            aria-label="Open settings"
+      {/* Settings/Close Button - Always visible */}
+      <div className="absolute right-4 top-4 z-40">
+        <Button
+          data-testid={
+            isSettingsOpen ? "close-settings-button" : "settings-button"
+          }
+          size="sm"
+          variant="ghost"
+          className="h-10 w-10 rounded-full border border-white/10 bg-black/40 p-2 shadow-lg backdrop-blur-md hover:scale-105 hover:bg-black/60"
+          onClick={toggleSettings}
+          aria-label={isSettingsOpen ? "Close settings" : "Open settings"}
+        >
+          <motion.div
+            key={isSettingsOpen ? "close" : "settings"}
+            initial={{ rotate: 0, scale: 0.8 }}
+            animate={{ rotate: 0, scale: 1 }}
+            exit={{ rotate: 90, scale: 0.8 }}
+            transition={{ duration: 0.2, ease: "easeInOut" }}
           >
-            <motion.div
-              initial={{ rotate: 0 }}
-              whileHover={{ rotate: 15 }}
-              transition={{ duration: 0.2, ease: "easeInOut" }}
-            >
+            {isSettingsOpen ? (
+              <X className="h-5 w-5 text-white/90" />
+            ) : (
               <Settings className="h-5 w-5 text-white/90" />
-            </motion.div>
-          </Button>
-        </div>
-      )}
+            )}
+          </motion.div>
+        </Button>
+      </div>
 
-      {/* Content Area - Switch between lyrics and settings */}
-      <motion.div
-        className="h-full w-full"
-        key={isSettingsOpen ? "settings" : "lyrics"}
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -20 }}
-        transition={{ duration: 0.3, ease: "easeInOut" }}
-      >
-        {isSettingsOpen ? <SettingsScreen /> : <LyricsScreen />}
-      </motion.div>
+      {/* Lyrics Screen - Always visible, stays in place */}
+      <LyricsScreen />
+
+      {/* Settings Screen - Slides from bottom */}
+      <AnimatePresence>
+        {isSettingsOpen && (
+          <motion.div
+            className="absolute inset-0 z-30"
+            initial={{ y: "100%" }}
+            animate={{ y: 0 }}
+            exit={{ y: "100%" }}
+            transition={{
+              duration: 0.3,
+              ease: [0.25, 0.1, 0.25, 1],
+            }}
+          >
+            <SettingsScreen />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

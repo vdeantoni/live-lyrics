@@ -1,10 +1,14 @@
 import MainScreen from "./MainScreen";
 import PlayerControls from "./PlayerControls";
 import { useSongSync } from "@/hooks/useSongSync";
+import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 
 const MusicPlayer = () => {
   // Sync with current music mode data - only called once at the top level
-  useSongSync();
+  const { songData, musicMode } = useSongSync();
+
+  // Global keyboard shortcuts
+  useKeyboardShortcuts(musicMode, songData);
 
   return (
     <div
