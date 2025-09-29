@@ -92,7 +92,10 @@ const LyricsProvider = () => {
   // Show loading state while waiting for lyrics content to be fetched
   if (rawLrcContent === null) {
     return (
-      <div className="flex h-full min-h-96 items-center justify-center">
+      <div
+        className="flex h-full min-h-96 items-center justify-center"
+        data-testid="lyrics-loading"
+      >
         <div className="text-zinc-400">Loading lyrics...</div>
       </div>
     );

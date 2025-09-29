@@ -33,6 +33,19 @@ const waitForBackgroundImage = async (page: Page, timeout: number = 5000) => {
   }
 };
 
+// Utility function to wait for lyrics to load (no more loading state)
+const waitForLyricsToLoad = async (page: Page, timeout: number = 5000) => {
+  try {
+    // Wait for the lyrics loading state to disappear
+    await page.waitForSelector('[data-testid="lyrics-loading"]', {
+      state: "detached",
+      timeout,
+    });
+  } catch {
+    console.log("Lyrics loading timed out, proceeding with test...");
+  }
+};
+
 test.describe("Visual Regression Tests", () => {
   test.beforeEach(async ({ page }) => {
     // Mock lyrics API for consistent visual tests
@@ -76,9 +89,9 @@ test.describe("Visual Regression Tests", () => {
     await page.goto("/");
     await page.waitForSelector('[data-testid="music-player"]');
 
-    // Wait for background image to load completely
+    // Wait for background image and lyrics to load completely
     await waitForBackgroundImage(page);
-    await page.waitForTimeout(1000);
+    await waitForLyricsToLoad(page);
 
     // Generate screenshot for Lost Pixel
     await page.screenshot({
@@ -92,9 +105,9 @@ test.describe("Visual Regression Tests", () => {
     await page.goto("/");
     await page.waitForSelector('[data-testid="music-player"]');
 
-    // Wait for background image to load completely
+    // Wait for background image and lyrics to load completely
     await waitForBackgroundImage(page);
-    await page.waitForTimeout(1000);
+    await waitForLyricsToLoad(page);
 
     // Generate screenshot for Lost Pixel
     await page.screenshot({
@@ -114,9 +127,21 @@ test.describe("Visual Regression Tests", () => {
       path: "lost-pixel/player-paused.png",
     });
 
-    // Click play and screenshot playing state
+    // Click play and set slider to 50% for playing state
     await page.click('[data-testid="play-pause-button"]');
-    await page.waitForTimeout(1000); // Let UI update
+
+    // Set progress slider to 50%
+    const slider = page.locator('[data-testid="progress-slider"]');
+    const sliderBounds = await slider.boundingBox();
+    if (sliderBounds) {
+      // Click at 50% position of the slider
+      await page.mouse.click(
+        sliderBounds.x + sliderBounds.width * 0.5,
+        sliderBounds.y + sliderBounds.height / 2,
+      );
+    }
+
+    await page.waitForTimeout(500); // Let UI update
     await page.locator('[data-testid="music-player"]').screenshot({
       path: "lost-pixel/player-playing.png",
     });
@@ -127,9 +152,9 @@ test.describe("Visual Regression Tests", () => {
     await page.goto("/");
     await page.waitForSelector('[data-testid="lyrics-screen"]');
 
-    // Wait for background image to load completely
+    // Wait for background image and lyrics to load completely
     await waitForBackgroundImage(page);
-    await page.waitForTimeout(1000);
+    await waitForLyricsToLoad(page);
 
     // Screenshot just the lyrics display area
     await page.locator('[data-testid="lyrics-screen"]').screenshot({
@@ -160,9 +185,9 @@ test.describe("Visual Regression Tests", () => {
     await page.goto("/");
     await page.waitForSelector('[data-testid="music-player"]');
 
-    // Wait for background image to load completely
+    // Wait for background image and lyrics to load completely
     await waitForBackgroundImage(page);
-    await page.waitForTimeout(1000);
+    await waitForLyricsToLoad(page);
 
     // Full page screenshot for mobile
     await page.screenshot({
@@ -176,9 +201,9 @@ test.describe("Visual Regression Tests", () => {
     await page.goto("/");
     await page.waitForSelector('[data-testid="music-player"]');
 
-    // Wait for background image to load completely
+    // Wait for background image and lyrics to load completely
     await waitForBackgroundImage(page);
-    await page.waitForTimeout(1000);
+    await waitForLyricsToLoad(page);
 
     // Full page screenshot for tablet landscape
     await page.screenshot({
@@ -192,8 +217,9 @@ test.describe("Visual Regression Tests", () => {
     await page.goto("/");
     await page.waitForSelector('[data-testid="lyrics-screen"]');
 
-    // Wait for background image to load completely first
+    // Wait for background image and lyrics to load completely first
     await waitForBackgroundImage(page);
+    await waitForLyricsToLoad(page);
 
     // Start playing to get highlighted lyrics
     await page.click('[data-testid="play-pause-button"]');
@@ -205,8 +231,6 @@ test.describe("Visual Regression Tests", () => {
         timeout: 5000,
       },
     );
-
-    await page.waitForTimeout(1000);
 
     // Screenshot lyrics with highlighting
     await page.locator('[data-testid="lyrics-screen"]').screenshot({

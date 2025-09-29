@@ -189,7 +189,8 @@ These checks leverage Turborepo's caching system for faster execution.
 
 - The app requires macOS and Apple Music for full functionality
 - Tests use a simulated player environment for cross-platform compatibility
-- Visual regression tests run automatically in CI/CD via Lost Pixel
+- Visual regression tests run automatically in CI/CD via Lost Pixel with robust background image loading detection
+- Visual tests include API mocking to handle external service failures gracefully
 - Use `[data-testid="..."]` attributes for test selectors
 - GitHub Actions include advanced caching for faster CI/CD builds:
   - pnpm store caching for dependencies
@@ -213,6 +214,8 @@ Runs on pull requests for quick feedback
 Runs on pull requests:
 - **Lost Pixel Integration**: Automated visual regression detection
 - **Screenshot Comparison**: Compares UI changes against baselines
+- **Background Loading**: Robust handling of artwork loading and network failures
+- **API Mocking**: Consistent test results with mocked external services
 - **Artifacts**: Visual test results and Playwright reports
 - **Cloud Integration**: Results available in Lost Pixel dashboard
 
