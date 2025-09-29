@@ -76,9 +76,10 @@ describe("MainScreen", () => {
       </JotaiProvider>,
     );
 
+    // Both screens are rendered now - lyrics stays in place, settings slides over
     expect(screen.getByTestId("settings-screen")).toBeInTheDocument();
-    expect(screen.queryByTestId("lyrics-screen")).not.toBeInTheDocument();
-    expect(screen.queryByTestId("settings-button")).not.toBeInTheDocument();
+    expect(screen.getByTestId("lyrics-screen")).toBeInTheDocument();
+    expect(screen.getByTestId("close-settings-button")).toBeInTheDocument();
   });
 
   it("handles settings button click", () => {

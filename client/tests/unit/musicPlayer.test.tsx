@@ -9,7 +9,23 @@ import SettingsScreen from "@/components/Player/SettingsScreen";
 
 // Mock components that might have CSS issues
 vi.mock("@/hooks/useSongSync", () => ({
-  useSongSync: vi.fn(),
+  useSongSync: vi.fn(() => ({
+    songData: {
+      name: "Test Song",
+      artist: "Test Artist",
+      album: "Test Album",
+      duration: 180,
+      currentTime: 60,
+      isPlaying: true,
+    },
+    musicMode: {
+      getId: () => "test",
+      getName: () => "Test Mode",
+      play: vi.fn(),
+      pause: vi.fn(),
+      seek: vi.fn(),
+    },
+  })),
   useLyrics: vi.fn(() => ({
     data: null,
     isLoading: false,
@@ -20,6 +36,11 @@ vi.mock("@/hooks/useSongSync", () => ({
     isLoading: false,
     isSuccess: true,
   })),
+}));
+
+// Mock keyboard shortcuts hook
+vi.mock("@/hooks/useKeyboardShortcuts", () => ({
+  useKeyboardShortcuts: vi.fn(),
 }));
 
 // Import to ensure providers are registered
@@ -83,7 +104,7 @@ describe("Music Player Components", () => {
   it("should render SettingsScreen component", () => {
     renderWithProvider(<SettingsScreen />);
     expect(screen.getByTestId("settings-screen")).toBeInTheDocument();
-    expect(screen.getByTestId("close-settings-button")).toBeInTheDocument();
+    // Close button is now in MainScreen, not SettingsScreen
     expect(screen.getByText("Settings")).toBeInTheDocument();
     expect(screen.getByText("Configure your music player")).toBeInTheDocument();
   });

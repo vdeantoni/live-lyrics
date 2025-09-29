@@ -41,7 +41,6 @@ vi.mock("@/atoms/settingsAtoms", () => ({
   modeIdAtom: { toString: () => "modeIdAtom" },
   lyricsProviderIdAtom: { toString: () => "lyricsProviderIdAtom" },
   artworkProviderIdAtom: { toString: () => "artworkProviderIdAtom" },
-  toggleSettingsAtom: { toString: () => "toggleSettingsAtom" },
 }));
 
 // Mock jotai hooks
@@ -60,7 +59,6 @@ describe("SettingsScreen", () => {
   const mockSetModeId = vi.fn();
   const mockSetLyricsProviderId = vi.fn();
   const mockSetArtworkProviderId = vi.fn();
-  const mockToggleSettings = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -89,8 +87,6 @@ describe("SettingsScreen", () => {
           return mockSetLyricsProviderId;
         case "artworkProviderIdAtom":
           return mockSetArtworkProviderId;
-        case "toggleSettingsAtom":
-          return mockToggleSettings;
         default:
           return vi.fn();
       }
@@ -107,7 +103,7 @@ describe("SettingsScreen", () => {
     expect(screen.getByTestId("settings-screen")).toBeInTheDocument();
     expect(screen.getByText("Settings")).toBeInTheDocument();
     expect(screen.getByText("Configure your music player")).toBeInTheDocument();
-    expect(screen.getByTestId("close-settings-button")).toBeInTheDocument();
+    // Close button is now in MainScreen, not SettingsScreen
   });
 
   it("displays music mode section", () => {
@@ -124,18 +120,7 @@ describe("SettingsScreen", () => {
     ).toBeInTheDocument();
   });
 
-  it("handles close button click", () => {
-    render(
-      <JotaiProvider>
-        <SettingsScreen />
-      </JotaiProvider>,
-    );
-
-    const closeButton = screen.getByTestId("close-settings-button");
-    fireEvent.click(closeButton);
-
-    expect(mockToggleSettings).toHaveBeenCalledTimes(1);
-  });
+  // Test removed as close button is now handled in MainScreen component
 
   it("handles mode toggle", () => {
     render(

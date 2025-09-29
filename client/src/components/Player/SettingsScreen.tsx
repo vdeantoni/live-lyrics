@@ -3,14 +3,13 @@ import {
   modeIdAtom,
   lyricsProviderIdAtom,
   artworkProviderIdAtom,
-  toggleSettingsAtom,
 } from "@/atoms/settingsAtoms";
 // import { musicModeRegistry } from "@/registries/musicModeRegistry";
 import { lyricsProviderRegistry } from "@/registries/lyricsProviderRegistry";
 import { artworkProviderRegistry } from "@/registries/artworkProviderRegistry";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
-import { X, Circle, CheckCircle } from "lucide-react";
+import { Circle, CheckCircle } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 
@@ -29,7 +28,6 @@ const SettingsScreen = () => {
   const setModeId = useSetAtom(modeIdAtom);
   const setLyricsProviderId = useSetAtom(lyricsProviderIdAtom);
   const setArtworkProviderId = useSetAtom(artworkProviderIdAtom);
-  const toggleSettings = useSetAtom(toggleSettingsAtom);
 
   const [lyricsProviders, setLyricsProviders] = useState<ProviderStatus[]>([]);
   const [artworkProviders, setArtworkProviders] = useState<ProviderStatus[]>(
@@ -159,21 +157,11 @@ const SettingsScreen = () => {
       className="relative h-full w-full overflow-hidden rounded-xl bg-zinc-900/95 backdrop-blur-md"
     >
       {/* Header */}
-      <div className="flex items-start justify-between border-b border-white/10 p-4">
+      <div className="border-b border-white/10 p-4">
         <div>
           <h2 className="text-2xl font-bold text-white">Settings</h2>
           <p className="text-sm text-zinc-400">Configure your music player</p>
         </div>
-        <Button
-          data-testid="close-settings-button"
-          size="sm"
-          variant="ghost"
-          className="h-10 w-10 rounded-full p-2"
-          onClick={toggleSettings}
-          aria-label="Close settings"
-        >
-          <X className="h-5 w-5 text-white/90" />
-        </Button>
       </div>
 
       {/* Settings Content */}

@@ -101,6 +101,8 @@ Both client and server compile to `dist/` directories:
   - Visual lyrics display with synchronized highlighting
   - Responsive design with landscape mode optimizations
   - Animated song name scrolling with hover pause/resume
+  - Global keyboard shortcuts for playback control and navigation
+  - Smooth iOS-style settings panel animations
 
 ### Component Architecture
 
@@ -112,6 +114,21 @@ Both client and server compile to `dist/` directories:
   - `Player.tsx`: Music playback controls with animated song name
   - `AnimatedSongName.tsx`: Framer Motion component for scrolling song titles
 - **ui/**: Reusable UI components (buttons, sliders, skeletons)
+
+### User Interaction Features
+
+**Global Keyboard Shortcuts**:
+- **Space**: Play/Pause toggle
+- **← →**: Seek backward/forward (5 seconds)
+- **Shift + ← →**: Fast seek backward/forward (15 seconds)
+- **C**: Toggle settings screen
+
+**Settings Panel Animation**:
+- Smooth slide-from-bottom transition (300ms duration)
+- iOS-style easing curve `[0.25, 0.1, 0.25, 1]`
+- Lyrics screen remains static while settings overlay slides over
+- Gear button morphs to close button when settings open
+- Smart input field detection prevents keyboard shortcut conflicts
 
 ### Data Flow
 
@@ -304,10 +321,27 @@ Both workspaces use consistent TypeScript setup:
 - pnpm 9.6+ as package manager
 - Node.js 20+ (tested with v24.8.0)
 
+## User Interface & Interaction
+
+### Keyboard Shortcuts
+The application supports global keyboard shortcuts implemented via the `useKeyboardShortcuts` hook:
+- Shortcuts work when the page is focused and user is not typing in input fields
+- Hook automatically detects input contexts to prevent conflicts
+- Provides intuitive media player controls without mouse interaction
+
+### Animation System
+Settings panel uses Framer Motion with optimized transitions:
+- **Performance**: 300ms duration prevents lag while feeling responsive
+- **Easing**: iOS-native curve provides familiar, polished feel
+- **Layout**: Non-destructive overlay preserves lyrics view context
+- **Accessibility**: Respects user motion preferences and keyboard navigation
+
 # important-instruction-reminders
 Do what has been asked; nothing more, nothing less.
 NEVER create files unless they're absolutely necessary for achieving your goal.
 ALWAYS prefer editing an existing file to creating a new one, UNLESS there are benefits to creating a new file (like better organization or performance).
 NEVER proactively create documentation files (*.md) or README files. Only create documentation files if explicitly requested by the User.
+snb=Go back to the main branch, fetch the latest changes from the remotes and reset --hard origin/main. Make sure the branch is clean and ready to go.
 itf=Go ahead and implement the fix.
-racc=Review all changes and commit (use separate commits if it makes logical sense).
+rcc=Review all changes (any obvious mistakes? any logical mistakes? do we really need all this code for this change? are the better ways to do it? are there any performance issues? are there any security vulnerabilities? are there any accessibility issues?), check tests (are the tests up to date? can we remove any test that is not useful? do we need to add more tests?) and commit (use separate commits if it makes logical sense). Make sure no files are left in the working directory.
+ppr=prepare for pr, checkout to a new branch (pick a name that follows git best practices) and give me the url to create a pr and also a gh command to create a pr based on the current branch against main that I can copy and run.
