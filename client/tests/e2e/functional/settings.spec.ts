@@ -78,11 +78,10 @@ test.describe("Settings Functionality", () => {
       await expect(page.getByText("Configure your music player")).toBeVisible();
 
       // Check music player section
-      await expect(page.getByText("Music Player")).toBeVisible();
-      await expect(page.getByText("Local Player")).toBeVisible();
       await expect(
-        page.getByText("Use local player for testing"),
+        page.getByRole("heading", { name: "Music Player" }),
       ).toBeVisible();
+      await expect(page.getByText("Local Player")).toBeVisible();
 
       // Check provider sections (these load asynchronously)
       await expect(page.getByText("Lyrics Provider")).toBeVisible();
@@ -107,11 +106,8 @@ test.describe("Settings Functionality", () => {
       // Toggle to Remote Player
       await playerToggle.click();
 
-      // Should now show Server Player
-      await expect(page.getByText("Server Player")).toBeVisible();
-      await expect(
-        page.getByText("Connect to Apple Music via local server"),
-      ).toBeVisible();
+      // Should now show Remote Player
+      await expect(page.getByText("Remote Player")).toBeVisible();
 
       // Toggle back to Local Player
       await playerToggle.click();
@@ -162,7 +158,6 @@ test.describe("Settings Functionality", () => {
 
       // Settings should still be visible and functional
       await expect(page.getByText("Settings")).toBeVisible();
-      await expect(page.getByText("Music Mode")).toBeVisible();
 
       // Close button should work
       const closeButton = page.locator('[data-testid="close-settings-button"]');

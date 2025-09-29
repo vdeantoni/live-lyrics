@@ -150,7 +150,7 @@ const SettingsScreen = () => {
                   {isRemotePlayer ? "Remote" : "Local"}
                 </div>
                 <div className="text-sm text-zinc-400">
-                  {isRemotePlayer ? "Remove player" : "Local player"}
+                  {isRemotePlayer ? "Remote player" : "Local player"}
                 </div>
               </div>
               <Switch

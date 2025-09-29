@@ -9,14 +9,14 @@ describe("Music Players", () => {
     const player = LocalMusicPlayer.getInstance();
     expect(player.getId()).toBe("local");
     expect(player.getName()).toBe("Local");
-    expect(player.getDescription()).toContain("Simulated");
+    expect(player.getDescription()).toBe("Local player");
   });
 
   it("should create remote music player instance", () => {
     const player = new RemoteMusicPlayer();
     expect(player.getId()).toBe("remote");
-    expect(player.getName()).toBe("Server");
-    expect(player.getDescription()).toContain("Apple Music");
+    expect(player.getName()).toBe("Remote");
+    expect(player.getDescription()).toBe("Remote player");
   });
 
   it("should have local player always available", async () => {

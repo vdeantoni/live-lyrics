@@ -16,11 +16,11 @@ export class RemoteMusicPlayer implements Player {
   }
 
   getName(): string {
-    return "Server";
+    return "Remote";
   }
 
   getDescription(): string {
-    return "Connect to Apple Music via local server";
+    return "Remote player";
   }
 
   async getSong(): Promise<Song> {

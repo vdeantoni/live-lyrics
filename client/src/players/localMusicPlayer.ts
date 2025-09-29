@@ -93,7 +93,7 @@ export class LocalMusicPlayer implements Player {
   }
 
   getDescription(): string {
-    return "Simulated player for testing and development";
+    return "Local player";
   }
 
   private startClock(): void {
