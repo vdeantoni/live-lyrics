@@ -29,7 +29,7 @@ export const LyricsProviderSection = () => {
         checkAvailability(provider.id);
       }
     });
-  }, [lyricsProviderIds, checkAvailability]); // Only depend on provider IDs, not their status
+  }, [lyricsProviderIds, checkAvailability]); // Only depend on provider IDs, not their status - prevents infinite re-renders
 
   const handleToggle = (id: string, enabled: boolean) => {
     const newSet = new Set(enabledLyricsProviders);

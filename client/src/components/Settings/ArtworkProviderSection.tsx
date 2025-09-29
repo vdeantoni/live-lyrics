@@ -29,7 +29,7 @@ export const ArtworkProviderSection = () => {
         checkAvailability(provider.id);
       }
     });
-  }, [artworkProviderIds, checkAvailability]); // Only depend on provider IDs, not their status
+  }, [artworkProviderIds, checkAvailability]); // Only depend on provider IDs, not their status - prevents infinite re-renders
 
   const handleToggle = (id: string, enabled: boolean) => {
     const newSet = new Set(enabledArtworkProviders);
