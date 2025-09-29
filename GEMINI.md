@@ -278,7 +278,8 @@ Both workspaces use consistent TypeScript setup:
 **Performance Optimizations**:
 - **Browser Optimization**: CI uses `test:e2e:install:ci` (Chromium-only) vs local `test:e2e:install` (all browsers)
 - **Workflow Separation**: Visual tests isolated to prevent blocking PRs on screenshot differences
-- **Caching Strategy**: Leverages Turborepo caching and GitHub Actions cache for dependencies
+- **Caching Strategy**: Leverages Turborepo caching and GitHub Actions cache for dependencies and Playwright browsers
+- **Browser Caching**: Playwright browsers cached using pnpm-lock.yaml hash for cache invalidation
 - **Parallel Execution**: Jobs run in parallel where possible for faster feedback
 
 ### macOS Development
@@ -343,5 +344,5 @@ ALWAYS prefer editing an existing file to creating a new one, UNLESS there are b
 NEVER proactively create documentation files (*.md) or README files. Only create documentation files if explicitly requested by the User.
 snb=Go back to the main branch, fetch the latest changes from the remotes and reset --hard origin/main. Make sure the branch is clean and ready to go.
 itf=Go ahead and implement the fix.
-rcc=Review all changes (any obvious mistakes? any logical mistakes? do we really need all this code for this change? are the better ways to do it? are there any performance issues? are there any security vulnerabilities? are there any accessibility issues?), check tests (are the tests up to date? can we remove any test that is not useful? do we need to add more tests?) and commit (use separate commits if it makes logical sense). Make sure no files are left in the working directory. And finally update README.me if necessary as well as CLAUDE.md.
+rcc=Review all changes (any obvious mistakes? any logical mistakes? do we really need all this code for this change? are the better ways to do it? are there any performance issues? are there any security vulnerabilities? are there any accessibility issues?), check tests (are the tests up to date? can we remove any test that is not useful? do we need to add more tests?) and commit (use separate commits if it makes logical sense). And finally update README.me if necessary as well as CLAUDE.md. Make sure no files are left in the working directory.
 ppr=prepare for pr, checkout to a new branch (pick a name that follows git best practices) and give me the url to create a pr and also a gh command to create a pr based on the current branch against main that I can copy and run.
