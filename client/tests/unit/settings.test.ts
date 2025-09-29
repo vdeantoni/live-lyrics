@@ -1,0 +1,74 @@
+import { describe, it, expect } from "vitest";
+import { LocalMusicMode } from "@/modes/localMusicMode";
+import { RemoteMusicMode } from "@/modes/remoteMusicMode";
+import { LrclibLyricsProvider } from "@/providers/lrclibLyricsProvider";
+import { ITunesArtworkProvider } from "@/providers/itunesArtworkProvider";
+
+describe("Music Modes", () => {
+  it("should create local music mode instance", () => {
+    const mode = new LocalMusicMode();
+    expect(mode.getId()).toBe("local");
+    expect(mode.getName()).toBe("Local");
+    expect(mode.getDescription()).toContain("Simulated");
+  });
+
+  it("should create remote music mode instance", () => {
+    const mode = new RemoteMusicMode();
+    expect(mode.getId()).toBe("remote");
+    expect(mode.getName()).toBe("Server");
+    expect(mode.getDescription()).toContain("Apple Music");
+  });
+
+  it("should have local mode always available", async () => {
+    const mode = new LocalMusicMode();
+    const isAvailable = await mode.isAvailable();
+    expect(isAvailable).toBe(true);
+  });
+});
+
+describe("Lyrics Providers", () => {
+  it("should create LrcLib provider instance", () => {
+    const provider = new LrclibLyricsProvider();
+    expect(provider.getId()).toBe("lrclib");
+    expect(provider.getName()).toBe("LrcLib");
+  });
+
+  it("should support lyrics with name and artist", async () => {
+    const provider = new LrclibLyricsProvider();
+    const song = {
+      name: "Test Song",
+      artist: "Test Artist",
+      album: "Test Album",
+      duration: 180,
+      currentTime: 0,
+      isPlaying: false,
+    };
+
+    const supports = await provider.supportsLyrics(song);
+    expect(supports).toBe(true);
+  });
+
+  it("should not support lyrics without name or artist", async () => {
+    const provider = new LrclibLyricsProvider();
+    const song = {
+      name: "",
+      artist: "",
+      album: "Test Album",
+      duration: 180,
+      currentTime: 0,
+      isPlaying: false,
+    };
+
+    const supports = await provider.supportsLyrics(song);
+    expect(supports).toBe(false);
+  });
+});
+
+describe("Artwork Providers", () => {
+  it("should create iTunes provider instance", () => {
+    const provider = new ITunesArtworkProvider();
+    expect(provider.getId()).toBe("itunes");
+    expect(provider.getName()).toBe("iTunes");
+    expect(provider.getDescription()).toContain("iTunes");
+  });
+});

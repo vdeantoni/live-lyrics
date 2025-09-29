@@ -22,7 +22,7 @@ test.describe("Player Component", () => {
     await page.goto("/");
 
     // Wait for the player to load
-    await page.waitForSelector('[data-testid="player"]');
+    await page.waitForSelector('[data-testid="player-controls"]');
   });
 
   test.describe("Portrait Mode", () => {
@@ -144,7 +144,7 @@ test.describe("Player Component", () => {
     });
 
     test("should adapt layout for landscape orientation", async ({ page }) => {
-      const player = page.locator('[data-testid="player"]');
+      const player = page.locator('[data-testid="player-controls"]');
       await expect(player).toBeVisible();
 
       const progressSlider = page.locator('[data-testid="progress-slider"]');
@@ -190,7 +190,7 @@ test.describe("Player Component", () => {
     });
 
     test("should display player controls", async ({ page }) => {
-      const player = page.locator('[data-testid="player"]');
+      const player = page.locator('[data-testid="player-controls"]');
       await expect(player).toBeVisible();
 
       // Wait specifically for song data to load
@@ -245,7 +245,7 @@ test.describe("Player Component", () => {
       page,
     }) => {
       // The simulated player should work without external API calls
-      const player = page.locator('[data-testid="player"]');
+      const player = page.locator('[data-testid="player-controls"]');
       await expect(player).toBeVisible();
 
       // Should show play/pause button

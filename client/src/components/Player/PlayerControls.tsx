@@ -14,9 +14,9 @@ import {
   seekAtom,
   isDraggingAtom,
 } from "@/atoms/playerAtoms";
-import AnimatedSongName from "./AnimatedSongName";
+import AnimatedSongName from "../LyricsVisualizer/AnimatedSongName";
 
-const Player = () => {
+const PlayerControls = () => {
   // Read atoms
   const currentTime = useAtomValue(currentTimeAtom);
   const duration = useAtomValue(durationAtom);
@@ -52,7 +52,7 @@ const Player = () => {
 
   return (
     <div
-      data-testid="player"
+      data-testid="player-controls"
       className="flex w-full flex-col gap-4 landscape:flex-row"
     >
       <div className="flex max-h-20 min-h-14 flex-col landscape:max-w-[30%]">
@@ -116,15 +116,9 @@ const Player = () => {
             aria-label={isPlaying ? "Pause" : "Play"}
           >
             {isPlaying ? (
-              <Pause
-                data-testid="pause-icon"
-                style={{ width: "24px", height: "24px" }}
-              />
+              <Pause data-testid="pause-icon" className="h-6 w-6" />
             ) : (
-              <Play
-                data-testid="play-icon"
-                style={{ width: "24px", height: "24px" }}
-              />
+              <Play data-testid="play-icon" className="h-6 w-6" />
             )}
           </Button>
         </div>
@@ -144,4 +138,4 @@ const Player = () => {
   );
 };
 
-export default Player;
+export default PlayerControls;

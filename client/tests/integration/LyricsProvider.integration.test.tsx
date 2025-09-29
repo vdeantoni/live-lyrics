@@ -17,7 +17,7 @@ vi.mock("liricle", () => ({
 
 // Mock the hooks and atoms
 vi.mock("@/hooks/useSongSync", () => ({
-  useLyricsFromSource: vi.fn(),
+  useLyrics: vi.fn(),
 }));
 
 vi.mock("@/atoms/playerAtoms", () => ({
@@ -50,7 +50,7 @@ vi.mock("@/components/LyricsVisualizer/NoLyricsFound", () => ({
 }));
 
 import LyricsProvider from "@/components/LyricsVisualizer/LyricsProvider";
-import { useLyricsFromSource } from "@/hooks/useSongSync";
+import { useLyrics } from "@/hooks/useSongSync";
 import { useAtomValue } from "jotai";
 
 // Helper to create proper UseQueryResult mocks
@@ -127,7 +127,7 @@ describe("LyricsProvider Integration", () => {
       ],
     };
 
-    vi.mocked(useLyricsFromSource).mockReturnValue(
+    vi.mocked(useLyrics).mockReturnValue(
       createMockQueryResult({
         data: mockLyrics,
         isLoading: false,
@@ -161,7 +161,7 @@ describe("LyricsProvider Integration", () => {
       expect(screen.getByText("Lyrics loaded")).toBeInTheDocument();
     });
 
-    expect(useLyricsFromSource).toHaveBeenCalledWith({
+    expect(useLyrics).toHaveBeenCalledWith({
       name: "Bohemian Rhapsody",
       artist: "Queen",
       album: "A Night at the Opera",
@@ -172,7 +172,7 @@ describe("LyricsProvider Integration", () => {
   });
 
   it("displays no lyrics found when data is null", async () => {
-    vi.mocked(useLyricsFromSource).mockReturnValue(
+    vi.mocked(useLyrics).mockReturnValue(
       createMockQueryResult({
         data: undefined,
         isLoading: false,
@@ -200,7 +200,7 @@ describe("LyricsProvider Integration", () => {
   });
 
   it("handles loading state", () => {
-    vi.mocked(useLyricsFromSource).mockReturnValue(
+    vi.mocked(useLyrics).mockReturnValue(
       createMockQueryResult({
         data: undefined,
         isLoading: true,

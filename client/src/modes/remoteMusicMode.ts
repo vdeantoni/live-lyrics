@@ -1,24 +1,26 @@
 import type { Song } from "@/lib/api";
-import type {
-  MusicSource,
-  LyricsProvider,
-  ArtworkProvider,
-} from "@/types/musicSource";
-import { HttpLyricsProvider } from "@/providers/httpLyricsProvider";
-import { ITunesArtworkProvider } from "@/providers/itunesArtworkProvider";
+import type { MusicMode } from "@/types/settings";
 
 /**
- * HTTP-based music source that communicates with a real server
+ * Remote music mode - communicates with Apple Music via local server
  */
-export class HttpMusicSource implements MusicSource {
+export class RemoteMusicMode implements MusicMode {
   private baseUrl: string;
-  private lyricsProvider: LyricsProvider;
-  private artworkProvider: ArtworkProvider;
 
   constructor(baseUrl: string = "http://127.0.0.1:4000") {
     this.baseUrl = baseUrl;
-    this.lyricsProvider = new HttpLyricsProvider();
-    this.artworkProvider = new ITunesArtworkProvider();
+  }
+
+  getId(): string {
+    return "remote";
+  }
+
+  getName(): string {
+    return "Server";
+  }
+
+  getDescription(): string {
+    return "Connect to Apple Music via local server";
   }
 
   async getSong(): Promise<Song> {
@@ -76,14 +78,6 @@ export class HttpMusicSource implements MusicSource {
     }
   }
 
-  getId(): string {
-    return `http-${this.baseUrl.replace(/[^a-zA-Z0-9]/g, "-")}`;
-  }
-
-  getName(): string {
-    return `HTTP Server (${this.baseUrl})`;
-  }
-
   async isAvailable(): Promise<boolean> {
     try {
       const response = await fetch(`${this.baseUrl}/music`, {
@@ -93,13 +87,5 @@ export class HttpMusicSource implements MusicSource {
     } catch {
       return false;
     }
-  }
-
-  getLyricsProvider(): LyricsProvider | null {
-    return this.lyricsProvider;
-  }
-
-  getArtworkProvider(): ArtworkProvider | null {
-    return this.artworkProvider;
   }
 }

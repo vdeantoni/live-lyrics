@@ -1,4 +1,4 @@
-import { useEffect, useState, type PropsWithChildren } from "react";
+import { useEffect, useState } from "react";
 import { useAtomValue } from "jotai";
 import {
   songNameAtom,
@@ -8,9 +8,10 @@ import {
   currentTimeAtom,
   isPlayingAtom,
 } from "@/atoms/playerAtoms";
-import { useArtworkFromSource } from "@/hooks/useSongSync";
+import { useArtwork } from "@/hooks/useSongSync";
+import LyricsProvider from "../LyricsVisualizer/LyricsProvider";
 
-const LyricsDisplay = ({ children }: PropsWithChildren) => {
+const LyricsScreen = () => {
   // Read song data from atoms (populated by useSongSync in parent)
   const songName = useAtomValue(songNameAtom);
   const artist = useAtomValue(artistAtom);
@@ -32,7 +33,7 @@ const LyricsDisplay = ({ children }: PropsWithChildren) => {
         }
       : undefined;
 
-  const { data: artworks } = useArtworkFromSource(song);
+  const { data: artworks } = useArtwork(song);
 
   const [currentArtworkUrl, setCurrentArtworkUrl] = useState("");
 
@@ -52,35 +53,30 @@ const LyricsDisplay = ({ children }: PropsWithChildren) => {
 
   return (
     <div
-      data-testid="lyrics-display"
-      className="relative h-full w-full overflow-hidden"
+      data-testid="lyrics-screen"
+      className="relative h-full w-full overflow-hidden rounded-xl"
     >
       {/* Background Image Layer with Effects */}
       <div
         data-testid="lyrics-background"
-        className="absolute inset-0 bg-cover bg-center transition-all duration-1000 ease-in-out"
+        className="absolute inset-0 scale-110 bg-cover bg-center blur-sm brightness-75 contrast-125 grayscale transition-all duration-1000 ease-in-out"
         style={{
           backgroundImage: `url(${currentArtworkUrl})`,
-          filter: "blur(4px) grayscale(0.7) brightness(0.6) contrast(1.1)",
-          transform: "scale(1.1)", // Slightly scale to hide blur edges
         }}
       />
 
       {/* Dark Gradient Overlay for Better Text Contrast */}
       <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-black/60" />
 
-      {/* Subtle Noise/Grain Texture (Optional) */}
-      <div
-        className="absolute inset-0 opacity-25 mix-blend-overlay"
-        style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
-        }}
-      />
+      {/* Subtle Noise/Grain Texture (Optional) - Simple pattern for better compatibility */}
+      <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-5 mix-blend-overlay" />
 
-      {/* Content Layer */}
-      <div className="relative z-10 h-full">{children}</div>
+      {/* Lyrics Content Layer */}
+      <div className="relative z-10 h-full">
+        <LyricsProvider />
+      </div>
     </div>
   );
 };
 
-export default LyricsDisplay;
+export default LyricsScreen;

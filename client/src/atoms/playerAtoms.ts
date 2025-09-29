@@ -1,6 +1,6 @@
 import { atom } from "jotai";
 import type { Song } from "@/lib/api";
-import { currentMusicSourceAtom } from "@/atoms/sourceAtoms";
+import { currentMusicModeAtom } from "@/atoms/settingsAtoms";
 
 // Base atoms for player state
 export const currentTimeAtom = atom(0);
@@ -35,15 +35,20 @@ export const songInfoAtom = atom((get) => ({
   isPlaying: get(isPlayingAtom),
 }));
 
-// Action atoms for player controls using music source
+// Action atoms for player controls using music mode
 export const playAtom = atom(null, async (get, set) => {
   const wasPlaying = get(isPlayingAtom);
-  const source = get(currentMusicSourceAtom);
+  const musicMode = get(currentMusicModeAtom);
+
+  if (!musicMode) {
+    console.error("No music mode available");
+    return;
+  }
 
   set(isPlayingAtom, true);
 
   try {
-    await source.play();
+    await musicMode.play();
   } catch (error) {
     // Rollback on error
     set(isPlayingAtom, wasPlaying);
@@ -54,12 +59,17 @@ export const playAtom = atom(null, async (get, set) => {
 
 export const pauseAtom = atom(null, async (get, set) => {
   const wasPlaying = get(isPlayingAtom);
-  const source = get(currentMusicSourceAtom);
+  const musicMode = get(currentMusicModeAtom);
+
+  if (!musicMode) {
+    console.error("No music mode available");
+    return;
+  }
 
   set(isPlayingAtom, false);
 
   try {
-    await source.pause();
+    await musicMode.pause();
   } catch (error) {
     // Rollback on error
     set(isPlayingAtom, wasPlaying);
@@ -70,13 +80,18 @@ export const pauseAtom = atom(null, async (get, set) => {
 
 export const seekAtom = atom(null, async (get, set, time: number) => {
   const previousTime = get(currentTimeAtom);
-  const source = get(currentMusicSourceAtom);
+  const musicMode = get(currentMusicModeAtom);
+
+  if (!musicMode) {
+    console.error("No music mode available");
+    return;
+  }
 
   set(currentTimeAtom, time);
   set(isUserSeekingAtom, true);
 
   try {
-    await source.seek(time);
+    await musicMode.seek(time);
   } catch (error) {
     // Rollback on error
     set(currentTimeAtom, previousTime);
@@ -102,11 +117,14 @@ export const syncFromSourceAtom = atom(null, (get, set, sourceData: Song) => {
   }
 });
 
-// Fetch song data from current source
+// Fetch song data from current music mode
 export const fetchSongDataAtom = atom(async (get) => {
-  const source = get(currentMusicSourceAtom);
+  const musicMode = get(currentMusicModeAtom);
+  if (!musicMode) {
+    throw new Error("No music mode available");
+  }
   try {
-    return await source.getSong();
+    return await musicMode.getSong();
   } catch (error) {
     console.error("Failed to fetch song data:", error);
     throw error;

@@ -1,5 +1,5 @@
 import type { Song } from "@/lib/api";
-import type { ArtworkProvider } from "@/types/musicSource";
+import type { ArtworkProvider } from "@/types/settings";
 
 interface iTunesSearchResult {
   resultCount: number;
@@ -40,11 +40,15 @@ export class ITunesArtworkProvider implements ArtworkProvider {
   }
 
   getId(): string {
-    return "itunes-artwork";
+    return "itunes";
   }
 
   getName(): string {
-    return "iTunes API";
+    return "iTunes";
+  }
+
+  getDescription(): string {
+    return "Album artwork from iTunes Search API";
   }
 
   async isAvailable(): Promise<boolean> {

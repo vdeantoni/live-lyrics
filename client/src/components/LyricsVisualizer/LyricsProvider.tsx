@@ -3,7 +3,7 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import LyricsContent from "./LyricsContent";
 import NoLyricsFound from "./NoLyricsFound";
 import Liricle from "liricle";
-import { useLyricsFromSource } from "@/hooks/useSongSync";
+import { useLyrics } from "@/hooks/useSongSync";
 import { useAtomValue } from "jotai";
 import {
   songNameAtom,
@@ -39,7 +39,7 @@ const LyricsProvider = () => {
     isLoading,
     isFetching,
     isSuccess,
-  } = useLyricsFromSource(song);
+  } = useLyrics(song);
 
   const liricleRef = useRef<Liricle | null>(null);
   const [lyricsData, setLyricsData] = useState<LyricsData | null>(null);

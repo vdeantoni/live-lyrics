@@ -1,18 +1,12 @@
 import type { Song } from "@/lib/api";
-import type {
-  MusicSource,
-  LyricsProvider,
-  ArtworkProvider,
-} from "@/types/musicSource";
-import { SimulatedLyricsProvider } from "@/providers/simulatedLyricsProvider";
-import { ITunesArtworkProvider } from "@/providers/itunesArtworkProvider";
+import type { MusicMode } from "@/types/settings";
 
 /**
- * Simulated music source with internal clock for testing and development
- * Singleton pattern to maintain state across source switches
+ * Local music mode - simulated player for testing and development
+ * Singleton pattern to maintain state across mode switches
  */
-export class SimulatedMusicSource implements MusicSource {
-  private static instance: SimulatedMusicSource | null = null;
+export class LocalMusicMode implements MusicMode {
+  private static instance: LocalMusicMode | null = null;
 
   private currentTime: number = 0;
   private duration: number = 180; // 3 minutes default
@@ -20,8 +14,6 @@ export class SimulatedMusicSource implements MusicSource {
   private hasEverBeenPlayed: boolean = false; // Track if ever played
   private lastUpdateTime: number = Date.now();
   private intervalId: number | null = null;
-  private lyricsProvider!: LyricsProvider; // Will be initialized in constructor
-  private artworkProvider!: ArtworkProvider; // Will be initialized in constructor
 
   // Demo playlist of songs
   private playlist: Song[] = [
@@ -71,20 +63,37 @@ export class SimulatedMusicSource implements MusicSource {
 
   constructor() {
     // Return existing instance if it exists (singleton pattern)
-    if (SimulatedMusicSource.instance) {
-      return SimulatedMusicSource.instance;
+    if (LocalMusicMode.instance) {
+      return LocalMusicMode.instance;
     }
 
     // Initialize new instance
     this.startClock();
-    this.lyricsProvider = new SimulatedLyricsProvider();
-    this.artworkProvider = new ITunesArtworkProvider();
 
     // Store the instance
-    SimulatedMusicSource.instance = this;
+    LocalMusicMode.instance = this;
 
     // Return this for proper singleton behavior
     return this;
+  }
+
+  static getInstance(): LocalMusicMode {
+    if (!LocalMusicMode.instance) {
+      LocalMusicMode.instance = new LocalMusicMode();
+    }
+    return LocalMusicMode.instance;
+  }
+
+  getId(): string {
+    return "local";
+  }
+
+  getName(): string {
+    return "Local";
+  }
+
+  getDescription(): string {
+    return "Simulated player for testing and development";
   }
 
   private startClock(): void {
@@ -117,7 +126,6 @@ export class SimulatedMusicSource implements MusicSource {
     this.currentTime = 0;
     this.duration = this.playlist[this.currentSongIndex].duration;
     // Keep playing state when advancing - songs loop forever
-    // Auto-play next song if we were playing
   }
 
   private getCurrentSong(): Song {
@@ -148,91 +156,18 @@ export class SimulatedMusicSource implements MusicSource {
     this.lastUpdateTime = Date.now();
   }
 
-  getId(): string {
-    return "simulated-player";
-  }
-
-  getName(): string {
-    return "Player";
-  }
-
   async isAvailable(): Promise<boolean> {
-    return true; // Always available
-  }
-
-  getLyricsProvider(): LyricsProvider | null {
-    return this.lyricsProvider;
-  }
-
-  getArtworkProvider(): ArtworkProvider | null {
-    return this.artworkProvider;
-  }
-
-  // Additional methods for simulated source
-
-  /**
-   * Manually advance to the next song in the playlist
-   */
-  async nextTrack(): Promise<void> {
-    this.nextSong();
+    // Local mode is always available
+    return true;
   }
 
   /**
-   * Go to the previous song in the playlist
+   * Cleanup method to stop the internal clock
    */
-  async previousTrack(): Promise<void> {
-    this.currentSongIndex =
-      this.currentSongIndex === 0
-        ? this.playlist.length - 1
-        : this.currentSongIndex - 1;
-    this.currentTime = 0;
-    this.duration = this.playlist[this.currentSongIndex].duration;
-    // Keep playing state when changing tracks
-  }
-
-  /**
-   * Get the current playlist
-   */
-  getPlaylist(): Song[] {
-    return [...this.playlist];
-  }
-
-  /**
-   * Add a song to the playlist
-   */
-  addToPlaylist(song: Song): void {
-    this.playlist.push(song);
-  }
-
-  /**
-   * Get the singleton instance
-   */
-  static getInstance(): SimulatedMusicSource {
-    if (!SimulatedMusicSource.instance) {
-      SimulatedMusicSource.instance = new SimulatedMusicSource();
-    }
-    return SimulatedMusicSource.instance;
-  }
-
-  /**
-   * Clean up the internal clock when done
-   * Note: In practice, this should rarely be called since the clock should keep running
-   */
-  destroy(): void {
+  cleanup(): void {
     if (this.intervalId !== null) {
       clearInterval(this.intervalId);
       this.intervalId = null;
-    }
-    // Don't reset the instance - keep state persistent
-  }
-
-  /**
-   * Reset the singleton instance (for testing purposes)
-   */
-  static reset(): void {
-    if (SimulatedMusicSource.instance) {
-      SimulatedMusicSource.instance.destroy();
-      SimulatedMusicSource.instance = null;
     }
   }
 }
