@@ -4,7 +4,7 @@ import { useSongSync } from "@/hooks/useSongSync";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 
 const MusicPlayer = () => {
-  // Sync with current music mode data - only called once at the top level
+  // Sync with current music player data - only called once at the top level
   useSongSync();
 
   // Global keyboard shortcuts with lyrics navigation

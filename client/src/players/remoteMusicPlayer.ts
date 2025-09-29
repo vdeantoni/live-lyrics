@@ -1,10 +1,10 @@
 import type { Song } from "@/types";
-import type { MusicMode } from "@/types";
+import type { Player } from "@/types";
 
 /**
- * Remote music mode - communicates with Apple Music via local server
+ * Remote music player - communicates with Apple Music via local server
  */
-export class RemoteMusicMode implements MusicMode {
+export class RemoteMusicPlayer implements Player {
   private baseUrl: string;
 
   constructor(baseUrl: string = "http://127.0.0.1:4000") {

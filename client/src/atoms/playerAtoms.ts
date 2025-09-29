@@ -1,7 +1,7 @@
 import { atom } from "jotai";
 import type { Song, LyricsData, LineData, WordData } from "@/types";
-import { modeIdAtom } from "@/atoms/settingsAtoms";
-import { loadMusicMode } from "@/config/providers";
+import { playerIdAtom } from "@/atoms/settingsAtoms";
+import { loadPlayer } from "@/config/providers";
 
 // Base atoms for player state
 export const currentTimeAtom = atom(0);
@@ -45,26 +45,26 @@ export const songInfoAtom = atom((get) => ({
   isPlaying: get(isPlayingAtom),
 }));
 
-// Helper function to get music mode instance
-const getMusicMode = async (modeId: string) => {
-  return await loadMusicMode(modeId);
+// Helper function to get player instance
+const getPlayer = async (playerId: string) => {
+  return await loadPlayer(playerId);
 };
 
-// Action atoms for player controls using music mode
+// Action atoms for player controls using player
 export const playAtom = atom(null, async (get, set) => {
   const wasPlaying = get(isPlayingAtom);
-  const modeId = get(modeIdAtom);
+  const playerId = get(playerIdAtom);
 
-  if (!modeId) {
-    console.error("No music mode selected");
+  if (!playerId) {
+    console.error("No music player selected");
     return;
   }
 
   set(isPlayingAtom, true);
 
   try {
-    const musicMode = await getMusicMode(modeId);
-    await musicMode.play();
+    const musicPlayer = await getPlayer(playerId);
+    await musicPlayer.play();
   } catch (error) {
     // Rollback on error
     set(isPlayingAtom, wasPlaying);
@@ -75,18 +75,18 @@ export const playAtom = atom(null, async (get, set) => {
 
 export const pauseAtom = atom(null, async (get, set) => {
   const wasPlaying = get(isPlayingAtom);
-  const modeId = get(modeIdAtom);
+  const playerId = get(playerIdAtom);
 
-  if (!modeId) {
-    console.error("No music mode selected");
+  if (!playerId) {
+    console.error("No music player selected");
     return;
   }
 
   set(isPlayingAtom, false);
 
   try {
-    const musicMode = await getMusicMode(modeId);
-    await musicMode.pause();
+    const musicPlayer = await getPlayer(playerId);
+    await musicPlayer.pause();
   } catch (error) {
     // Rollback on error
     set(isPlayingAtom, wasPlaying);
@@ -97,10 +97,10 @@ export const pauseAtom = atom(null, async (get, set) => {
 
 export const seekAtom = atom(null, async (get, set, time: number) => {
   const previousTime = get(currentTimeAtom);
-  const modeId = get(modeIdAtom);
+  const playerId = get(playerIdAtom);
 
-  if (!modeId) {
-    console.error("No music mode selected");
+  if (!playerId) {
+    console.error("No music player selected");
     return;
   }
 
@@ -109,8 +109,8 @@ export const seekAtom = atom(null, async (get, set, time: number) => {
   set(isUserSeekingAtom, true);
 
   try {
-    const musicMode = await getMusicMode(modeId);
-    await musicMode.seek(time);
+    const musicPlayer = await getPlayer(playerId);
+    await musicPlayer.seek(time);
   } catch (error) {
     // Rollback on error
     set(currentTimeAtom, previousTime);
@@ -127,13 +127,13 @@ export const syncFromSourceAtom = atom(
   null,
   async (get, set, songData: Song) => {
     const canUpdate = get(canUpdateFromServerAtom);
-    const modeId = get(modeIdAtom);
+    const playerId = get(playerIdAtom);
 
-    if (!canUpdate || !modeId) return;
+    if (!canUpdate || !playerId) return;
 
     try {
-      // Only update if this is still the current mode
-      if (get(modeIdAtom) !== modeId) return;
+      // Only update if this is still the current player
+      if (get(playerIdAtom) !== playerId) return;
 
       set(currentTimeAtom, songData.currentTime);
       set(durationAtom, songData.duration);

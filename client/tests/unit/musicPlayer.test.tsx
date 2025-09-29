@@ -10,9 +10,9 @@ import SettingsScreen from "@/components/Player/SettingsScreen";
 // Mock components that might have CSS issues
 vi.mock("@/hooks/useSongSync", () => ({
   useSongSync: vi.fn(() => ({
-    musicMode: {
+    players: {
       getId: () => "test",
-      getName: () => "Test Mode",
+      getName: () => "Test Player",
       play: vi.fn(),
       pause: vi.fn(),
       seek: vi.fn(),
@@ -44,12 +44,12 @@ import {
 } from "@/atoms/playerAtoms";
 import {
   isSettingsOpenAtom,
-  availableMusicModesAtom,
+  availableMusicPlayersAtom,
   availableLyricsProvidersAtom,
   availableArtworkProvidersAtom,
   lyricsProvidersWithStatusAtom,
   artworkProvidersWithStatusAtom,
-  musicModesWithStatusAtom,
+  musicPlayersWithStatusAtom,
 } from "@/atoms/settingsAtoms";
 
 vi.mock("jotai", async () => {
@@ -79,7 +79,7 @@ vi.mock("jotai", async () => {
           return [];
         case isSettingsOpenAtom:
           return false;
-        case availableMusicModesAtom:
+        case availableMusicPlayersAtom:
           return [
             { id: "local", name: "Local", description: "Simulated player" },
             { id: "remote", name: "Server", description: "Apple Music server" },
@@ -96,7 +96,7 @@ vi.mock("jotai", async () => {
           return [
             { id: "itunes", name: "iTunes", description: "iTunes Search API" },
           ];
-        case musicModesWithStatusAtom:
+        case musicPlayersWithStatusAtom:
           return [
             {
               id: "local",

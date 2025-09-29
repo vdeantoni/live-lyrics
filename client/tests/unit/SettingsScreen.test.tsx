@@ -6,15 +6,15 @@ import { act } from "react";
 
 // Import actual atoms
 import {
-  modeIdAtom,
+  playerIdAtom,
   lyricsProviderIdAtom,
   artworkProviderIdAtom,
-  availableMusicModesAtom,
+  availableMusicPlayersAtom,
   availableLyricsProvidersAtom,
   availableArtworkProvidersAtom,
   lyricsProvidersWithStatusAtom,
   artworkProvidersWithStatusAtom,
-  musicModesWithStatusAtom,
+  musicPlayersWithStatusAtom,
 } from "@/atoms/settingsAtoms";
 
 // Mock jotai hooks
@@ -30,16 +30,16 @@ vi.mock("jotai", async () => {
 import { useAtomValue, useSetAtom } from "jotai";
 
 describe("SettingsScreen", () => {
-  const mockSetModeId = vi.fn();
+  const mockSetPlayerId = vi.fn();
   const mockSetLyricsProviderId = vi.fn();
   const mockSetArtworkProviderId = vi.fn();
 
-  const mockMusicModes = [
-    { id: "local", name: "Local", description: "Simulated player for testing" },
+  const mockMusicPlayers = [
+    { id: "local", name: "Local", description: "Local player" },
     {
       id: "remote",
       name: "Server",
-      description: "Connect to Apple Music via local server",
+      description: "Remote player",
     },
   ];
 
@@ -61,8 +61,8 @@ describe("SettingsScreen", () => {
     { id: "itunes", name: "iTunes", description: "iTunes Search API" },
   ];
 
-  const mockMusicModesWithStatus = mockMusicModes.map((mode) => ({
-    ...mode,
+  const mockMusicPlayersWithStatus = mockMusicPlayers.map((player) => ({
+    ...player,
     isAvailable: true,
   }));
   const mockLyricsProvidersWithStatus = mockLyricsProviders.map((provider) => ({
@@ -79,20 +79,20 @@ describe("SettingsScreen", () => {
     // Setup mock implementations
     vi.mocked(useAtomValue).mockImplementation((atom) => {
       switch (atom) {
-        case modeIdAtom:
+        case playerIdAtom:
           return "local";
         case lyricsProviderIdAtom:
           return "lrclib";
         case artworkProviderIdAtom:
           return "itunes";
-        case availableMusicModesAtom:
-          return mockMusicModes;
+        case availableMusicPlayersAtom:
+          return mockMusicPlayers;
         case availableLyricsProvidersAtom:
           return mockLyricsProviders;
         case availableArtworkProvidersAtom:
           return mockArtworkProviders;
-        case musicModesWithStatusAtom:
-          return mockMusicModesWithStatus;
+        case musicPlayersWithStatusAtom:
+          return mockMusicPlayersWithStatus;
         case lyricsProvidersWithStatusAtom:
           return mockLyricsProvidersWithStatus;
         case artworkProvidersWithStatusAtom:
@@ -104,8 +104,8 @@ describe("SettingsScreen", () => {
 
     vi.mocked(useSetAtom).mockImplementation((atom) => {
       switch (atom) {
-        case modeIdAtom:
-          return mockSetModeId;
+        case playerIdAtom:
+          return mockSetPlayerId;
         case lyricsProviderIdAtom:
           return mockSetLyricsProviderId;
         case artworkProviderIdAtom:
@@ -137,22 +137,20 @@ describe("SettingsScreen", () => {
     expect(screen.getByText("Configure your music player")).toBeInTheDocument();
   });
 
-  it("displays music mode section", async () => {
+  it("displays music player section", async () => {
     await renderComponent();
-    expect(screen.getByText("Music Mode")).toBeInTheDocument();
-    expect(screen.getByText("Local Mode")).toBeInTheDocument();
-    expect(
-      screen.getByText("Use simulated player for testing"),
-    ).toBeInTheDocument();
+    expect(screen.getByText("Music Player")).toBeInTheDocument();
+    expect(screen.getByText("Local")).toBeInTheDocument();
+    expect(screen.getByText("Local player")).toBeInTheDocument();
   });
 
-  it("handles mode toggle", async () => {
+  it("handles player toggle", async () => {
     await renderComponent();
-    const modeToggle = screen.getByRole("switch");
+    const playerToggle = screen.getByRole("switch");
     await act(async () => {
-      fireEvent.click(modeToggle);
+      fireEvent.click(playerToggle);
     });
-    expect(mockSetModeId).toHaveBeenCalledWith("remote");
+    expect(mockSetPlayerId).toHaveBeenCalledWith("remote");
   });
 
   it("displays provider sections", async () => {

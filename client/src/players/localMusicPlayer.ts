@@ -1,12 +1,12 @@
 import type { Song } from "@/types";
-import type { MusicMode } from "@/types";
+import type { Player } from "@/types";
 
 /**
- * Local music mode - simulated player for testing and development
- * Singleton pattern to maintain state across mode switches
+ * Local music player
+ * Singleton pattern to maintain state across player switches
  */
-export class LocalMusicMode implements MusicMode {
-  private static instance: LocalMusicMode | null = null;
+export class LocalMusicPlayer implements Player {
+  private static instance: LocalMusicPlayer | null = null;
 
   private currentTime: number = 0;
   private duration: number = 180; // 3 minutes default
@@ -63,25 +63,25 @@ export class LocalMusicMode implements MusicMode {
 
   constructor() {
     // Return existing instance if it exists (singleton pattern)
-    if (LocalMusicMode.instance) {
-      return LocalMusicMode.instance;
+    if (LocalMusicPlayer.instance) {
+      return LocalMusicPlayer.instance;
     }
 
     // Initialize new instance
     this.startClock();
 
     // Store the instance
-    LocalMusicMode.instance = this;
+    LocalMusicPlayer.instance = this;
 
     // Return this for proper singleton behavior
     return this;
   }
 
-  static getInstance(): LocalMusicMode {
-    if (!LocalMusicMode.instance) {
-      LocalMusicMode.instance = new LocalMusicMode();
+  static getInstance(): LocalMusicPlayer {
+    if (!LocalMusicPlayer.instance) {
+      LocalMusicPlayer.instance = new LocalMusicPlayer();
     }
-    return LocalMusicMode.instance;
+    return LocalMusicPlayer.instance;
   }
 
   getId(): string {
@@ -157,7 +157,7 @@ export class LocalMusicMode implements MusicMode {
   }
 
   async isAvailable(): Promise<boolean> {
-    // Local mode is always available
+    // Local player is always available
     return true;
   }
 

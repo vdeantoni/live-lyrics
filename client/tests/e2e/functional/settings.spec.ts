@@ -77,11 +77,11 @@ test.describe("Settings Functionality", () => {
       ).toContainText("Settings");
       await expect(page.getByText("Configure your music player")).toBeVisible();
 
-      // Check music mode section
-      await expect(page.getByText("Music Mode")).toBeVisible();
-      await expect(page.getByText("Local Mode")).toBeVisible();
+      // Check music player section
+      await expect(page.getByText("Music Player")).toBeVisible();
+      await expect(page.getByText("Local Player")).toBeVisible();
       await expect(
-        page.getByText("Use simulated player for testing"),
+        page.getByText("Use local player for testing"),
       ).toBeVisible();
 
       // Check provider sections (these load asynchronously)
@@ -89,7 +89,7 @@ test.describe("Settings Functionality", () => {
       await expect(page.getByText("Artwork Provider")).toBeVisible();
     });
 
-    test("should allow mode switching", async ({ page }) => {
+    test("should allow player switching", async ({ page }) => {
       await page.setViewportSize({ width: 768, height: 1024 });
 
       // Open settings
@@ -98,26 +98,26 @@ test.describe("Settings Functionality", () => {
 
       await page.waitForSelector('[data-testid="settings-screen"]');
 
-      // Find the mode toggle switch
-      const modeToggle = page.locator('[role="switch"]').first();
+      // Find the player toggle switch
+      const playerToggle = page.locator('[role="switch"]').first();
 
-      // Initially should be unchecked (Local Mode)
-      await expect(page.getByText("Local Mode")).toBeVisible();
+      // Initially should be unchecked (Local Player)
+      await expect(page.getByText("Local Player")).toBeVisible();
 
-      // Toggle to Remote Mode
-      await modeToggle.click();
+      // Toggle to Remote Player
+      await playerToggle.click();
 
-      // Should now show Server Mode
-      await expect(page.getByText("Server Mode")).toBeVisible();
+      // Should now show Server Player
+      await expect(page.getByText("Server Player")).toBeVisible();
       await expect(
         page.getByText("Connect to Apple Music via local server"),
       ).toBeVisible();
 
-      // Toggle back to Local Mode
-      await modeToggle.click();
+      // Toggle back to Local Player
+      await playerToggle.click();
 
-      // Should be back to Local Mode
-      await expect(page.getByText("Local Mode")).toBeVisible();
+      // Should be back to Local Player
+      await expect(page.getByText("Local Player")).toBeVisible();
     });
 
     test("should show provider availability status", async ({ page }) => {

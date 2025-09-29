@@ -2,15 +2,15 @@ import { atom } from "jotai";
 import { atomWithStorage } from "jotai/utils";
 import type {
   AppSettings,
-  MusicMode,
+  Player,
   LyricsProvider,
   ArtworkProvider,
 } from "@/types";
 import {
-  getMusicModeConfigs,
+  getMusicPlayerConfigs,
   getLyricsProviderConfigs,
   getArtworkProviderConfigs,
-  loadMusicMode,
+  loadPlayer,
   loadLyricsProvider,
   loadArtworkProvider,
 } from "@/config/providers";
@@ -19,7 +19,7 @@ import {
  * Default application settings
  */
 export const defaultSettings: AppSettings = {
-  modeId: "local",
+  playerId: "local",
   lyricsProviderId: "lrclib",
   artworkProviderId: "itunes",
 };
@@ -35,11 +35,11 @@ export const settingsAtom = atomWithStorage<AppSettings>(
 /**
  * Individual setting atoms (derived from main settings)
  */
-export const modeIdAtom = atom(
-  (get) => get(settingsAtom).modeId,
-  (get, set, newModeId: string) => {
+export const playerIdAtom = atom(
+  (get) => get(settingsAtom).playerId,
+  (get, set, newPlayerId: string) => {
     const currentSettings = get(settingsAtom);
-    set(settingsAtom, { ...currentSettings, modeId: newModeId });
+    set(settingsAtom, { ...currentSettings, playerId: newPlayerId });
   },
 );
 
@@ -62,7 +62,7 @@ export const artworkProviderIdAtom = atom(
 /**
  * Configuration atoms - provide metadata without instantiating providers
  */
-export const availableMusicModesAtom = atom(() => getMusicModeConfigs());
+export const availableMusicPlayersAtom = atom(() => getMusicPlayerConfigs());
 export const availableLyricsProvidersAtom = atom(() =>
   getLyricsProviderConfigs(),
 );
@@ -105,12 +105,12 @@ export const artworkProvidersWithStatusAtom = atom(async (get) => {
   return Promise.all(statusPromises);
 });
 
-export const musicModesWithStatusAtom = atom(async (get) => {
-  const configs = get(availableMusicModesAtom);
+export const musicPlayersWithStatusAtom = atom(async (get) => {
+  const configs = get(availableMusicPlayersAtom);
   const statusPromises = configs.map(async (config) => {
     try {
-      const mode = await loadMusicMode(config.id);
-      const isAvailable = await mode.isAvailable();
+      const player = await loadPlayer(config.id);
+      const isAvailable = await player.isAvailable();
       return { ...config, isAvailable };
     } catch (error) {
       console.error(`Failed to check availability for ${config.id}:`, error);
@@ -124,32 +124,32 @@ export const musicModesWithStatusAtom = atom(async (get) => {
 /**
  * Provider instance atoms with lazy loading and caching
  */
-const musicModeInstancesAtom = atom<Map<string, MusicMode>>(new Map());
+const musicPlayerInstancesAtom = atom<Map<string, Player>>(new Map());
 
-export const currentMusicModeAtom = atom(
-  async (get): Promise<MusicMode | null> => {
-    const modeId = get(modeIdAtom);
-    const instances = get(musicModeInstancesAtom);
+export const currentMusicPlayerAtom = atom(
+  async (get): Promise<Player | null> => {
+    const playerId = get(playerIdAtom);
+    const instances = get(musicPlayerInstancesAtom);
 
     // Return cached instance if available
-    if (instances.has(modeId)) {
-      return instances.get(modeId)!;
+    if (instances.has(playerId)) {
+      return instances.get(playerId)!;
     }
 
     try {
-      const provider = await loadMusicMode(modeId);
-      instances.set(modeId, provider);
+      const provider = await loadPlayer(playerId);
+      instances.set(playerId, provider);
       return provider;
     } catch (error) {
-      console.error(`Failed to load music mode "${modeId}":`, error);
+      console.error(`Failed to load music player "${playerId}":`, error);
       return null;
     }
   },
-  (get, set, instance: MusicMode | null) => {
+  (get, set, instance: Player | null) => {
     if (instance) {
-      const instances = new Map(get(musicModeInstancesAtom));
+      const instances = new Map(get(musicPlayerInstancesAtom));
       instances.set(instance.getId(), instance);
-      set(musicModeInstancesAtom, instances);
+      set(musicPlayerInstancesAtom, instances);
     }
   },
 );

@@ -1,6 +1,6 @@
 import { useAtomValue, useSetAtom } from "jotai";
 import {
-  modeIdAtom,
+  playerIdAtom,
   lyricsProviderIdAtom,
   artworkProviderIdAtom,
   lyricsProvidersWithStatusAtom,
@@ -116,13 +116,13 @@ const LoadingSkeleton = () => (
 );
 
 const SettingsScreen = () => {
-  const currentModeId = useAtomValue(modeIdAtom);
-  const setModeId = useSetAtom(modeIdAtom);
+  const currentPlayerId = useAtomValue(playerIdAtom);
+  const setPlayerId = useSetAtom(playerIdAtom);
 
-  const isRemoteMode = currentModeId === "remote";
+  const isRemotePlayer = currentPlayerId === "remote";
 
-  const handleModeToggle = (checked: boolean) => {
-    setModeId(checked ? "remote" : "local");
+  const handlePlayerToggle = (checked: boolean) => {
+    setPlayerId(checked ? "remote" : "local");
   };
 
   return (
@@ -131,7 +131,7 @@ const SettingsScreen = () => {
       className="relative h-full w-full overflow-hidden rounded-xl bg-zinc-900/95 backdrop-blur-md"
     >
       {/* Header */}
-      <div className="border-b border-white/10 p-4">
+      <div className="border-b border-white/10 p-6">
         <div>
           <h2 className="text-2xl font-bold text-white">Settings</h2>
           <p className="text-sm text-zinc-400">Configure your music player</p>
@@ -141,24 +141,22 @@ const SettingsScreen = () => {
       {/* Settings Content */}
       <div className="h-full overflow-y-auto p-6 pb-20">
         <div className="space-y-8">
-          {/* Music Mode Section */}
+          {/* Music Player Section */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-white">Music Mode</h3>
+            <h3 className="text-lg font-semibold text-white">Music Player</h3>
             <div className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 p-4">
               <div>
                 <div className="font-medium text-white">
-                  {isRemoteMode ? "Server Mode" : "Local Mode"}
+                  {isRemotePlayer ? "Remote" : "Local"}
                 </div>
                 <div className="text-sm text-zinc-400">
-                  {isRemoteMode
-                    ? "Connect to Apple Music via local server"
-                    : "Use simulated player for testing"}
+                  {isRemotePlayer ? "Remove player" : "Local player"}
                 </div>
               </div>
               <Switch
-                id="mode-toggle"
-                checked={isRemoteMode}
-                onCheckedChange={handleModeToggle}
+                id="player-toggle"
+                checked={isRemotePlayer}
+                onCheckedChange={handlePlayerToggle}
               />
             </div>
           </div>

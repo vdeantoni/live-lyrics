@@ -1,27 +1,29 @@
-import type { MusicMode, LyricsProvider, ArtworkProvider } from "@/types";
+import type { Player, LyricsProvider, ArtworkProvider } from "@/types";
 
 /**
  * Centralized provider configuration with lazy loading
  * This eliminates duplication between settings atoms and sync hooks
  */
 export const PROVIDER_CONFIGS = {
-  musicModes: {
+  players: {
     local: {
       id: "local",
       name: "Local",
       description: "Local player",
-      load: async (): Promise<MusicMode> => {
-        const { LocalMusicMode } = await import("@/modes/localMusicMode");
-        return LocalMusicMode.getInstance();
+      load: async (): Promise<Player> => {
+        const { LocalMusicPlayer } = await import("@/players/localMusicPlayer");
+        return LocalMusicPlayer.getInstance();
       },
     },
     remote: {
       id: "remote",
       name: "Server",
-      description: "Connect to Apple Music via local server",
-      load: async (): Promise<MusicMode> => {
-        const { RemoteMusicMode } = await import("@/modes/remoteMusicMode");
-        return new RemoteMusicMode();
+      description: "Remote player",
+      load: async (): Promise<Player> => {
+        const { RemoteMusicPlayer } = await import(
+          "@/players/remoteMusicPlayer"
+        );
+        return new RemoteMusicPlayer();
       },
     },
   },
@@ -79,13 +81,11 @@ export const PROVIDER_CONFIGS = {
 /**
  * Helper functions to load providers by ID
  */
-export const loadMusicMode = async (modeId: string): Promise<MusicMode> => {
+export const loadPlayer = async (playerId: string): Promise<Player> => {
   const config =
-    PROVIDER_CONFIGS.musicModes[
-      modeId as keyof typeof PROVIDER_CONFIGS.musicModes
-    ];
+    PROVIDER_CONFIGS.players[playerId as keyof typeof PROVIDER_CONFIGS.players];
   if (!config) {
-    throw new Error(`Unknown music mode: ${modeId}`);
+    throw new Error(`Unknown music player: ${playerId}`);
   }
   return config.load();
 };
@@ -119,8 +119,8 @@ export const loadArtworkProvider = async (
 /**
  * Helper functions to get provider metadata without loading
  */
-export const getMusicModeConfigs = () => {
-  return Object.values(PROVIDER_CONFIGS.musicModes).map(
+export const getMusicPlayerConfigs = () => {
+  return Object.values(PROVIDER_CONFIGS.players).map(
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     ({ load, ...config }) => config,
   );
