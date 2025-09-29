@@ -157,6 +157,8 @@ const lyricsProviderAvailabilityCache = atom<Record<string, boolean>>({});
 const lyricsProviderLoadingStates = atom<Record<string, boolean>>({});
 const artworkProviderAvailabilityCache = atom<Record<string, boolean>>({});
 const artworkProviderLoadingStates = atom<Record<string, boolean>>({});
+const playerAvailabilityCache = atom<Record<string, boolean>>({});
+const playerLoadingStates = atom<Record<string, boolean>>({});
 
 // Sync atom that combines cached availability with current order/enabled state and loading states
 export const lyricsProvidersWithStatusAtom = atom((get) => {
@@ -304,6 +306,71 @@ export const checkArtworkProviderAvailabilityAtom = atom(
       console.error(`Failed to check availability for ${providerId}:`, error);
       set(updateArtworkProviderStateAtom, {
         id: providerId,
+        isAvailable: false,
+        isLoading: false,
+      });
+    }
+  },
+);
+
+// Player availability status atom - sync like providers
+export const remotePlayerWithStatusAtom = atom((get) => {
+  const cache = get(playerAvailabilityCache);
+  const loadingStates = get(playerLoadingStates);
+
+  // Only track remote player since that's what we show in settings
+  return {
+    id: "remote",
+    name: "Server",
+    description: "Connect to a remote server",
+    isAvailable: cache["remote"] ?? true, // Default to true until checked
+    isLoading: loadingStates["remote"] ?? false,
+  };
+});
+
+// Write-only atom to update player state
+export const updatePlayerStateAtom = atom(
+  null,
+  (
+    get,
+    set,
+    update: { id: string; isAvailable?: boolean; isLoading?: boolean },
+  ) => {
+    if (update.isAvailable !== undefined) {
+      const cache = get(playerAvailabilityCache);
+      set(playerAvailabilityCache, {
+        ...cache,
+        [update.id]: update.isAvailable,
+      });
+    }
+    if (update.isLoading !== undefined) {
+      const loadingStates = get(playerLoadingStates);
+      set(playerLoadingStates, {
+        ...loadingStates,
+        [update.id]: update.isLoading,
+      });
+    }
+  },
+);
+
+// Helper atom to check availability for individual players
+export const checkPlayerAvailabilityAtom = atom(
+  null,
+  async (_get, set, playerId: string) => {
+    set(updatePlayerStateAtom, { id: playerId, isLoading: true });
+
+    try {
+      const player = await loadPlayer(playerId);
+      const isAvailable = await player.isAvailable();
+      set(updatePlayerStateAtom, {
+        id: playerId,
+        isAvailable,
+        isLoading: false,
+      });
+    } catch (error) {
+      console.error(`Failed to check availability for ${playerId}:`, error);
+      set(updatePlayerStateAtom, {
+        id: playerId,
         isAvailable: false,
         isLoading: false,
       });

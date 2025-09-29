@@ -18,7 +18,7 @@ test.describe("Keyboard Navigation and Accessibility", () => {
     });
 
     await page.goto("/");
-    await page.waitForSelector('[data-testid="music-player"]');
+    await page.waitForSelector('[data-testid="player"]');
   });
 
   test("should support keyboard navigation for play/pause", async ({

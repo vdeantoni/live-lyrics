@@ -29,7 +29,8 @@ export const ArtworkProviderSection = () => {
         checkAvailability(provider.id);
       }
     });
-  }, [artworkProviderIds, checkAvailability]); // Only depend on provider IDs, not their status - prevents infinite re-renders
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Only depend on provider IDs, not their status - prevents infinite re-renders
+  }, [artworkProviderIds, checkAvailability]);
 
   const handleToggle = (id: string, enabled: boolean) => {
     const newSet = new Set(enabledArtworkProviders);

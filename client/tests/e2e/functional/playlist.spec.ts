@@ -19,7 +19,7 @@ test.describe("Playlist Navigation", () => {
     });
 
     await page.goto("/");
-    await page.waitForSelector('[data-testid="music-player"]');
+    await page.waitForSelector('[data-testid="player"]');
   });
 
   test("should display initial song (Bohemian Rhapsody)", async ({ page }) => {

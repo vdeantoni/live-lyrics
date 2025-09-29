@@ -12,11 +12,11 @@ test.describe("Application Layout and Responsiveness", () => {
 
     test("should load the application successfully", async ({ page }) => {
       await expect(page.locator("#root")).toBeVisible();
-      await expect(page.locator('[data-testid="music-player"]')).toBeVisible();
+      await expect(page.locator('[data-testid="player"]')).toBeVisible();
     });
 
     test("should display all main components in portrait", async ({ page }) => {
-      await expect(page.locator('[data-testid="music-player"]')).toBeVisible();
+      await expect(page.locator('[data-testid="player"]')).toBeVisible();
       await expect(
         page.locator('[data-testid="player-controls"]'),
       ).toBeVisible();
@@ -35,7 +35,7 @@ test.describe("Application Layout and Responsiveness", () => {
   });
 
   test("should handle scroll behavior correctly", async ({ page }) => {
-    await page.waitForSelector('[data-testid="music-player"]');
+    await page.waitForSelector('[data-testid="player"]');
 
     const body = page.locator("body");
     await expect(body).toBeVisible();
@@ -54,17 +54,17 @@ test.describe("Landscape Layout (Desktop/Tablet)", () => {
   });
 
   test("should adapt layout for landscape orientation", async ({ page }) => {
-    await page.waitForSelector('[data-testid="music-player"]');
+    await page.waitForSelector('[data-testid="player"]');
 
-    await expect(page.locator('[data-testid="music-player"]')).toBeVisible();
+    await expect(page.locator('[data-testid="player"]')).toBeVisible();
     await expect(page.locator('[data-testid="player-controls"]')).toBeVisible();
     await expect(page.locator('[data-testid="lyrics-screen"]')).toBeVisible();
   });
 
   test("should optimize space usage in landscape", async ({ page }) => {
-    await page.waitForSelector('[data-testid="music-player"]');
+    await page.waitForSelector('[data-testid="player"]');
 
-    const visualizer = page.locator('[data-testid="music-player"]');
+    const visualizer = page.locator('[data-testid="player"]');
     const visualizerBox = await visualizer.boundingBox();
     expect(visualizerBox?.width).toBeGreaterThan(800);
   });
@@ -78,17 +78,17 @@ test.describe("Responsive Transitions", () => {
   test("should handle orientation changes smoothly", async ({ page }) => {
     // Start in portrait
     await page.setViewportSize({ width: 768, height: 1024 });
-    await page.waitForSelector('[data-testid="music-player"]');
+    await page.waitForSelector('[data-testid="player"]');
 
     // Rotate to landscape
     await page.setViewportSize({ width: 1024, height: 768 });
 
-    await expect(page.locator('[data-testid="music-player"]')).toBeVisible();
+    await expect(page.locator('[data-testid="player"]')).toBeVisible();
 
     // Rotate back to portrait
     await page.setViewportSize({ width: 768, height: 1024 });
 
-    await expect(page.locator('[data-testid="music-player"]')).toBeVisible();
+    await expect(page.locator('[data-testid="player"]')).toBeVisible();
   });
 
   test("should handle different screen sizes", async ({ page }) => {
@@ -102,7 +102,7 @@ test.describe("Responsive Transitions", () => {
     for (const viewport of viewports) {
       await page.setViewportSize(viewport);
 
-      await expect(page.locator('[data-testid="music-player"]')).toBeVisible();
+      await expect(page.locator('[data-testid="player"]')).toBeVisible();
 
       // Should not have horizontal scroll
       const scrollWidth = await page.evaluate(() => document.body.scrollWidth);
@@ -117,7 +117,7 @@ test.describe("Performance and Loading", () => {
     const startTime = Date.now();
 
     await page.goto("/");
-    await page.waitForSelector('[data-testid="music-player"]');
+    await page.waitForSelector('[data-testid="player"]');
 
     const loadTime = Date.now() - startTime;
     expect(loadTime).toBeLessThan(10000);
@@ -131,7 +131,7 @@ test.describe("Accessibility", () => {
 
   test("should have proper focus management", async ({ page }) => {
     await page.setViewportSize({ width: 768, height: 1024 });
-    await page.waitForSelector('[data-testid="music-player"]');
+    await page.waitForSelector('[data-testid="player"]');
 
     const interactiveElements = [
       '[data-testid="play-pause-button"]',
@@ -166,7 +166,7 @@ test.describe("Accessibility", () => {
 
   test("should have adequate color contrast", async ({ page }) => {
     await page.setViewportSize({ width: 768, height: 1024 });
-    await page.waitForSelector('[data-testid="music-player"]');
+    await page.waitForSelector('[data-testid="player"]');
 
     const songName = page.locator('[data-testid="song-name"]');
     if (await songName.isVisible()) {

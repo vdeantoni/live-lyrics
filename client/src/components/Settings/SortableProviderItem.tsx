@@ -1,6 +1,5 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { motion } from "framer-motion";
 import { Circle, CheckCircle, GripVertical, Loader2 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 
@@ -45,7 +44,7 @@ export const SortableProviderItem = ({
   };
 
   return (
-    <motion.div
+    <div
       ref={setNodeRef}
       style={style}
       data-testid={`provider-item-${provider.id}`}
@@ -53,7 +52,6 @@ export const SortableProviderItem = ({
       className={`flex items-center justify-between rounded-lg border border-white/10 bg-white/5 p-3 transition-colors hover:bg-white/10 ${
         isDragging ? "z-10 scale-105 opacity-50 shadow-lg" : ""
       }`}
-      transition={{ duration: 0.2 }}
     >
       <div className="flex items-center gap-3">
         <div
@@ -93,6 +91,6 @@ export const SortableProviderItem = ({
           disabled={!provider.isAvailable}
         />
       </div>
-    </motion.div>
+    </div>
   );
 };

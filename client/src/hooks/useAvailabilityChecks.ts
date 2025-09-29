@@ -3,15 +3,16 @@ import { useEffect, useRef } from "react";
 import {
   checkLyricsProviderAvailabilityAtom,
   checkArtworkProviderAvailabilityAtom,
+  checkPlayerAvailabilityAtom,
   availableLyricsProvidersAtom,
   availableArtworkProvidersAtom,
 } from "@/atoms/settingsAtoms";
 
 /**
- * Hook that checks provider availability on app startup
- * This ensures users can see provider status immediately without opening settings
+ * Hook that checks provider and player availability on app startup
+ * This ensures users can see availability status immediately without opening settings
  */
-export const useProviderAvailabilityStartup = () => {
+export const useAvailabilityChecks = () => {
   const availableLyricsProviders = useAtomValue(availableLyricsProvidersAtom);
   const availableArtworkProviders = useAtomValue(availableArtworkProvidersAtom);
   const checkLyricsAvailability = useSetAtom(
@@ -20,6 +21,7 @@ export const useProviderAvailabilityStartup = () => {
   const checkArtworkAvailability = useSetAtom(
     checkArtworkProviderAvailabilityAtom,
   );
+  const checkPlayerAvailability = useSetAtom(checkPlayerAvailabilityAtom);
   const hasChecked = useRef(false);
 
   useEffect(() => {
@@ -36,10 +38,14 @@ export const useProviderAvailabilityStartup = () => {
     availableArtworkProviders.forEach((provider) => {
       checkArtworkAvailability(provider.id);
     });
+
+    // Check remote player availability
+    checkPlayerAvailability("remote");
   }, [
     availableLyricsProviders,
     availableArtworkProviders,
     checkLyricsAvailability,
     checkArtworkAvailability,
+    checkPlayerAvailability,
   ]);
 };

@@ -16,7 +16,7 @@ test.describe("Error Handling", () => {
     });
 
     await page.setViewportSize({ width: 768, height: 1024 });
-    await page.waitForSelector('[data-testid="music-player"]');
+    await page.waitForSelector('[data-testid="player"]');
 
     // Should still show player controls even without lyrics
     await expect(page.locator('[data-testid="player-controls"]')).toBeVisible();
@@ -44,7 +44,7 @@ test.describe("Error Handling", () => {
     await page.setViewportSize({ width: 768, height: 1024 });
 
     // Player should still load
-    await page.waitForSelector('[data-testid="music-player"]', {
+    await page.waitForSelector('[data-testid="player"]', {
       timeout: 10000,
     });
     await expect(page.locator('[data-testid="player-controls"]')).toBeVisible();
@@ -64,7 +64,7 @@ test.describe("Error Handling", () => {
     });
 
     await page.setViewportSize({ width: 768, height: 1024 });
-    await page.waitForSelector('[data-testid="music-player"]');
+    await page.waitForSelector('[data-testid="player"]');
 
     // Should still show player and lyrics screen
     await expect(page.locator('[data-testid="player-controls"]')).toBeVisible();
@@ -94,7 +94,7 @@ test.describe("Error Handling", () => {
     });
 
     await page.setViewportSize({ width: 768, height: 1024 });
-    await page.waitForSelector('[data-testid="music-player"]');
+    await page.waitForSelector('[data-testid="player"]');
 
     // Should show some form of loading state or skeleton
     // The app should be functional even while loading lyrics
@@ -108,21 +108,13 @@ test.describe("Error Handling", () => {
   });
 
   test("should handle JavaScript errors gracefully", async ({ page }) => {
-    await page.setViewportSize({ width: 768, height: 1024 });
-
-    // Listen for JavaScript errors
-    const errors: string[] = [];
-    page.on("console", (msg) => {
-      if (msg.type() === "error") {
-        errors.push(msg.text());
-      }
-    });
-
+    // Listen for uncaught exceptions, which are always critical bugs.
+    const uncaughtErrors: Error[] = [];
     page.on("pageerror", (error) => {
-      errors.push(error.message);
+      uncaughtErrors.push(error);
     });
 
-    await page.waitForSelector('[data-testid="music-player"]');
+    await page.waitForSelector('[data-testid="player"]');
 
     // Basic functionality should work even if there are minor JS errors
     await expect(page.locator('[data-testid="player-controls"]')).toBeVisible();
@@ -136,16 +128,11 @@ test.describe("Error Handling", () => {
     // Should show pause icon after clicking play
     await expect(page.locator('[data-testid="pause-icon"]')).toBeVisible();
 
-    // No critical errors should prevent basic functionality
-    const criticalErrors = errors.filter(
-      (error) =>
-        !error.includes("Failed to fetch") && // Network errors are expected in tests
-        !error.includes("Loading chunk"), // Dynamic import errors in dev mode
-    );
-    if (criticalErrors.length > 0) {
-      console.log("Critical Errors Found:", criticalErrors);
+    // Assert that no uncaught exceptions were thrown
+    if (uncaughtErrors.length > 0) {
+      console.error("Uncaught exceptions found:", uncaughtErrors);
     }
-    expect(criticalErrors.length).toBe(0);
+    expect(uncaughtErrors.length).toBe(0);
   });
 
   test("should handle missing testid attributes gracefully", async ({

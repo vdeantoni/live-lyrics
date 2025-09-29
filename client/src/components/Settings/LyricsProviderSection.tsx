@@ -29,7 +29,8 @@ export const LyricsProviderSection = () => {
         checkAvailability(provider.id);
       }
     });
-  }, [lyricsProviderIds, checkAvailability]); // Only depend on provider IDs, not their status - prevents infinite re-renders
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Only depend on provider IDs, not their status - prevents infinite re-renders
+  }, [lyricsProviderIds, checkAvailability]);
 
   const handleToggle = (id: string, enabled: boolean) => {
     const newSet = new Set(enabledLyricsProviders);

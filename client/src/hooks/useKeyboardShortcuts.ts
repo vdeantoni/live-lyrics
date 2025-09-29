@@ -12,11 +12,11 @@ import { loadPlayer } from "@/config/providers";
 /**
  * Global keyboard shortcuts hook for the player
  *
- * Shortcuts:
+ * Shortcuts (only triggered when no modifier keys are pressed, except where noted):
  * - Space: Play/Pause
- * - Left/Right arrows: Seek backward/forward (5s)
+ * - Left/Right arrows: Seek backward/forward (5s, or 15s with Shift)
  * - Up/Down arrows: Navigate to previous/next lyrics line
- * - C: Toggle settings screen
+ * - C: Toggle settings screen (blocked when Cmd/Ctrl/Alt are pressed to avoid conflicts with copy/paste)
  */
 export const useKeyboardShortcuts = () => {
   const playerId = useAtomValue(playerIdAtom);
@@ -36,6 +36,9 @@ export const useKeyboardShortcuts = () => {
       ) {
         return;
       }
+
+      // Don't trigger shortcuts if modifier keys are pressed (except for navigation shortcuts that expect them)
+      const hasModifier = event.ctrlKey || event.metaKey || event.altKey;
 
       const { key } = event;
 
@@ -65,6 +68,7 @@ export const useKeyboardShortcuts = () => {
 
       switch (key.toLowerCase()) {
         case " ": // Space - Play/Pause
+          if (hasModifier) return; // Don't trigger if modifier keys are pressed
           event.preventDefault();
           if (playerId && songInfo) {
             const player = await getPlayer();
@@ -79,33 +83,37 @@ export const useKeyboardShortcuts = () => {
           break;
 
         case "c": // C - Toggle Settings
+          if (hasModifier) return; // Don't trigger if modifier keys are pressed (fixes Cmd+C issue)
           event.preventDefault();
           toggleSettings();
           break;
 
-        case "arrowleft": // Left Arrow - Seek backward
+        case "arrowleft": // Left Arrow - Seek backward (5s) or fast seek (15s with Shift)
           event.preventDefault();
           if (playerId) {
             const player = await getPlayer();
             if (player) {
-              const newTime = Math.max(0, currentTime - 5);
+              const seekAmount = event.shiftKey ? 15 : 5; // Fast seek with Shift
+              const newTime = Math.max(0, currentTime - seekAmount);
               await player.seek(newTime);
             }
           }
           break;
 
-        case "arrowright": // Right Arrow - Seek forward
+        case "arrowright": // Right Arrow - Seek forward (5s) or fast seek (15s with Shift)
           event.preventDefault();
           if (playerId) {
             const player = await getPlayer();
             if (player) {
-              const newTime = Math.min(duration, currentTime + 5);
+              const seekAmount = event.shiftKey ? 15 : 5; // Fast seek with Shift
+              const newTime = Math.min(duration, currentTime + seekAmount);
               await player.seek(newTime);
             }
           }
           break;
 
         case "arrowup": // Up Arrow - Previous lyrics line
+          if (event.ctrlKey || event.metaKey || event.altKey) return; // Block if Ctrl/Cmd/Alt (but allow Shift for consistency)
           event.preventDefault();
           if (playerId && lyricsData && lyricsData.lines.length > 0) {
             const player = await getPlayer();
@@ -121,6 +129,7 @@ export const useKeyboardShortcuts = () => {
           break;
 
         case "arrowdown": // Down Arrow - Next lyrics line
+          if (event.ctrlKey || event.metaKey || event.altKey) return; // Block if Ctrl/Cmd/Alt (but allow Shift for consistency)
           event.preventDefault();
           if (playerId && lyricsData && lyricsData.lines.length > 0) {
             const player = await getPlayer();
