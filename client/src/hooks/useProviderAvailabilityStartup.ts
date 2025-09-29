@@ -36,8 +36,6 @@ export const useProviderAvailabilityStartup = () => {
     availableArtworkProviders.forEach((provider) => {
       checkArtworkAvailability(provider.id);
     });
-
-    console.log("🔍 Started provider availability checks on app startup");
   }, [
     availableLyricsProviders,
     availableArtworkProviders,
