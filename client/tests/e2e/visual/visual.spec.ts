@@ -1,4 +1,37 @@
-import { test } from "@playwright/test";
+import { test, Page } from "@playwright/test";
+
+// Utility function to wait for background image to load or timeout gracefully
+const waitForBackgroundImage = async (page: Page, timeout: number = 5000) => {
+  try {
+    await page.waitForFunction(
+      () => {
+        const backgroundElement = document.querySelector(
+          '[data-testid="lyrics-background"]',
+        );
+        if (!backgroundElement) return false;
+
+        const computedStyle = window.getComputedStyle(backgroundElement);
+        const backgroundImage = computedStyle.backgroundImage;
+
+        // If no background image is set, consider it "loaded" (graceful fallback)
+        if (!backgroundImage || backgroundImage === "none") return true;
+
+        const urlMatch = backgroundImage.match(/url\(["']?([^"']+)["']?\)/);
+        if (!urlMatch) return true; // No valid URL, consider loaded
+
+        // Only wait for actual image loading if we have a valid URL
+        const img = new Image();
+        img.src = urlMatch[1];
+        return img.complete && img.naturalWidth > 0;
+      },
+      { timeout },
+    );
+  } catch {
+    // Timeout is OK - background might not load due to CORS or network issues
+    // Visual tests should still proceed for layout/UI testing
+    console.log("Background image loading timed out, proceeding with test...");
+  }
+};
 
 test.describe("Visual Regression Tests", () => {
   test.beforeEach(async ({ page }) => {
@@ -18,6 +51,24 @@ test.describe("Visual Regression Tests", () => {
         }),
       });
     });
+
+    // Mock iTunes artwork API to prevent CORS issues
+    await page.route("**/itunes.apple.com/**", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          results: [
+            {
+              artworkUrl100:
+                "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==", // 1x1 transparent PNG
+              artworkUrl600:
+                "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==",
+            },
+          ],
+        }),
+      });
+    });
   });
 
   test("homepage portrait mode", async ({ page }) => {
@@ -25,8 +76,9 @@ test.describe("Visual Regression Tests", () => {
     await page.goto("/");
     await page.waitForSelector('[data-testid="music-player"]');
 
-    // Wait for app to fully load and stabilize
-    await page.waitForTimeout(2000);
+    // Wait for background image to load completely
+    await waitForBackgroundImage(page);
+    await page.waitForTimeout(1000);
 
     // Generate screenshot for Lost Pixel
     await page.screenshot({
@@ -40,8 +92,9 @@ test.describe("Visual Regression Tests", () => {
     await page.goto("/");
     await page.waitForSelector('[data-testid="music-player"]');
 
-    // Wait for app to fully load and stabilize
-    await page.waitForTimeout(2000);
+    // Wait for background image to load completely
+    await waitForBackgroundImage(page);
+    await page.waitForTimeout(1000);
 
     // Generate screenshot for Lost Pixel
     await page.screenshot({
@@ -74,8 +127,9 @@ test.describe("Visual Regression Tests", () => {
     await page.goto("/");
     await page.waitForSelector('[data-testid="lyrics-screen"]');
 
-    // Wait for lyrics to load
-    await page.waitForTimeout(2000);
+    // Wait for background image to load completely
+    await waitForBackgroundImage(page);
+    await page.waitForTimeout(1000);
 
     // Screenshot just the lyrics display area
     await page.locator('[data-testid="lyrics-screen"]').screenshot({
@@ -106,8 +160,9 @@ test.describe("Visual Regression Tests", () => {
     await page.goto("/");
     await page.waitForSelector('[data-testid="music-player"]');
 
-    // Wait for mobile layout to stabilize
-    await page.waitForTimeout(2000);
+    // Wait for background image to load completely
+    await waitForBackgroundImage(page);
+    await page.waitForTimeout(1000);
 
     // Full page screenshot for mobile
     await page.screenshot({
@@ -121,8 +176,9 @@ test.describe("Visual Regression Tests", () => {
     await page.goto("/");
     await page.waitForSelector('[data-testid="music-player"]');
 
-    // Wait for tablet layout to stabilize
-    await page.waitForTimeout(2000);
+    // Wait for background image to load completely
+    await waitForBackgroundImage(page);
+    await page.waitForTimeout(1000);
 
     // Full page screenshot for tablet landscape
     await page.screenshot({
@@ -136,6 +192,9 @@ test.describe("Visual Regression Tests", () => {
     await page.goto("/");
     await page.waitForSelector('[data-testid="lyrics-screen"]');
 
+    // Wait for background image to load completely first
+    await waitForBackgroundImage(page);
+
     // Start playing to get highlighted lyrics
     await page.click('[data-testid="play-pause-button"]');
 
@@ -146,6 +205,8 @@ test.describe("Visual Regression Tests", () => {
         timeout: 5000,
       },
     );
+
+    await page.waitForTimeout(1000);
 
     // Screenshot lyrics with highlighting
     await page.locator('[data-testid="lyrics-screen"]').screenshot({
