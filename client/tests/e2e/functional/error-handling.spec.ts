@@ -157,7 +157,7 @@ test.describe("Error Handling", () => {
     // Test with more generic selectors
     await expect(page.locator("#root")).toBeVisible();
 
-    // Should have some form of music player interface
+    // Should have some form of player interface
     const hasPlayerElements =
       (await page.locator("button").count()) > 0 &&
       (await page.locator('[role="slider"]').count()) > 0;

@@ -11,8 +11,8 @@ export const PROVIDER_CONFIGS = {
       name: "Local",
       description: "Local player",
       load: async (): Promise<Player> => {
-        const { LocalMusicPlayer } = await import("@/players/localMusicPlayer");
-        return LocalMusicPlayer.getInstance();
+        const { LocalPlayer } = await import("@/players/localPlayer");
+        return LocalPlayer.getInstance();
       },
     },
     remote: {
@@ -20,10 +20,8 @@ export const PROVIDER_CONFIGS = {
       name: "Server",
       description: "Remote player",
       load: async (): Promise<Player> => {
-        const { RemoteMusicPlayer } = await import(
-          "@/players/remoteMusicPlayer"
-        );
-        return new RemoteMusicPlayer();
+        const { RemotePlayer } = await import("@/players/remotePlayer");
+        return new RemotePlayer();
       },
     },
   },
@@ -85,7 +83,7 @@ export const loadPlayer = async (playerId: string): Promise<Player> => {
   const config =
     PROVIDER_CONFIGS.players[playerId as keyof typeof PROVIDER_CONFIGS.players];
   if (!config) {
-    throw new Error(`Unknown music player: ${playerId}`);
+    throw new Error(`Unknown player: ${playerId}`);
   }
   return config.load();
 };
@@ -119,7 +117,7 @@ export const loadArtworkProvider = async (
 /**
  * Helper functions to get provider metadata without loading
  */
-export const getMusicPlayerConfigs = () => {
+export const getPlayerConfigs = () => {
   return Object.values(PROVIDER_CONFIGS.players).map(
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     ({ load, ...config }) => config,

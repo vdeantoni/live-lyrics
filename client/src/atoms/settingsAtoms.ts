@@ -7,7 +7,7 @@ import type {
   ArtworkProvider,
 } from "@/types";
 import {
-  getMusicPlayerConfigs,
+  getPlayerConfigs,
   getLyricsProviderConfigs,
   getArtworkProviderConfigs,
   loadPlayer,
@@ -20,49 +20,127 @@ import {
  */
 export const defaultSettings: AppSettings = {
   playerId: "local",
-  lyricsProviderId: "lrclib",
-  artworkProviderId: "itunes",
+  lyricsProviderIds: ["lrclib", "local-server", "simulated"],
+  artworkProviderIds: ["itunes"],
+  enabledLyricsProviders: new Set(["lrclib"]),
+  enabledArtworkProviders: new Set(["itunes"]),
 };
 
 /**
  * Persistent settings atom (stored in localStorage)
+ * Custom serialization to handle Set types
  */
 export const settingsAtom = atomWithStorage<AppSettings>(
-  "live-lyrics-settings",
+  "LIVE_LYRICS_SETTINGS",
   defaultSettings,
+  {
+    getItem: (key: string, initialValue: AppSettings): AppSettings => {
+      try {
+        const storedValue = localStorage.getItem(key);
+        if (storedValue === null) return initialValue;
+
+        const parsed = JSON.parse(storedValue);
+        // Ensure all required fields exist with proper defaults and convert arrays back to Sets
+        return {
+          playerId: parsed.playerId || initialValue.playerId,
+          lyricsProviderIds:
+            parsed.lyricsProviderIds || initialValue.lyricsProviderIds,
+          artworkProviderIds:
+            parsed.artworkProviderIds || initialValue.artworkProviderIds,
+          enabledLyricsProviders: new Set<string>(
+            parsed.enabledLyricsProviders ||
+              Array.from(initialValue.enabledLyricsProviders),
+          ),
+          enabledArtworkProviders: new Set<string>(
+            parsed.enabledArtworkProviders ||
+              Array.from(initialValue.enabledArtworkProviders),
+          ),
+        };
+      } catch {
+        return initialValue;
+      }
+    },
+    setItem: (key, value) => {
+      try {
+        // Convert Sets to arrays for serialization
+        const serializable = {
+          ...value,
+          enabledLyricsProviders: Array.from(value.enabledLyricsProviders),
+          enabledArtworkProviders: Array.from(value.enabledArtworkProviders),
+        };
+        localStorage.setItem(key, JSON.stringify(serializable));
+      } catch (error) {
+        console.error("Failed to save settings:", error);
+      }
+    },
+    removeItem: (key) => {
+      localStorage.removeItem(key);
+    },
+  },
 );
 
 /**
  * Individual setting atoms (derived from main settings)
  */
 export const playerIdAtom = atom(
-  (get) => get(settingsAtom).playerId,
+  (get) => {
+    const settings = get(settingsAtom);
+    return settings.playerId;
+  },
   (get, set, newPlayerId: string) => {
     const currentSettings = get(settingsAtom);
     set(settingsAtom, { ...currentSettings, playerId: newPlayerId });
   },
 );
 
-export const lyricsProviderIdAtom = atom(
-  (get) => get(settingsAtom).lyricsProviderId,
-  (get, set, newProviderId: string) => {
+export const lyricsProviderIdsAtom = atom(
+  (get) => get(settingsAtom).lyricsProviderIds,
+  (get, set, newProviderIds: string[]) => {
     const currentSettings = get(settingsAtom);
-    set(settingsAtom, { ...currentSettings, lyricsProviderId: newProviderId });
+    set(settingsAtom, {
+      ...currentSettings,
+      lyricsProviderIds: newProviderIds,
+    });
   },
 );
 
-export const artworkProviderIdAtom = atom(
-  (get) => get(settingsAtom).artworkProviderId,
-  (get, set, newProviderId: string) => {
+export const artworkProviderIdsAtom = atom(
+  (get) => get(settingsAtom).artworkProviderIds,
+  (get, set, newProviderIds: string[]) => {
     const currentSettings = get(settingsAtom);
-    set(settingsAtom, { ...currentSettings, artworkProviderId: newProviderId });
+    set(settingsAtom, {
+      ...currentSettings,
+      artworkProviderIds: newProviderIds,
+    });
+  },
+);
+
+export const enabledLyricsProvidersAtom = atom(
+  (get) => get(settingsAtom).enabledLyricsProviders,
+  (get, set, newEnabledProviders: Set<string>) => {
+    const currentSettings = get(settingsAtom);
+    set(settingsAtom, {
+      ...currentSettings,
+      enabledLyricsProviders: newEnabledProviders,
+    });
+  },
+);
+
+export const enabledArtworkProvidersAtom = atom(
+  (get) => get(settingsAtom).enabledArtworkProviders,
+  (get, set, newEnabledProviders: Set<string>) => {
+    const currentSettings = get(settingsAtom);
+    set(settingsAtom, {
+      ...currentSettings,
+      enabledArtworkProviders: newEnabledProviders,
+    });
   },
 );
 
 /**
  * Configuration atoms - provide metadata without instantiating providers
  */
-export const availableMusicPlayersAtom = atom(() => getMusicPlayerConfigs());
+export const availablePlayersAtom = atom(() => getPlayerConfigs());
 export const availableLyricsProvidersAtom = atom(() =>
   getLyricsProviderConfigs(),
 );
@@ -71,42 +149,170 @@ export const availableArtworkProvidersAtom = atom(() =>
 );
 
 /**
- * Async atoms for checking provider availability (for UI status)
+ * Atoms for tracking provider availability with individual loading states
  */
-export const lyricsProvidersWithStatusAtom = atom(async (get) => {
+
+// Cache atoms to store availability results and loading states
+const lyricsProviderAvailabilityCache = atom<Record<string, boolean>>({});
+const lyricsProviderLoadingStates = atom<Record<string, boolean>>({});
+const artworkProviderAvailabilityCache = atom<Record<string, boolean>>({});
+const artworkProviderLoadingStates = atom<Record<string, boolean>>({});
+
+// Sync atom that combines cached availability with current order/enabled state and loading states
+export const lyricsProvidersWithStatusAtom = atom((get) => {
   const configs = get(availableLyricsProvidersAtom);
-  const statusPromises = configs.map(async (config) => {
-    try {
-      const provider = await loadLyricsProvider(config.id);
-      const isAvailable = await provider.isAvailable();
-      return { ...config, isAvailable };
-    } catch (error) {
-      console.error(`Failed to check availability for ${config.id}:`, error);
-      return { ...config, isAvailable: false };
-    }
-  });
+  const providerIds = get(lyricsProviderIdsAtom);
+  const enabledProviders = get(enabledLyricsProvidersAtom);
+  const cache = get(lyricsProviderAvailabilityCache);
+  const loadingStates = get(lyricsProviderLoadingStates);
 
-  return Promise.all(statusPromises);
+  // Create ordered list based on priority, with enabled status
+  const orderedConfigs = providerIds
+    .map((id) => configs.find((config) => config.id === id))
+    .filter(Boolean) as typeof configs;
+
+  // Add any configs not in the priority list at the end
+  const missingConfigs = configs.filter(
+    (config) => !providerIds.includes(config.id),
+  );
+  const allConfigs = [...orderedConfigs, ...missingConfigs];
+
+  return allConfigs.map((config) => ({
+    ...config,
+    isAvailable: cache[config.id] ?? true, // Default to true until checked
+    isEnabled: enabledProviders.has(config.id),
+    priority: providerIds.indexOf(config.id) + 1 || 999,
+    isLoading: loadingStates[config.id] ?? false,
+  }));
 });
 
-export const artworkProvidersWithStatusAtom = atom(async (get) => {
+export const artworkProvidersWithStatusAtom = atom((get) => {
   const configs = get(availableArtworkProvidersAtom);
-  const statusPromises = configs.map(async (config) => {
-    try {
-      const provider = await loadArtworkProvider(config.id);
-      const isAvailable = await provider.isAvailable();
-      return { ...config, isAvailable };
-    } catch (error) {
-      console.error(`Failed to check availability for ${config.id}:`, error);
-      return { ...config, isAvailable: false };
-    }
-  });
+  const providerIds = get(artworkProviderIdsAtom);
+  const enabledProviders = get(enabledArtworkProvidersAtom);
+  const cache = get(artworkProviderAvailabilityCache);
+  const loadingStates = get(artworkProviderLoadingStates);
 
-  return Promise.all(statusPromises);
+  // Create ordered list based on priority, with enabled status
+  const orderedConfigs = providerIds
+    .map((id) => configs.find((config) => config.id === id))
+    .filter(Boolean) as typeof configs;
+
+  // Add any configs not in the priority list at the end
+  const missingConfigs = configs.filter(
+    (config) => !providerIds.includes(config.id),
+  );
+  const allConfigs = [...orderedConfigs, ...missingConfigs];
+
+  return allConfigs.map((config) => ({
+    ...config,
+    isAvailable: cache[config.id] ?? true, // Default to true until checked
+    isEnabled: enabledProviders.has(config.id),
+    priority: providerIds.indexOf(config.id) + 1 || 999,
+    isLoading: loadingStates[config.id] ?? false,
+  }));
 });
 
-export const musicPlayersWithStatusAtom = atom(async (get) => {
-  const configs = get(availableMusicPlayersAtom);
+// Write-only atoms to update individual provider states
+export const updateLyricsProviderStateAtom = atom(
+  null,
+  (
+    get,
+    set,
+    update: { id: string; isAvailable?: boolean; isLoading?: boolean },
+  ) => {
+    if (update.isAvailable !== undefined) {
+      const cache = get(lyricsProviderAvailabilityCache);
+      set(lyricsProviderAvailabilityCache, {
+        ...cache,
+        [update.id]: update.isAvailable,
+      });
+    }
+    if (update.isLoading !== undefined) {
+      const loadingStates = get(lyricsProviderLoadingStates);
+      set(lyricsProviderLoadingStates, {
+        ...loadingStates,
+        [update.id]: update.isLoading,
+      });
+    }
+  },
+);
+
+export const updateArtworkProviderStateAtom = atom(
+  null,
+  (
+    get,
+    set,
+    update: { id: string; isAvailable?: boolean; isLoading?: boolean },
+  ) => {
+    if (update.isAvailable !== undefined) {
+      const cache = get(artworkProviderAvailabilityCache);
+      set(artworkProviderAvailabilityCache, {
+        ...cache,
+        [update.id]: update.isAvailable,
+      });
+    }
+    if (update.isLoading !== undefined) {
+      const loadingStates = get(artworkProviderLoadingStates);
+      set(artworkProviderLoadingStates, {
+        ...loadingStates,
+        [update.id]: update.isLoading,
+      });
+    }
+  },
+);
+
+// Helper atoms to check availability for individual providers
+export const checkLyricsProviderAvailabilityAtom = atom(
+  null,
+  async (_get, set, providerId: string) => {
+    set(updateLyricsProviderStateAtom, { id: providerId, isLoading: true });
+
+    try {
+      const provider = await loadLyricsProvider(providerId);
+      const isAvailable = await provider.isAvailable();
+      set(updateLyricsProviderStateAtom, {
+        id: providerId,
+        isAvailable,
+        isLoading: false,
+      });
+    } catch (error) {
+      console.error(`Failed to check availability for ${providerId}:`, error);
+      set(updateLyricsProviderStateAtom, {
+        id: providerId,
+        isAvailable: false,
+        isLoading: false,
+      });
+    }
+  },
+);
+
+export const checkArtworkProviderAvailabilityAtom = atom(
+  null,
+  async (_get, set, providerId: string) => {
+    set(updateArtworkProviderStateAtom, { id: providerId, isLoading: true });
+
+    try {
+      const provider = await loadArtworkProvider(providerId);
+      const isAvailable = await provider.isAvailable();
+      set(updateArtworkProviderStateAtom, {
+        id: providerId,
+        isAvailable,
+        isLoading: false,
+      });
+    } catch (error) {
+      console.error(`Failed to check availability for ${providerId}:`, error);
+      set(updateArtworkProviderStateAtom, {
+        id: providerId,
+        isAvailable: false,
+        isLoading: false,
+      });
+    }
+  },
+);
+
+export const playersWithStatusAtom = atom(async (get) => {
+  const configs = get(availablePlayersAtom);
   const statusPromises = configs.map(async (config) => {
     try {
       const player = await loadPlayer(config.id);
@@ -123,13 +329,14 @@ export const musicPlayersWithStatusAtom = atom(async (get) => {
 
 /**
  * Provider instance atoms with lazy loading and caching
+ * These atoms provide the actual enabled providers in priority order
  */
-const musicPlayerInstancesAtom = atom<Map<string, Player>>(new Map());
+const playerInstancesAtom = atom<Map<string, Player>>(new Map());
 
-export const currentMusicPlayerAtom = atom(
+export const currentPlayerAtom = atom(
   async (get): Promise<Player | null> => {
     const playerId = get(playerIdAtom);
-    const instances = get(musicPlayerInstancesAtom);
+    const instances = get(playerInstancesAtom);
 
     // Return cached instance if available
     if (instances.has(playerId)) {
@@ -141,79 +348,61 @@ export const currentMusicPlayerAtom = atom(
       instances.set(playerId, provider);
       return provider;
     } catch (error) {
-      console.error(`Failed to load music player "${playerId}":`, error);
+      console.error(`Failed to load player "${playerId}":`, error);
       return null;
     }
   },
   (get, set, instance: Player | null) => {
     if (instance) {
-      const instances = new Map(get(musicPlayerInstancesAtom));
+      const instances = new Map(get(playerInstancesAtom));
       instances.set(instance.getId(), instance);
-      set(musicPlayerInstancesAtom, instances);
+      set(playerInstancesAtom, instances);
     }
   },
 );
 
-const lyricsProviderInstancesAtom = atom<Map<string, LyricsProvider>>(
-  new Map(),
-);
-
+/**
+ * Provider atoms that return the first enabled provider in priority order
+ * for compatibility with components that expect a single provider
+ */
 export const currentLyricsProviderAtom = atom(
   async (get): Promise<LyricsProvider | null> => {
-    const providerId = get(lyricsProviderIdAtom);
-    const instances = get(lyricsProviderInstancesAtom);
+    const providerIds = get(lyricsProviderIdsAtom);
+    const enabledProviders = get(enabledLyricsProvidersAtom);
 
-    // Return cached instance if available
-    if (instances.has(providerId)) {
-      return instances.get(providerId)!;
-    }
+    // Get the first enabled provider
+    const firstEnabledId = providerIds.find((id) => enabledProviders.has(id));
+    if (!firstEnabledId) return null;
 
     try {
-      const provider = await loadLyricsProvider(providerId);
-      instances.set(providerId, provider);
-      return provider;
+      return await loadLyricsProvider(firstEnabledId);
     } catch (error) {
-      console.error(`Failed to load lyrics provider "${providerId}":`, error);
+      console.error(
+        `Failed to load lyrics provider "${firstEnabledId}":`,
+        error,
+      );
       return null;
     }
   },
-  (get, set, instance: LyricsProvider | null) => {
-    if (instance) {
-      const instances = new Map(get(lyricsProviderInstancesAtom));
-      instances.set(instance.getId(), instance);
-      set(lyricsProviderInstancesAtom, instances);
-    }
-  },
-);
-
-const artworkProviderInstancesAtom = atom<Map<string, ArtworkProvider>>(
-  new Map(),
 );
 
 export const currentArtworkProviderAtom = atom(
   async (get): Promise<ArtworkProvider | null> => {
-    const providerId = get(artworkProviderIdAtom);
-    const instances = get(artworkProviderInstancesAtom);
+    const providerIds = get(artworkProviderIdsAtom);
+    const enabledProviders = get(enabledArtworkProvidersAtom);
 
-    // Return cached instance if available
-    if (instances.has(providerId)) {
-      return instances.get(providerId)!;
-    }
+    // Get the first enabled provider
+    const firstEnabledId = providerIds.find((id) => enabledProviders.has(id));
+    if (!firstEnabledId) return null;
 
     try {
-      const provider = await loadArtworkProvider(providerId);
-      instances.set(providerId, provider);
-      return provider;
+      return await loadArtworkProvider(firstEnabledId);
     } catch (error) {
-      console.error(`Failed to load artwork provider "${providerId}":`, error);
+      console.error(
+        `Failed to load artwork provider "${firstEnabledId}":`,
+        error,
+      );
       return null;
-    }
-  },
-  (get, set, instance: ArtworkProvider | null) => {
-    if (instance) {
-      const instances = new Map(get(artworkProviderInstancesAtom));
-      instances.set(instance.getId(), instance);
-      set(artworkProviderInstancesAtom, instances);
     }
   },
 );

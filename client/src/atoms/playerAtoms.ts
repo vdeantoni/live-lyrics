@@ -56,15 +56,15 @@ export const playAtom = atom(null, async (get, set) => {
   const playerId = get(playerIdAtom);
 
   if (!playerId) {
-    console.error("No music player selected");
+    console.error("No player selected");
     return;
   }
 
   set(isPlayingAtom, true);
 
   try {
-    const musicPlayer = await getPlayer(playerId);
-    await musicPlayer.play();
+    const player = await getPlayer(playerId);
+    await player.play();
   } catch (error) {
     // Rollback on error
     set(isPlayingAtom, wasPlaying);
@@ -78,15 +78,15 @@ export const pauseAtom = atom(null, async (get, set) => {
   const playerId = get(playerIdAtom);
 
   if (!playerId) {
-    console.error("No music player selected");
+    console.error("No player selected");
     return;
   }
 
   set(isPlayingAtom, false);
 
   try {
-    const musicPlayer = await getPlayer(playerId);
-    await musicPlayer.pause();
+    const player = await getPlayer(playerId);
+    await player.pause();
   } catch (error) {
     // Rollback on error
     set(isPlayingAtom, wasPlaying);
@@ -100,7 +100,7 @@ export const seekAtom = atom(null, async (get, set, time: number) => {
   const playerId = get(playerIdAtom);
 
   if (!playerId) {
-    console.error("No music player selected");
+    console.error("No player selected");
     return;
   }
 
@@ -109,8 +109,8 @@ export const seekAtom = atom(null, async (get, set, time: number) => {
   set(isUserSeekingAtom, true);
 
   try {
-    const musicPlayer = await getPlayer(playerId);
-    await musicPlayer.seek(time);
+    const player = await getPlayer(playerId);
+    await player.seek(time);
   } catch (error) {
     // Rollback on error
     set(currentTimeAtom, previousTime);

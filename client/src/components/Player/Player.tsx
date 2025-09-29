@@ -3,8 +3,8 @@ import PlayerControls from "./PlayerControls";
 import { useSongSync } from "@/hooks/useSongSync";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 
-const MusicPlayer = () => {
-  // Sync with current music player data - only called once at the top level
+const Player = () => {
+  // Sync with current player data - only called once at the top level
   useSongSync();
 
   // Global keyboard shortcuts with lyrics navigation
@@ -21,4 +21,4 @@ const MusicPlayer = () => {
   );
 };
 
-export default MusicPlayer;
+export default Player;

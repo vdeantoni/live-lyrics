@@ -155,21 +155,21 @@ Both client and server compile to `dist/` directories:
 **Atom-Based Provider System**:
 The app uses a centralized configuration-based architecture with multiple providers:
 
-**Available Music Players**:
-- **Remote Player** (`RemoteMusicPlayer`): Connects to local server for real Apple Music integration
-- **Local Player** (`LocalMusicPlayer`): In-memory player with classic songs playlist
+**Available Players**:
+- **Remote Player** (`RemotePlayer`): Connects to local server for real Apple Music integration
+- **Local Player** (`LocalPlayer`): In-memory player with classic songs playlist
 
 **Provider Management**:
 - Centralized configuration via `/src/config/providers.ts` with lazy loading
 - Settings management through Jotai atoms in `settingsAtoms.ts`
 - Dynamic provider loading eliminates side-effect imports
-- Each provider implements respective interfaces (`MusicPlayer`, `LyricsProvider`, `ArtworkProvider`)
+- Each provider implements respective interfaces (`Player`, `LyricsProvider`, `ArtworkProvider`)
 
 **Provider Ecosystem**:
-- **Music Players**: `RemoteMusicPlayer` (Apple Music), `LocalMusicPlayer` (simulated)
+- **Players**: `RemotePlayer` (Apple Music), `LocalPlayer` (simulated)
 - **Lyrics Providers**: `LrclibLyricsProvider`, `LocalServerLyricsProvider`, `SimulatedLyricsProvider`
 - **Artwork Providers**: `ITunesArtworkProvider` for album cover fetching
-- Providers are loaded dynamically using `loadMusicPlayer()`, `loadLyricsProvider()`, `loadArtworkProvider()`
+- Providers are loaded dynamically using `loadPlayer()`, `loadLyricsProvider()`, `loadArtworkProvider()`
 
 **Benefits of Atom-Based System**:
 - Eliminates registry side-effect imports (`import "@/registries/registerProviders"`)

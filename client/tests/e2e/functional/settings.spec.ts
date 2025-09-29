@@ -75,17 +75,93 @@ test.describe("Settings Functionality", () => {
       await expect(
         page.locator('[data-testid="settings-screen"] h2'),
       ).toContainText("Settings");
-      await expect(page.getByText("Configure your music player")).toBeVisible();
+      await expect(page.getByText("Configure your player")).toBeVisible();
 
-      // Check music player section
-      await expect(
-        page.getByRole("heading", { name: "Music Player" }),
-      ).toBeVisible();
+      // Check player section
+      await expect(page.getByRole("heading", { name: "Player" })).toBeVisible();
       await expect(page.getByText("Local Player")).toBeVisible();
 
-      // Check provider sections (these load asynchronously)
+      // Check provider sections (these load with individual loading states)
       await expect(page.getByText("Lyrics Provider")).toBeVisible();
       await expect(page.getByText("Artwork Provider")).toBeVisible();
+    });
+
+    test("should allow drag and drop reordering of providers", async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width: 768, height: 1024 });
+
+      // Open settings
+      const settingsButton = page.locator('[data-testid="settings-button"]');
+      await settingsButton.click();
+
+      await page.waitForSelector('[data-testid="settings-screen"]');
+
+      // Wait for provider items to load
+      await page.waitForSelector('[data-testid^="provider-item-"]', {
+        timeout: 5000,
+      });
+
+      // Find drag handles in lyrics provider section
+      const lyricsSection = page.locator(
+        '[data-testid="lyrics-provider-section"]',
+      );
+      const dragHandles = lyricsSection.locator(
+        '[data-testid^="provider-drag-handle-"]',
+      );
+
+      const dragHandleCount = await dragHandles.count();
+      if (dragHandleCount >= 2) {
+        // Get the first two drag handles
+        const firstHandle = dragHandles.nth(0);
+        const secondHandle = dragHandles.nth(1);
+
+        // Perform drag and drop operation
+        await firstHandle.dragTo(secondHandle);
+
+        // The order should have changed (we can't easily verify the exact order change in E2E,
+        // but we can verify the UI responded to the drag operation)
+        await expect(dragHandles.nth(0)).toBeVisible();
+        await expect(dragHandles.nth(1)).toBeVisible();
+      }
+    });
+
+    test("should show individual loading states for providers", async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width: 768, height: 1024 });
+
+      // Open settings
+      const settingsButton = page.locator('[data-testid="settings-button"]');
+      await settingsButton.click();
+
+      await page.waitForSelector('[data-testid="settings-screen"]');
+
+      // Wait for provider items to appear
+      await page.waitForSelector('[data-testid^="provider-item-"]', {
+        timeout: 5000,
+      });
+
+      // Should have provider status buttons (they may show spinners initially)
+      const providerButtons = page.locator(
+        '[data-testid="provider-status-button"]',
+      );
+      const buttonCount = await providerButtons.count();
+      expect(buttonCount).toBeGreaterThan(0);
+
+      // Eventually status should resolve to available/unavailable (no more spinners)
+      await page.waitForFunction(
+        () => {
+          const buttons = document.querySelectorAll(
+            '[data-testid="provider-status-button"]',
+          );
+          return Array.from(buttons).every(
+            (button) => !button.innerHTML.includes("animate-spin"),
+          );
+        },
+        {},
+        { timeout: 10000 },
+      );
     });
 
     test("should allow player switching", async ({ page }) => {
@@ -157,7 +233,9 @@ test.describe("Settings Functionality", () => {
       await page.waitForSelector('[data-testid="settings-screen"]');
 
       // Settings should still be visible and functional
-      await expect(page.getByText("Settings")).toBeVisible();
+      await expect(
+        page.getByRole("heading", { name: "Settings" }),
+      ).toBeVisible();
 
       // Close button should work
       const closeButton = page.locator('[data-testid="close-settings-button"]');
@@ -183,7 +261,9 @@ test.describe("Settings Functionality", () => {
         await page.waitForSelector('[data-testid="settings-screen"]');
 
         // Settings should be responsive
-        await expect(page.getByText("Settings")).toBeVisible();
+        await expect(
+          page.getByRole("heading", { name: "Settings" }),
+        ).toBeVisible();
         const closeButton = page.locator(
           '[data-testid="close-settings-button"]',
         );

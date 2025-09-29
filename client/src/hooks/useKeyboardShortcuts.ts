@@ -10,7 +10,7 @@ import {
 import { loadPlayer } from "@/config/providers";
 
 /**
- * Global keyboard shortcuts hook for the music player
+ * Global keyboard shortcuts hook for the player
  *
  * Shortcuts:
  * - Space: Play/Pause
@@ -52,13 +52,13 @@ export const useKeyboardShortcuts = () => {
         return 0; // Default to first line if none found
       };
 
-      // Helper function to get music player instance
-      const getMusicPlayer = async () => {
+      // Helper function to get player instance
+      const getPlayer = async () => {
         if (!playerId) return null;
         try {
           return await loadPlayer(playerId);
         } catch (error) {
-          console.error("Failed to load music player:", error);
+          console.error("Failed to load player:", error);
           return null;
         }
       };
@@ -67,12 +67,12 @@ export const useKeyboardShortcuts = () => {
         case " ": // Space - Play/Pause
           event.preventDefault();
           if (playerId && songInfo) {
-            const musicPlayer = await getMusicPlayer();
-            if (musicPlayer) {
+            const player = await getPlayer();
+            if (player) {
               if (songInfo.isPlaying) {
-                await musicPlayer.pause();
+                await player.pause();
               } else {
-                await musicPlayer.play();
+                await player.play();
               }
             }
           }
@@ -86,10 +86,10 @@ export const useKeyboardShortcuts = () => {
         case "arrowleft": // Left Arrow - Seek backward
           event.preventDefault();
           if (playerId) {
-            const musicPlayer = await getMusicPlayer();
-            if (musicPlayer) {
+            const player = await getPlayer();
+            if (player) {
               const newTime = Math.max(0, currentTime - 5);
-              await musicPlayer.seek(newTime);
+              await player.seek(newTime);
             }
           }
           break;
@@ -97,10 +97,10 @@ export const useKeyboardShortcuts = () => {
         case "arrowright": // Right Arrow - Seek forward
           event.preventDefault();
           if (playerId) {
-            const musicPlayer = await getMusicPlayer();
-            if (musicPlayer) {
+            const player = await getPlayer();
+            if (player) {
               const newTime = Math.min(duration, currentTime + 5);
-              await musicPlayer.seek(newTime);
+              await player.seek(newTime);
             }
           }
           break;
@@ -108,13 +108,13 @@ export const useKeyboardShortcuts = () => {
         case "arrowup": // Up Arrow - Previous lyrics line
           event.preventDefault();
           if (playerId && lyricsData && lyricsData.lines.length > 0) {
-            const musicPlayer = await getMusicPlayer();
-            if (musicPlayer) {
+            const player = await getPlayer();
+            if (player) {
               const currentIndex = getCurrentLineIndex();
               const prevIndex = Math.max(0, currentIndex - 1);
               const prevLine = lyricsData.lines[prevIndex];
               if (prevLine) {
-                await musicPlayer.seek(prevLine.time);
+                await player.seek(prevLine.time);
               }
             }
           }
@@ -123,8 +123,8 @@ export const useKeyboardShortcuts = () => {
         case "arrowdown": // Down Arrow - Next lyrics line
           event.preventDefault();
           if (playerId && lyricsData && lyricsData.lines.length > 0) {
-            const musicPlayer = await getMusicPlayer();
-            if (musicPlayer) {
+            const player = await getPlayer();
+            if (player) {
               const currentIndex = getCurrentLineIndex();
               const nextIndex = Math.min(
                 lyricsData.lines.length - 1,
@@ -132,7 +132,7 @@ export const useKeyboardShortcuts = () => {
               );
               const nextLine = lyricsData.lines[nextIndex];
               if (nextLine) {
-                await musicPlayer.seek(nextLine.time);
+                await player.seek(nextLine.time);
               }
             }
           }
