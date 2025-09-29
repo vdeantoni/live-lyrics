@@ -6,51 +6,16 @@ import { act } from "react";
 
 // Import actual atoms
 import {
-  modeIdAtom,
+  playerIdAtom,
   lyricsProviderIdAtom,
   artworkProviderIdAtom,
+  availableMusicPlayersAtom,
+  availableLyricsProvidersAtom,
+  availableArtworkProvidersAtom,
+  lyricsProvidersWithStatusAtom,
+  artworkProvidersWithStatusAtom,
+  musicPlayersWithStatusAtom,
 } from "@/atoms/settingsAtoms";
-
-// Mock the registries
-vi.mock("@/registries/lyricsProviderRegistry", () => ({
-  lyricsProviderRegistry: {
-    register: vi.fn(),
-    get: vi.fn(),
-    getAll: vi.fn(() => [
-      {
-        id: "lrclib",
-        name: "LrcLib",
-        description: "Community lyrics database",
-        factory: () => ({ isAvailable: () => Promise.resolve(true) }),
-      },
-      {
-        id: "local",
-        name: "Local Server",
-        description: "Local server with LrcLib fallback",
-        factory: () => ({ isAvailable: () => Promise.resolve(false) }),
-      },
-    ]),
-    has: vi.fn(),
-    getAvailable: vi.fn(() => Promise.resolve([])),
-  },
-}));
-
-vi.mock("@/registries/artworkProviderRegistry", () => ({
-  artworkProviderRegistry: {
-    register: vi.fn(),
-    get: vi.fn(),
-    getAll: vi.fn(() => [
-      {
-        id: "itunes",
-        name: "iTunes",
-        description: "iTunes Search API",
-        factory: () => ({ isAvailable: () => Promise.resolve(true) }),
-      },
-    ]),
-    has: vi.fn(),
-    getAvailable: vi.fn(() => Promise.resolve([])),
-  },
-}));
 
 // Mock jotai hooks
 vi.mock("jotai", async () => {
@@ -65,9 +30,48 @@ vi.mock("jotai", async () => {
 import { useAtomValue, useSetAtom } from "jotai";
 
 describe("SettingsScreen", () => {
-  const mockSetModeId = vi.fn();
+  const mockSetPlayerId = vi.fn();
   const mockSetLyricsProviderId = vi.fn();
   const mockSetArtworkProviderId = vi.fn();
+
+  const mockMusicPlayers = [
+    { id: "local", name: "Local", description: "Local player" },
+    {
+      id: "remote",
+      name: "Server",
+      description: "Remote player",
+    },
+  ];
+
+  const mockLyricsProviders = [
+    { id: "lrclib", name: "LrcLib", description: "Community lyrics database" },
+    {
+      id: "local-server",
+      name: "Local Server",
+      description: "Local server with LrcLib fallback",
+    },
+    {
+      id: "simulated",
+      name: "Simulated",
+      description: "Hardcoded demo lyrics",
+    },
+  ];
+
+  const mockArtworkProviders = [
+    { id: "itunes", name: "iTunes", description: "iTunes Search API" },
+  ];
+
+  const mockMusicPlayersWithStatus = mockMusicPlayers.map((player) => ({
+    ...player,
+    isAvailable: true,
+  }));
+  const mockLyricsProvidersWithStatus = mockLyricsProviders.map((provider) => ({
+    ...provider,
+    isAvailable: true,
+  }));
+  const mockArtworkProvidersWithStatus = mockArtworkProviders.map(
+    (provider) => ({ ...provider, isAvailable: true }),
+  );
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -75,12 +79,24 @@ describe("SettingsScreen", () => {
     // Setup mock implementations
     vi.mocked(useAtomValue).mockImplementation((atom) => {
       switch (atom) {
-        case modeIdAtom:
+        case playerIdAtom:
           return "local";
         case lyricsProviderIdAtom:
           return "lrclib";
         case artworkProviderIdAtom:
           return "itunes";
+        case availableMusicPlayersAtom:
+          return mockMusicPlayers;
+        case availableLyricsProvidersAtom:
+          return mockLyricsProviders;
+        case availableArtworkProvidersAtom:
+          return mockArtworkProviders;
+        case musicPlayersWithStatusAtom:
+          return mockMusicPlayersWithStatus;
+        case lyricsProvidersWithStatusAtom:
+          return mockLyricsProvidersWithStatus;
+        case artworkProvidersWithStatusAtom:
+          return mockArtworkProvidersWithStatus;
         default:
           return undefined;
       }
@@ -88,8 +104,8 @@ describe("SettingsScreen", () => {
 
     vi.mocked(useSetAtom).mockImplementation((atom) => {
       switch (atom) {
-        case modeIdAtom:
-          return mockSetModeId;
+        case playerIdAtom:
+          return mockSetPlayerId;
         case lyricsProviderIdAtom:
           return mockSetLyricsProviderId;
         case artworkProviderIdAtom:
@@ -121,22 +137,20 @@ describe("SettingsScreen", () => {
     expect(screen.getByText("Configure your music player")).toBeInTheDocument();
   });
 
-  it("displays music mode section", async () => {
+  it("displays music player section", async () => {
     await renderComponent();
-    expect(screen.getByText("Music Mode")).toBeInTheDocument();
-    expect(screen.getByText("Local Mode")).toBeInTheDocument();
-    expect(
-      screen.getByText("Use simulated player for testing"),
-    ).toBeInTheDocument();
+    expect(screen.getByText("Music Player")).toBeInTheDocument();
+    expect(screen.getByText("Local")).toBeInTheDocument();
+    expect(screen.getByText("Local player")).toBeInTheDocument();
   });
 
-  it("handles mode toggle", async () => {
+  it("handles player toggle", async () => {
     await renderComponent();
-    const modeToggle = screen.getByRole("switch");
+    const playerToggle = screen.getByRole("switch");
     await act(async () => {
-      fireEvent.click(modeToggle);
+      fireEvent.click(playerToggle);
     });
-    expect(mockSetModeId).toHaveBeenCalledWith("remote");
+    expect(mockSetPlayerId).toHaveBeenCalledWith("remote");
   });
 
   it("displays provider sections", async () => {

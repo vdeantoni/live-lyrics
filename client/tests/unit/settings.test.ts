@@ -1,27 +1,27 @@
 import { describe, it, expect } from "vitest";
-import { LocalMusicMode } from "@/modes/localMusicMode";
-import { RemoteMusicMode } from "@/modes/remoteMusicMode";
+import { LocalMusicPlayer } from "@/players/localMusicPlayer";
+import { RemoteMusicPlayer } from "@/players/remoteMusicPlayer";
 import { LrclibLyricsProvider } from "@/providers/lrclibLyricsProvider";
 import { ITunesArtworkProvider } from "@/providers/itunesArtworkProvider";
 
-describe("Music Modes", () => {
-  it("should create local music mode instance", () => {
-    const mode = new LocalMusicMode();
-    expect(mode.getId()).toBe("local");
-    expect(mode.getName()).toBe("Local");
-    expect(mode.getDescription()).toContain("Simulated");
+describe("Music Players", () => {
+  it("should create local music player instance", () => {
+    const player = LocalMusicPlayer.getInstance();
+    expect(player.getId()).toBe("local");
+    expect(player.getName()).toBe("Local");
+    expect(player.getDescription()).toBe("Local player");
   });
 
-  it("should create remote music mode instance", () => {
-    const mode = new RemoteMusicMode();
-    expect(mode.getId()).toBe("remote");
-    expect(mode.getName()).toBe("Server");
-    expect(mode.getDescription()).toContain("Apple Music");
+  it("should create remote music player instance", () => {
+    const player = new RemoteMusicPlayer();
+    expect(player.getId()).toBe("remote");
+    expect(player.getName()).toBe("Remote");
+    expect(player.getDescription()).toBe("Remote player");
   });
 
-  it("should have local mode always available", async () => {
-    const mode = new LocalMusicMode();
-    const isAvailable = await mode.isAvailable();
+  it("should have local player always available", async () => {
+    const player = LocalMusicPlayer.getInstance();
+    const isAvailable = await player.isAvailable();
     expect(isAvailable).toBe(true);
   });
 });

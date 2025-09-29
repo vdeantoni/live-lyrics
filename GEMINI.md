@@ -140,22 +140,30 @@ Both client and server compile to `dist/` directories:
 
 ### Music Source Architecture
 
-**Source Abstraction System**:
-The app uses a pluggable source architecture with multiple music providers:
+**Atom-Based Provider System**:
+The app uses a centralized configuration-based architecture with multiple providers:
 
-**Available Sources**:
-- **Server Source** (`HttpMusicSource`): Connects to local server for real Apple Music integration
-- **Local Source** (`SimulatedMusicSource`): In-memory demo player with classic songs playlist
+**Available Music Players**:
+- **Remote Player** (`RemoteMusicPlayer`): Connects to local server for real Apple Music integration
+- **Local Player** (`LocalMusicPlayer`): In-memory player with classic songs playlist
 
-**Source Management**:
-- Configurable via `sourceAtoms.ts` with Jotai state management
-- UI source switcher allows runtime switching between sources
-- Each source implements `MusicSource` interface for consistent API
+**Provider Management**:
+- Centralized configuration via `/src/config/providers.ts` with lazy loading
+- Settings management through Jotai atoms in `settingsAtoms.ts`
+- Dynamic provider loading eliminates side-effect imports
+- Each provider implements respective interfaces (`MusicPlayer`, `LyricsProvider`, `ArtworkProvider`)
 
 **Provider Ecosystem**:
-- **Lyrics Providers**: `HttpLyricsProvider` (local + LrcLib API), `SimulatedLyricsProvider`
+- **Music Players**: `RemoteMusicPlayer` (Apple Music), `LocalMusicPlayer` (simulated)
+- **Lyrics Providers**: `LrclibLyricsProvider`, `LocalServerLyricsProvider`, `SimulatedLyricsProvider`
 - **Artwork Providers**: `ITunesArtworkProvider` for album cover fetching
-- Sources can combine multiple providers for comprehensive functionality
+- Providers are loaded dynamically using `loadMusicPlayer()`, `loadLyricsProvider()`, `loadArtworkProvider()`
+
+**Benefits of Atom-Based System**:
+- Eliminates registry side-effect imports (`import "@/registries/registerProviders"`)
+- Single source of truth for provider configuration
+- Better code splitting with dynamic imports
+- Cleaner separation between configuration and runtime instances
 
 ## Development & Troubleshooting
 

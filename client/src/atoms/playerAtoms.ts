@@ -1,6 +1,7 @@
 import { atom } from "jotai";
 import type { Song, LyricsData, LineData, WordData } from "@/types";
-import { currentMusicModeAtom } from "@/atoms/settingsAtoms";
+import { playerIdAtom } from "@/atoms/settingsAtoms";
+import { loadPlayer } from "@/config/providers";
 
 // Base atoms for player state
 export const currentTimeAtom = atom(0);
@@ -44,20 +45,26 @@ export const songInfoAtom = atom((get) => ({
   isPlaying: get(isPlayingAtom),
 }));
 
-// Action atoms for player controls using music mode
+// Helper function to get player instance
+const getPlayer = async (playerId: string) => {
+  return await loadPlayer(playerId);
+};
+
+// Action atoms for player controls using player
 export const playAtom = atom(null, async (get, set) => {
   const wasPlaying = get(isPlayingAtom);
-  const musicMode = get(currentMusicModeAtom);
+  const playerId = get(playerIdAtom);
 
-  if (!musicMode) {
-    console.error("No music mode available");
+  if (!playerId) {
+    console.error("No music player selected");
     return;
   }
 
   set(isPlayingAtom, true);
 
   try {
-    await musicMode.play();
+    const musicPlayer = await getPlayer(playerId);
+    await musicPlayer.play();
   } catch (error) {
     // Rollback on error
     set(isPlayingAtom, wasPlaying);
@@ -68,17 +75,18 @@ export const playAtom = atom(null, async (get, set) => {
 
 export const pauseAtom = atom(null, async (get, set) => {
   const wasPlaying = get(isPlayingAtom);
-  const musicMode = get(currentMusicModeAtom);
+  const playerId = get(playerIdAtom);
 
-  if (!musicMode) {
-    console.error("No music mode available");
+  if (!playerId) {
+    console.error("No music player selected");
     return;
   }
 
   set(isPlayingAtom, false);
 
   try {
-    await musicMode.pause();
+    const musicPlayer = await getPlayer(playerId);
+    await musicPlayer.pause();
   } catch (error) {
     // Rollback on error
     set(isPlayingAtom, wasPlaying);
@@ -89,18 +97,20 @@ export const pauseAtom = atom(null, async (get, set) => {
 
 export const seekAtom = atom(null, async (get, set, time: number) => {
   const previousTime = get(currentTimeAtom);
-  const musicMode = get(currentMusicModeAtom);
+  const playerId = get(playerIdAtom);
 
-  if (!musicMode) {
-    console.error("No music mode available");
+  if (!playerId) {
+    console.error("No music player selected");
     return;
   }
 
+  // Update the UI immediately for responsiveness
   set(currentTimeAtom, time);
   set(isUserSeekingAtom, true);
 
   try {
-    await musicMode.seek(time);
+    const musicPlayer = await getPlayer(playerId);
+    await musicPlayer.seek(time);
   } catch (error) {
     // Rollback on error
     set(currentTimeAtom, previousTime);
@@ -112,30 +122,35 @@ export const seekAtom = atom(null, async (get, set, time: number) => {
   }
 });
 
-// Server sync atom using music source
-export const syncFromSourceAtom = atom(null, (get, set, sourceData: Song) => {
-  const canUpdate = get(canUpdateFromServerAtom);
+// Atom for syncing from source data
+export const syncFromSourceAtom = atom(
+  null,
+  async (get, set, songData: Song) => {
+    const canUpdate = get(canUpdateFromServerAtom);
+    const playerId = get(playerIdAtom);
 
-  if (canUpdate) {
-    set(currentTimeAtom, sourceData.currentTime || 0);
-    set(durationAtom, sourceData.duration || 0);
-    set(isPlayingAtom, sourceData.isPlaying || false);
-    set(songNameAtom, sourceData.name);
-    set(artistAtom, sourceData.artist);
-    set(albumAtom, sourceData.album);
-  }
-});
+    if (!canUpdate || !playerId) return;
 
-// Fetch song data from current music mode
-export const fetchSongDataAtom = atom(async (get) => {
-  const musicMode = get(currentMusicModeAtom);
-  if (!musicMode) {
-    throw new Error("No music mode available");
-  }
-  try {
-    return await musicMode.getSong();
-  } catch (error) {
-    console.error("Failed to fetch song data:", error);
-    throw error;
-  }
-});
+    try {
+      // Only update if this is still the current player
+      if (get(playerIdAtom) !== playerId) return;
+
+      set(currentTimeAtom, songData.currentTime);
+      set(durationAtom, songData.duration);
+      set(isPlayingAtom, songData.isPlaying);
+
+      // Only update song metadata if it actually changed
+      if (get(songNameAtom) !== songData.name) {
+        set(songNameAtom, songData.name);
+      }
+      if (get(artistAtom) !== songData.artist) {
+        set(artistAtom, songData.artist);
+      }
+      if (get(albumAtom) !== songData.album) {
+        set(albumAtom, songData.album);
+      }
+    } catch (error) {
+      console.error("Failed to sync from source:", error);
+    }
+  },
+);

@@ -42,23 +42,23 @@ export interface TagsData {
 
 // Application settings interface
 export interface AppSettings {
-  /** ID of the selected music mode */
-  modeId: string;
+  /** ID of the selected music player */
+  playerId: string;
   /** ID of the selected lyrics provider */
   lyricsProviderId: string;
   /** ID of the selected artwork provider */
   artworkProviderId: string;
 }
 
-// Interface for music modes (local simulation vs remote server)
-export interface MusicMode {
-  /** Unique identifier for this mode */
+// Interface for music player (local vs remote server)
+export interface Player {
+  /** Unique identifier for this player */
   getId(): string;
   /** Human-readable name */
   getName(): string;
-  /** Description of what this mode does */
+  /** Description of what this player does */
   getDescription(): string;
-  /** Check if this mode is currently available */
+  /** Check if this player is currently available */
   isAvailable(): Promise<boolean>;
   /** Get current song information and playback state */
   getSong(): Promise<Song>;
@@ -145,11 +145,11 @@ export interface SourceConfig {
 }
 
 // Registry entry types
-export interface MusicModeRegistryEntry {
+export interface MusicPlayerRegistryEntry {
   id: string;
   name: string;
   description: string;
-  factory: () => MusicMode;
+  factory: () => Player;
 }
 
 export interface LyricsProviderRegistryEntry {

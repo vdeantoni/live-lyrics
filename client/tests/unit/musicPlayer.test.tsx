@@ -10,9 +10,9 @@ import SettingsScreen from "@/components/Player/SettingsScreen";
 // Mock components that might have CSS issues
 vi.mock("@/hooks/useSongSync", () => ({
   useSongSync: vi.fn(() => ({
-    musicMode: {
+    players: {
       getId: () => "test",
-      getName: () => "Test Mode",
+      getName: () => "Test Player",
       play: vi.fn(),
       pause: vi.fn(),
       seek: vi.fn(),
@@ -33,9 +33,6 @@ vi.mock("@/hooks/useKeyboardShortcuts", () => ({
   useKeyboardShortcuts: vi.fn(),
 }));
 
-// Import to ensure providers are registered
-import "@/registries/registerProviders";
-
 // Mock jotai hooks at module level
 import {
   songInfoAtom,
@@ -45,7 +42,15 @@ import {
   rawLrcContentAtom,
   artworkUrlsAtom,
 } from "@/atoms/playerAtoms";
-import { isSettingsOpenAtom } from "@/atoms/settingsAtoms";
+import {
+  isSettingsOpenAtom,
+  availableMusicPlayersAtom,
+  availableLyricsProvidersAtom,
+  availableArtworkProvidersAtom,
+  lyricsProvidersWithStatusAtom,
+  artworkProvidersWithStatusAtom,
+  musicPlayersWithStatusAtom,
+} from "@/atoms/settingsAtoms";
 
 vi.mock("jotai", async () => {
   const actual = await vi.importActual("jotai");
@@ -74,6 +79,56 @@ vi.mock("jotai", async () => {
           return [];
         case isSettingsOpenAtom:
           return false;
+        case availableMusicPlayersAtom:
+          return [
+            { id: "local", name: "Local", description: "Simulated player" },
+            { id: "remote", name: "Server", description: "Apple Music server" },
+          ];
+        case availableLyricsProvidersAtom:
+          return [
+            {
+              id: "lrclib",
+              name: "LrcLib",
+              description: "Community lyrics database",
+            },
+          ];
+        case availableArtworkProvidersAtom:
+          return [
+            { id: "itunes", name: "iTunes", description: "iTunes Search API" },
+          ];
+        case musicPlayersWithStatusAtom:
+          return [
+            {
+              id: "local",
+              name: "Local",
+              description: "Simulated player",
+              isAvailable: true,
+            },
+            {
+              id: "remote",
+              name: "Server",
+              description: "Apple Music server",
+              isAvailable: true,
+            },
+          ];
+        case lyricsProvidersWithStatusAtom:
+          return [
+            {
+              id: "lrclib",
+              name: "LrcLib",
+              description: "Community lyrics database",
+              isAvailable: true,
+            },
+          ];
+        case artworkProvidersWithStatusAtom:
+          return [
+            {
+              id: "itunes",
+              name: "iTunes",
+              description: "iTunes Search API",
+              isAvailable: true,
+            },
+          ];
         default:
           return undefined;
       }
