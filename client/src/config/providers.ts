@@ -9,7 +9,7 @@ export const PROVIDER_CONFIGS = {
     local: {
       id: "local",
       name: "Local",
-      description: "Simulated player for testing and development",
+      description: "Local player",
       load: async (): Promise<MusicMode> => {
         const { LocalMusicMode } = await import("@/modes/localMusicMode");
         return LocalMusicMode.getInstance();
