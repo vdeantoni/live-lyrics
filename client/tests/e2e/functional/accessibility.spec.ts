@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
 test.describe("Keyboard Navigation and Accessibility", () => {
   test.beforeEach(async ({ page }) => {
@@ -62,11 +62,7 @@ test.describe("Keyboard Navigation and Accessibility", () => {
     // Ensure the player is paused and time is at the start.
     await expect(currentTimeDisplay).toHaveText("0:00");
 
-    // Use locator.press(), which focuses the element and dispatches the key press.
-    // This is often more reliable for component-specific interactions.
-    for (let i = 0; i < 10; i++) {
-      await progressSlider.press("ArrowRight");
-    }
+    await progressSlider.press("ArrowRight");
 
     // Assert that the time display has changed, confirming seeking works when paused.
     await expect(currentTimeDisplay).not.toHaveText("0:00");

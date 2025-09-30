@@ -70,7 +70,7 @@ const PlayerControls = () => {
           value={[currentTime]}
           min={0}
           max={duration || 0}
-          step={0.1}
+          step={5}
           className="rounded-md bg-zinc-700"
           onValueChange={handleSliderChange}
           onPointerDown={handleSliderPointerDown}
