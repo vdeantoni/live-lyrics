@@ -15,6 +15,25 @@ interface TestProviderProps {
 /**
  * Test provider that automatically handles bootstrap and loading states
  * Use this instead of manually wrapping components with JotaiProvider + TestWrapper
+ *
+ * @example
+ * ```typescript
+ * import { TestProvider } from "./TestProvider";
+ * import { createTestRegistry } from "./testRegistry";
+ *
+ * // Basic usage with default test registry
+ * <TestProvider>
+ *   <YourComponent />
+ * </TestProvider>
+ *
+ * // With custom registry modifications
+ * const customRegistry = createTestRegistry();
+ * customRegistry.get("lrclib")!.status.isAvailable = false;
+ *
+ * <TestProvider testRegistry={customRegistry}>
+ *   <YourComponent />
+ * </TestProvider>
+ * ```
  */
 export const TestProvider: React.FC<TestProviderProps> = ({
   children,

@@ -77,6 +77,12 @@ cd client && pnpm test:coverage
 cd client && pnpm test:ui
 ```
 
+The unit tests use a sophisticated test utilities system (`client/tests/helpers/`) that provides:
+- **`renderWithProviders()`**: Automated component rendering with provider registry setup
+- **`createTestRegistry()`**: Consistent mock data for all provider types
+- **Isolated State**: Each test gets fresh provider state to prevent cross-test pollution
+- **Bootstrap Integration**: Automatic handling of app initialization and loading states
+
 ### End-to-End Tests
 ```bash
 # Install all browsers (local development)
@@ -220,8 +226,9 @@ Runs on pull requests for quick feedback
 Runs on pull requests:
 - **Lost Pixel Integration**: Automated visual regression detection
 - **Screenshot Comparison**: Compares UI changes against baselines
-- **Background Loading**: Robust handling of artwork loading and network failures
-- **API Mocking**: Consistent test results with mocked external services
+- **Background Loading**: Robust handling of artwork loading with preloading and enhanced waiting
+- **API Mocking**: Consistent test results with mocked external services (iTunes, LrcLib)
+- **Timing Stability**: Images preloaded before display to prevent visual inconsistencies
 - **Artifacts**: Visual test results and Playwright reports
 - **Cloud Integration**: Results available in Lost Pixel dashboard
 

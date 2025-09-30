@@ -18,6 +18,23 @@ interface CustomRenderOptions extends Omit<RenderOptions, "wrapper"> {
  *
  * @param ui - The component to render
  * @param options - Render options including optional testRegistry
+ *
+ * @example
+ * ```typescript
+ * // Simple usage (waits for bootstrap automatically)
+ * await renderWithProviders(<MyComponent />);
+ * expect(screen.getByText("Hello")).toBeInTheDocument();
+ *
+ * // With custom test registry
+ * const customRegistry = createTestRegistry();
+ * // Modify the registry by setting custom provider states
+ * customRegistry.get("lrclib")!.status.isAvailable = false;
+ * await renderWithProviders(<MyComponent />, { testRegistry: customRegistry });
+ *
+ * // Skip bootstrap waiting (useful for testing loading states)
+ * await renderWithProviders(<MyComponent />, { waitForBootstrap: false });
+ * expect(screen.getByTestId("loading")).toBeInTheDocument();
+ * ```
  */
 export const renderWithProviders = async (
   ui: React.ReactElement,
@@ -44,6 +61,19 @@ export const renderWithProviders = async (
 /**
  * Simple render function that just wraps with TestProvider but doesn't wait
  * Useful when you need more control over the bootstrap process
+ *
+ * @example
+ * ```typescript
+ * // Test loading states manually
+ * const { getByTestId } = renderWithProvidersOnly(<MyComponent />);
+ * expect(getByTestId("loading")).toBeInTheDocument();
+ *
+ * // Or with custom registry
+ * const customRegistry = createTestRegistry();
+ * const { getByTestId } = renderWithProvidersOnly(<MyComponent />, {
+ *   testRegistry: customRegistry
+ * });
+ * ```
  */
 export const renderWithProvidersOnly = (
   ui: React.ReactElement,

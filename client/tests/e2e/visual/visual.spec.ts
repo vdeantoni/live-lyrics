@@ -1,7 +1,7 @@
 import { test, Page } from "@playwright/test";
 
 // Utility function to wait for background image to load or timeout gracefully
-const waitForBackgroundImage = async (page: Page, timeout: number = 5000) => {
+const waitForBackgroundImage = async (page: Page, timeout: number = 10000) => {
   try {
     await page.waitForFunction(
       () => {
@@ -19,13 +19,23 @@ const waitForBackgroundImage = async (page: Page, timeout: number = 5000) => {
         const urlMatch = backgroundImage.match(/url\(["']?([^"']+)["']?\)/);
         if (!urlMatch) return true; // No valid URL, consider loaded
 
-        // Only wait for actual image loading if we have a valid URL
-        const img = new Image();
-        img.src = urlMatch[1];
-        return img.complete && img.naturalWidth > 0;
+        // Since we now preload images in LyricsScreen, check if the URL is set
+        // and has had time to complete its CSS transition
+        const url = urlMatch[1];
+        if (url && url !== "") {
+          // Check if image is loaded by creating a test image
+          const img = new Image();
+          img.src = url;
+          return img.complete && img.naturalWidth > 0;
+        }
+
+        return false;
       },
       { timeout },
     );
+
+    // Additional wait for CSS transition to complete (1000ms duration)
+    await page.waitForTimeout(1200);
   } catch {
     // Timeout is OK - background might not load due to CORS or network issues
     // Visual tests should still proceed for layout/UI testing
