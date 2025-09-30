@@ -1,5 +1,6 @@
 import React from "react";
 import { Provider as JotaiProvider, useAtomValue } from "jotai";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useBootstrap } from "@/hooks/useBootstrap";
 import {
   appStateAtom,
@@ -11,6 +12,20 @@ interface TestProviderProps {
   children: React.ReactNode;
   testRegistry?: Map<string, ProviderRegistryEntry>;
 }
+
+// Create a test QueryClient that doesn't retry
+const createTestQueryClient = () =>
+  new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false,
+        cacheTime: 0,
+      },
+      mutations: {
+        retry: false,
+      },
+    },
+  });
 
 /**
  * Test provider that automatically handles bootstrap and loading states
@@ -39,12 +54,16 @@ export const TestProvider: React.FC<TestProviderProps> = ({
   children,
   testRegistry,
 }) => {
+  const queryClient = createTestQueryClient();
+
   return (
-    <JotaiProvider>
-      <BootstrapWrapper testRegistry={testRegistry}>
-        {children}
-      </BootstrapWrapper>
-    </JotaiProvider>
+    <QueryClientProvider client={queryClient}>
+      <JotaiProvider>
+        <BootstrapWrapper testRegistry={testRegistry}>
+          {children}
+        </BootstrapWrapper>
+      </JotaiProvider>
+    </QueryClientProvider>
   );
 };
 

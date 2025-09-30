@@ -1,10 +1,19 @@
 import type { ProviderRegistryEntry } from "@/atoms/settingsAtoms";
+import {
+  createTestRegistry as createTestRegistryFactory,
+  type TestRegistryConfig,
+} from "./testRegistryFactory";
 
 /**
  * Factory function to create a test provider registry with consistent test data
  * This ensures all tests use the same mock data structure
  *
  * @returns Map containing mock providers for lyrics, artwork, and player sources
+ *
+ * **Default Test Behavior:**
+ * - **Lyrics**: Only returns lyrics for "Bohemian Rhapsody" by "Queen", null for all other songs
+ * - **Artwork**: Always returns empty array (no artwork available)
+ * - **Player Sources**: Local player enabled, remote player disabled
  *
  * @example
  * ```typescript
@@ -13,9 +22,9 @@ import type { ProviderRegistryEntry } from "@/atoms/settingsAtoms";
  *
  * // Basic usage - creates registry with default mock data
  * const testRegistry = createTestRegistry();
- * // Contains: LrcLib, Local Server, Simulated (lyrics)
- * // Contains: iTunes (artwork)
- * // Contains: Local, Remote (player sources)
+ * // Lyrics: Only "Bohemian Rhapsody" by "Queen" supported
+ * // Artwork: Empty array (no artwork)
+ * // Players: Local (enabled), Remote (disabled)
  *
  * // Modify registry for specific test scenarios
  * const customRegistry = createTestRegistry();
@@ -57,124 +66,29 @@ import type { ProviderRegistryEntry } from "@/atoms/settingsAtoms";
  *   expect(screen.getByTestId("ready")).toBeInTheDocument();
  * });
  * ```
+ *
+ * @example
+ * ```typescript
+ * // Custom configuration for specific test scenarios
+ * const customRegistry = createTestRegistry({
+ *   lyricsProviders: [
+ *     {
+ *       id: "lrclib",
+ *       name: "LrcLib",
+ *       description: "Community lyrics database",
+ *       priority: 1,
+ *       isEnabled: true,
+ *       isAvailable: false, // Test unavailable provider
+ *     }
+ *   ]
+ * });
+ * ```
  */
-export const createTestRegistry = (): Map<string, ProviderRegistryEntry> => {
-  const registry = new Map<string, ProviderRegistryEntry>();
-
-  // Lyrics providers
-  const lyricsProviders = [
-    {
-      id: "lrclib",
-      name: "LrcLib",
-      description: "Community lyrics database",
-      priority: 1,
-      isEnabled: true,
-      isAvailable: true,
-    },
-    {
-      id: "local-server",
-      name: "Local Server",
-      description: "Local server",
-      priority: 2,
-      isEnabled: true,
-      isAvailable: true,
-    },
-  ];
-
-  lyricsProviders.forEach((provider) => {
-    registry.set(provider.id, {
-      config: {
-        id: provider.id,
-        name: provider.name,
-        description: provider.description,
-        type: "lyrics" as const,
-        load: async () => ({ isAvailable: () => Promise.resolve(true) }),
-      },
-      status: {
-        isAvailable: provider.isAvailable,
-        isLoading: false,
-        lastChecked: new Date(),
-      },
-      userPreferences: {
-        isEnabled: provider.isEnabled,
-        priority: provider.priority,
-      },
-    });
-  });
-
-  // Artwork providers
-  const artworkProviders = [
-    {
-      id: "itunes",
-      name: "iTunes",
-      description: "iTunes Search API",
-      priority: 1,
-      isEnabled: true,
-      isAvailable: true,
-    },
-  ];
-
-  artworkProviders.forEach((provider) => {
-    registry.set(provider.id, {
-      config: {
-        id: provider.id,
-        name: provider.name,
-        description: provider.description,
-        type: "artwork" as const,
-        load: async () => ({ isAvailable: () => Promise.resolve(true) }),
-      },
-      status: {
-        isAvailable: provider.isAvailable,
-        isLoading: false,
-        lastChecked: new Date(),
-      },
-      userPreferences: {
-        isEnabled: provider.isEnabled,
-        priority: provider.priority,
-      },
-    });
-  });
-
-  // Player sources
-  const playerSources = [
-    {
-      id: "local",
-      name: "Local",
-      description: "Local player",
-      priority: 1,
-      isEnabled: true,
-      isAvailable: true,
-    },
-    {
-      id: "remote",
-      name: "Server",
-      description: "Connect to a remote server",
-      priority: 2,
-      isEnabled: false,
-      isAvailable: true,
-    },
-  ];
-
-  playerSources.forEach((provider) => {
-    registry.set(provider.id, {
-      config: {
-        id: provider.id,
-        name: provider.name,
-        description: provider.description,
-        type: "player-source" as const,
-        load: async () => ({ isAvailable: () => Promise.resolve(true) }),
-      },
-      status: {
-        isAvailable: provider.isAvailable,
-        isLoading: false,
-        lastChecked: new Date(),
-      },
-      userPreferences: {
-        isEnabled: provider.isEnabled,
-        priority: provider.priority,
-      },
-    });
-  });
-
-  return registry;
+export const createTestRegistry = (
+  customConfig?: Partial<TestRegistryConfig>,
+): Map<string, ProviderRegistryEntry> => {
+  return createTestRegistryFactory(customConfig);
 };
+
+// Re-export for convenience
+export { type TestRegistryConfig } from "./testRegistryFactory";

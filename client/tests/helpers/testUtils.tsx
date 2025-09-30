@@ -1,5 +1,7 @@
 import React from "react";
 import { render, type RenderOptions, waitFor } from "@testing-library/react";
+import { Provider as JotaiProvider } from "jotai";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { TestProvider } from "./TestProvider";
 import { type ProviderRegistryEntry } from "@/atoms/settingsAtoms";
 
@@ -12,9 +14,97 @@ interface CustomRenderOptions extends Omit<RenderOptions, "wrapper"> {
   waitForBootstrap?: boolean;
 }
 
+interface LightweightRenderOptions extends Omit<RenderOptions, "wrapper"> {
+  /**
+   * Whether to include QueryClient for components that need it
+   * @default true
+   */
+  withQueryClient?: boolean;
+}
+
+// Create a test QueryClient that doesn't retry
+const createTestQueryClient = () =>
+  new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false,
+        cacheTime: 0,
+      },
+      mutations: {
+        retry: false,
+      },
+    },
+  });
+
 /**
- * Custom render function that automatically wraps components with TestProvider
- * This handles bootstrap initialization and loading states automatically
+ * ⚡ LIGHTWEIGHT: Simple render with minimal providers
+ * Perfect for unit testing individual components without full app bootstrap
+ *
+ * @param ui - The component to render
+ * @param options - Lightweight render options
+ *
+ * @example
+ * ```typescript
+ * // Just Jotai + QueryClient - super fast, no bootstrap
+ * renderLightweight(<MyComponent />);
+ *
+ * // Skip QueryClient for components that don't need it
+ * renderLightweight(<SimpleComponent />, { withQueryClient: false });
+ * ```
+ */
+export const renderLightweight = (
+  ui: React.ReactElement,
+  options: LightweightRenderOptions = {},
+) => {
+  const { withQueryClient = true, ...renderOptions } = options;
+
+  const Wrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+    if (withQueryClient) {
+      const queryClient = createTestQueryClient();
+      return (
+        <QueryClientProvider client={queryClient}>
+          <JotaiProvider>{children}</JotaiProvider>
+        </QueryClientProvider>
+      );
+    }
+
+    return <JotaiProvider>{children}</JotaiProvider>;
+  };
+
+  return render(ui, { wrapper: Wrapper, ...renderOptions });
+};
+
+/**
+ * 🔧 UNIT TEST: Lightweight render with specific atom mocks
+ * For components that need specific atom values but no bootstrap
+ *
+ * @param ui - The component to render
+ * @param atomMocks - Object mapping atoms to their mock values
+ * @param options - Additional render options
+ *
+ * @example
+ * ```typescript
+ * import { songInfoAtom, playerStateAtom } from '@/atoms/playerAtoms';
+ *
+ * renderWithAtomMocks(<PlayerControls />, {
+ *   [songInfoAtom]: { name: "Test Song", artist: "Test Artist", duration: 120 },
+ *   [playerStateAtom]: { isPlaying: false, currentTime: 0 }
+ * });
+ * ```
+ */
+export const renderWithAtomMocks = (
+  ui: React.ReactElement,
+  atomMocks: Record<string, unknown>,
+  options: LightweightRenderOptions = {},
+) => {
+  // TODO: Implement proper atom mocking with Jotai
+  // For now, fall back to lightweight render
+  return renderLightweight(ui, options);
+};
+
+/**
+ * 🚀 FULL INTEGRATION: Full provider registry with bootstrap
+ * Use for integration tests and components that need complete app state
  *
  * @param ui - The component to render
  * @param options - Render options including optional testRegistry

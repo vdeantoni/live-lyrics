@@ -6,11 +6,15 @@ import { useQueryClient } from "@tanstack/react-query";
 import { clearAppData } from "@/utils/clearAppData";
 
 // Mock React Query
-vi.mock("@tanstack/react-query", () => ({
-  useQueryClient: vi.fn(() => ({
-    clear: vi.fn(),
-  })),
-}));
+vi.mock("@tanstack/react-query", async () => {
+  const actual = await vi.importActual("@tanstack/react-query");
+  return {
+    ...actual,
+    useQueryClient: vi.fn(() => ({
+      clear: vi.fn(),
+    })),
+  };
+});
 
 // Mock the clearAppData utility
 vi.mock("@/utils/clearAppData", () => ({

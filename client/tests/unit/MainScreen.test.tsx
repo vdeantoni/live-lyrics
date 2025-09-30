@@ -1,8 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
-import { Provider as JotaiProvider } from "jotai";
+import { screen, fireEvent } from "@testing-library/react";
+import { renderWithProviders } from "../helpers/testUtils";
 import MainScreen from "@/components/Player/MainScreen";
-import { isSettingsOpenAtom, toggleSettingsAtom } from "@/atoms/settingsAtoms";
 
 // Mock the child components
 vi.mock("@/components/Player/LyricsScreen", () => ({
@@ -13,96 +12,55 @@ vi.mock("@/components/Player/SettingsScreen", () => ({
   default: () => <div data-testid="settings-screen">Settings Screen</div>,
 }));
 
-// Mock jotai hooks
-vi.mock("jotai", async () => {
-  const actual = await vi.importActual("jotai");
-  return {
-    ...actual,
-    useAtomValue: vi.fn(),
-    useSetAtom: vi.fn(),
-  };
-});
-
-import { useAtomValue, useSetAtom } from "jotai";
+vi.mock("@/components/Player/LoadingScreen", () => ({
+  default: () => <div data-testid="loading-screen">Loading Screen</div>,
+}));
 
 describe("MainScreen", () => {
-  const mockToggleSettings = vi.fn();
-
   beforeEach(() => {
     vi.clearAllMocks();
-
-    vi.mocked(useSetAtom).mockImplementation((atom) => {
-      if (atom === toggleSettingsAtom) {
-        return mockToggleSettings;
-      }
-      return vi.fn();
-    });
   });
 
-  it("renders lyrics screen when settings are closed", () => {
-    vi.mocked(useAtomValue).mockImplementation((atom) => {
-      if (atom === isSettingsOpenAtom) return false;
-      return undefined;
-    });
-
-    render(
-      <JotaiProvider>
-        <MainScreen />
-      </JotaiProvider>,
-    );
+  it("renders lyrics screen when settings are closed and app is loaded", async () => {
+    await renderWithProviders(<MainScreen />);
 
     expect(screen.getByTestId("lyrics-screen")).toBeInTheDocument();
     expect(screen.queryByTestId("settings-screen")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("loading-screen")).not.toBeInTheDocument();
     expect(screen.getByTestId("settings-button")).toBeInTheDocument();
   });
 
-  it("renders settings screen when settings are open", () => {
-    vi.mocked(useAtomValue).mockImplementation((atom) => {
-      if (atom === isSettingsOpenAtom) return true;
-      return undefined;
-    });
+  it("renders settings screen when settings are open", async () => {
+    await renderWithProviders(<MainScreen />);
 
-    render(
-      <JotaiProvider>
-        <MainScreen />
-      </JotaiProvider>,
-    );
+    // Click to open settings
+    const settingsButton = screen.getByTestId("settings-button");
+    fireEvent.click(settingsButton);
 
     // Both screens are rendered now - lyrics stays in place, settings slides over
     expect(screen.getByTestId("settings-screen")).toBeInTheDocument();
     expect(screen.getByTestId("lyrics-screen")).toBeInTheDocument();
+    expect(screen.queryByTestId("loading-screen")).not.toBeInTheDocument();
     expect(screen.getByTestId("close-settings-button")).toBeInTheDocument();
   });
 
-  it("handles settings button click", () => {
-    vi.mocked(useAtomValue).mockImplementation((atom) => {
-      if (atom === isSettingsOpenAtom) return false;
-      return undefined;
-    });
-
-    render(
-      <JotaiProvider>
-        <MainScreen />
-      </JotaiProvider>,
-    );
+  it("handles settings button click", async () => {
+    await renderWithProviders(<MainScreen />);
 
     const settingsButton = screen.getByTestId("settings-button");
+
+    // Initially settings should be closed
+    expect(screen.queryByTestId("settings-screen")).not.toBeInTheDocument();
+
+    // Click to open settings
     fireEvent.click(settingsButton);
 
-    expect(mockToggleSettings).toHaveBeenCalledTimes(1);
+    // Settings should now be visible
+    expect(screen.getByTestId("settings-screen")).toBeInTheDocument();
   });
 
-  it("has proper accessibility labels", () => {
-    vi.mocked(useAtomValue).mockImplementation((atom) => {
-      if (atom === isSettingsOpenAtom) return false;
-      return undefined;
-    });
-
-    render(
-      <JotaiProvider>
-        <MainScreen />
-      </JotaiProvider>,
-    );
+  it("has proper accessibility labels", async () => {
+    await renderWithProviders(<MainScreen />);
 
     expect(screen.getByLabelText("Open settings")).toBeInTheDocument();
   });
