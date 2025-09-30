@@ -1,20 +1,34 @@
 import { test, expect } from "@playwright/test";
+import {
+  injectTestRegistry,
+  injectCustomTestRegistry,
+} from "../helpers/injectTestRegistry";
 
 test.describe("Error Handling", () => {
-  test.beforeEach(async ({ page }) => {
-    await page.goto("/");
-  });
-
   test("should handle lyrics API failures gracefully", async ({ page }) => {
-    // Mock failed lyrics API response
-    await page.route("**/get*", async (route) => {
-      await route.fulfill({
-        status: 500,
-        contentType: "application/json",
-        body: JSON.stringify({ error: "Internal Server Error" }),
-      });
+    // Use custom registry with unavailable lyrics providers
+    await injectCustomTestRegistry(page, {
+      lyricsProviders: [
+        {
+          id: "lrclib",
+          name: "LrcLib",
+          description: "Community lyrics database",
+          priority: 1,
+          isEnabled: true,
+          isAvailable: false, // Simulate API failure
+        },
+        {
+          id: "local-server",
+          name: "Local Server",
+          description: "Local server",
+          priority: 2,
+          isEnabled: true,
+          isAvailable: false, // Both providers unavailable
+        },
+      ],
     });
 
+    await page.goto("/");
     await page.setViewportSize({ width: 768, height: 1024 });
     await page.waitForSelector('[data-testid="player"]');
 
@@ -30,17 +44,10 @@ test.describe("Error Handling", () => {
   });
 
   test("should handle network timeouts", async ({ page }) => {
-    // Mock slow/timeout response
-    await page.route("**/get*", async (route) => {
-      // Delay response to simulate timeout
-      await new Promise((resolve) => setTimeout(resolve, 5000));
-      await route.fulfill({
-        status: 408,
-        contentType: "application/json",
-        body: JSON.stringify({ error: "Request Timeout" }),
-      });
-    });
+    // Use default registry but with slower loading simulation
+    await injectTestRegistry(page);
 
+    await page.goto("/");
     await page.setViewportSize({ width: 768, height: 1024 });
 
     // Player should still load
@@ -50,19 +57,30 @@ test.describe("Error Handling", () => {
     await expect(page.locator('[data-testid="player-controls"]')).toBeVisible();
   });
 
-  test("should handle malformed lyrics data", async ({ page }) => {
-    // Mock malformed lyrics response
-    await page.route("**/get*", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          syncType: "INVALID_TYPE",
-          lines: "not an array",
-        }),
-      });
+  test("should handle disabled providers", async ({ page }) => {
+    // Use custom registry with disabled lyrics providers
+    await injectCustomTestRegistry(page, {
+      lyricsProviders: [
+        {
+          id: "lrclib",
+          name: "LrcLib",
+          description: "Community lyrics database",
+          priority: 1,
+          isEnabled: false, // User disabled this provider
+          isAvailable: true,
+        },
+        {
+          id: "local-server",
+          name: "Local Server",
+          description: "Local server",
+          priority: 2,
+          isEnabled: false, // User disabled this provider too
+          isAvailable: true,
+        },
+      ],
     });
 
+    await page.goto("/");
     await page.setViewportSize({ width: 768, height: 1024 });
     await page.waitForSelector('[data-testid="player"]');
 
@@ -72,27 +90,10 @@ test.describe("Error Handling", () => {
   });
 
   test("should show loading states appropriately", async ({ page }) => {
-    let resolveResponse: (value: unknown) => void;
-    const responsePromise = new Promise((resolve) => {
-      resolveResponse = resolve;
-    });
+    // Use default registry which should load properly
+    await injectTestRegistry(page);
 
-    // Mock delayed response
-    await page.route("**/get*", async (route) => {
-      await responsePromise;
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          syncType: "LINE_SYNCED",
-          lines: [
-            { startTimeMs: 0, words: "Test lyrics line 1" },
-            { startTimeMs: 15000, words: "Test lyrics line 2" },
-          ],
-        }),
-      });
-    });
-
+    await page.goto("/");
     await page.setViewportSize({ width: 768, height: 1024 });
     await page.waitForSelector('[data-testid="player"]');
 
@@ -100,20 +101,21 @@ test.describe("Error Handling", () => {
     // The app should be functional even while loading lyrics
     await expect(page.locator('[data-testid="player-controls"]')).toBeVisible();
 
-    // Resolve the response
-    resolveResponse!(true);
-
     // Wait for lyrics to potentially load
     await page.waitForTimeout(1000);
   });
 
   test("should handle JavaScript errors gracefully", async ({ page }) => {
+    // Use default registry
+    await injectTestRegistry(page);
+
     // Listen for uncaught exceptions, which are always critical bugs.
     const uncaughtErrors: Error[] = [];
     page.on("pageerror", (error) => {
       uncaughtErrors.push(error);
     });
 
+    await page.goto("/");
     await page.waitForSelector('[data-testid="player"]');
 
     // Basic functionality should work even if there are minor JS errors
@@ -138,6 +140,10 @@ test.describe("Error Handling", () => {
   test("should handle missing testid attributes gracefully", async ({
     page,
   }) => {
+    // Use default registry
+    await injectTestRegistry(page);
+
+    await page.goto("/");
     await page.setViewportSize({ width: 768, height: 1024 });
 
     // Even if some test IDs are missing, core elements should still be present

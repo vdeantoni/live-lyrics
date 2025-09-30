@@ -58,24 +58,29 @@ const waitForLyricsToLoad = async (page: Page, timeout: number = 5000) => {
 
 test.describe("Visual Regression Tests", () => {
   test.beforeEach(async ({ page }) => {
-    // Mock lyrics API for consistent visual tests
-    await page.route("**/get*", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          syncType: "LINE_SYNCED",
-          lines: [
-            { startTimeMs: 0, words: "Is this the real life?" },
-            { startTimeMs: 15000, words: "Is this just fantasy?" },
-            { startTimeMs: 30000, words: "Caught in a landslide" },
-            { startTimeMs: 45000, words: "No escape from reality" },
-          ],
-        }),
-      });
+    await page.route("**/lrclib.net/api/**", async (route) => {
+      const url = new URL(route.request().url());
+      if (url.pathname.includes("search")) {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify([
+            {
+              id: 52373,
+              name: "Bohemian Rhapsody",
+              artistName: "Queen",
+              albumName: "A Night at the Opera",
+              duration: 355,
+              instrumental: false,
+              syncedLyrics:
+                "[00:00.00] Is this the real life?\n[00:15.00] Is this just fantasy?\n[00:30.00] Caught in a landslide\n[00:45.00] No escape from reality\n[01:00.00] Open your eyes\n[01:15.00] Look up to the skies and see\n[01:30.00] I'm just a poor boy, I need no sympathy\n[01:45.00] Because I'm easy come, easy go\n[02:00.00] Little high, little low\n[02:15.00] Any way the wind blows, doesn't really matter to me\n[02:30.00] To me",
+            },
+          ]),
+        });
+      }
     });
 
-    // Mock iTunes artwork API to prevent CORS issues
+    // Still mock iTunes artwork API to prevent CORS issues in visual tests
     await page.route("**/itunes.apple.com/**", async (route) => {
       await route.fulfill({
         status: 200,
@@ -252,6 +257,79 @@ test.describe("Visual Regression Tests", () => {
     // Screenshot just the player controls
     await page.locator('[data-testid="player-controls"]').screenshot({
       path: "lost-pixel/player-controls.png",
+    });
+  });
+
+  test("loading screen visual", async ({ page }) => {
+    await page.setViewportSize({ width: 768, height: 1024 });
+
+    // Mock bootstrap delay to capture loading screen
+    await page.addInitScript(() => {
+      const originalSetTimeout = window.setTimeout;
+      window.setTimeout = (
+        callback: () => void,
+        delay: number,
+        ...args: unknown[]
+      ) => {
+        if (delay === 0 && typeof callback === "function") {
+          return originalSetTimeout(callback, 3000, ...args);
+        }
+        return originalSetTimeout(callback, delay, ...args);
+      };
+    });
+
+    await page.goto("/");
+
+    // Wait for loading screen to appear
+    await page.waitForSelector('[data-testid="loading-screen"]', {
+      timeout: 2000,
+    });
+
+    // Wait a moment for animations to stabilize
+    await page.waitForTimeout(1000);
+
+    // Screenshot the loading screen component
+    await page.locator('[data-testid="loading-screen"]').screenshot({
+      path: "lost-pixel/loading-screen.png",
+    });
+
+    // Also capture full page with loading screen visible
+    await page.screenshot({
+      path: "lost-pixel/loading-screen-fullpage.png",
+      fullPage: true,
+    });
+  });
+
+  test("loading screen mobile visual", async ({ page }) => {
+    await page.setViewportSize({ width: 320, height: 568 }); // iPhone SE
+
+    // Mock bootstrap delay
+    await page.addInitScript(() => {
+      const originalSetTimeout = window.setTimeout;
+      window.setTimeout = (
+        callback: () => void,
+        delay: number,
+        ...args: unknown[]
+      ) => {
+        if (delay === 0 && typeof callback === "function") {
+          return originalSetTimeout(callback, 2500, ...args);
+        }
+        return originalSetTimeout(callback, delay, ...args);
+      };
+    });
+
+    await page.goto("/");
+
+    // Wait for loading screen on mobile
+    await page.waitForSelector('[data-testid="loading-screen"]', {
+      timeout: 2000,
+    });
+    await page.waitForTimeout(800);
+
+    // Screenshot mobile loading screen
+    await page.screenshot({
+      path: "lost-pixel/loading-screen-mobile.png",
+      fullPage: true,
     });
   });
 });
