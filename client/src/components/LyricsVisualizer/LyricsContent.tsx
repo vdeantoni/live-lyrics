@@ -5,7 +5,7 @@ import {
   lyricsDataAtom,
   activeLineAtom,
   activeWordAtom,
-  seekAtom,
+  playerControlAtom,
 } from "@/atoms/playerAtoms";
 
 const LyricsContent: React.FC = () => {
@@ -13,16 +13,16 @@ const LyricsContent: React.FC = () => {
   const lyricsData = useAtomValue(lyricsDataAtom);
   const activeLine = useAtomValue(activeLineAtom);
   const activeWord = useAtomValue(activeWordAtom);
-  const seek = useSetAtom(seekAtom);
+  const playerControl = useSetAtom(playerControlAtom);
 
-  // Click handler using seek atom
+  // Click handler using playerControl atom
   const handleLineClick = useCallback(
     (line: LineData) => {
       if (line.time !== undefined) {
-        seek(line.time);
+        playerControl({ type: "seek", payload: line.time });
       }
     },
-    [seek],
+    [playerControl],
   );
 
   const contentRef = useRef<HTMLDivElement>(null);

@@ -15,9 +15,447 @@ import {
   loadArtworkProvider,
 } from "@/config/providers";
 
-/**
- * Default application settings
- */
+// App state for managing bootstrap status
+interface AppState {
+  isLoading: boolean;
+  isReady: boolean;
+  error?: string;
+}
+
+export const appStateAtom = atom<AppState>({
+  isLoading: true,
+  isReady: false,
+});
+
+// New Provider Registry Architecture
+type ProviderType = "lyrics" | "artwork" | "player-source" | "theme";
+
+interface ProviderStatus {
+  isAvailable: boolean;
+  isLoading: boolean;
+  lastChecked?: Date;
+  error?: string;
+}
+
+interface BaseProviderConfig {
+  id: string;
+  name: string;
+  description: string;
+  type: ProviderType;
+}
+
+interface LyricsProviderConfig extends BaseProviderConfig {
+  type: "lyrics";
+  load: () => Promise<LyricsProvider>;
+}
+
+interface ArtworkProviderConfig extends BaseProviderConfig {
+  type: "artwork";
+  load: () => Promise<ArtworkProvider>;
+}
+
+interface PlayerSourceConfig extends BaseProviderConfig {
+  type: "player-source";
+  load: () => Promise<Player>;
+}
+
+interface ThemeConfig extends BaseProviderConfig {
+  type: "theme";
+  cssVariables: Record<string, string>;
+}
+
+type ProviderConfig =
+  | LyricsProviderConfig
+  | ArtworkProviderConfig
+  | PlayerSourceConfig
+  | ThemeConfig;
+
+interface ProviderRegistryEntry {
+  config: ProviderConfig;
+  status: ProviderStatus;
+  userPreferences: {
+    isEnabled: boolean;
+    priority: number;
+  };
+}
+
+// Export types for external use (tests, etc.)
+export type { ProviderRegistryEntry, ProviderConfig, ProviderStatus, AppState };
+
+// Main provider registry with default initialization
+export const providerRegistry = atom<Map<string, ProviderRegistryEntry>>(
+  (() => {
+    // Start with empty registry so it can be populated by initializeRegistry
+    return new Map<string, ProviderRegistryEntry>();
+  })(),
+);
+
+// Registry initialization atom - can be used to set up default or test data
+export const initializeRegistryAtom = atom(
+  null,
+  (_, set, registry?: Map<string, ProviderRegistryEntry>) => {
+    if (registry) {
+      // Use provided registry (for tests)
+      set(providerRegistry, registry);
+    } else {
+      // Initialize with defaults (for production)
+      const defaultRegistry = new Map<string, ProviderRegistryEntry>();
+
+      // Add default lyrics providers
+      const lyricsConfigs = getLyricsProviderConfigs();
+      lyricsConfigs.forEach((config, index) => {
+        defaultRegistry.set(config.id, {
+          config: {
+            ...config,
+            type: "lyrics" as const,
+            load: () => loadLyricsProvider(config.id),
+          },
+          status: {
+            isAvailable: true, // Default to available until checked
+            isLoading: false,
+          },
+          userPreferences: {
+            isEnabled: config.id === "lrclib", // Enable lrclib by default
+            priority: index + 1,
+          },
+        });
+      });
+
+      // Add default artwork providers
+      const artworkConfigs = getArtworkProviderConfigs();
+      artworkConfigs.forEach((config, index) => {
+        defaultRegistry.set(config.id, {
+          config: {
+            ...config,
+            type: "artwork" as const,
+            load: () => loadArtworkProvider(config.id),
+          },
+          status: {
+            isAvailable: true,
+            isLoading: false,
+          },
+          userPreferences: {
+            isEnabled: config.id === "itunes", // Enable iTunes by default
+            priority: index + 1,
+          },
+        });
+      });
+
+      // Add default player sources
+      const playerConfigs = getPlayerConfigs();
+      playerConfigs.forEach((config, index) => {
+        defaultRegistry.set(config.id, {
+          config: {
+            ...config,
+            type: "player-source" as const,
+            load: () => loadPlayer(config.id),
+          },
+          status: {
+            isAvailable: true,
+            isLoading: false,
+          },
+          userPreferences: {
+            isEnabled: config.id === "local", // Enable local by default
+            priority: index + 1,
+          },
+        });
+      });
+
+      // Add default themes
+      const defaultThemes = [
+        {
+          id: "default",
+          name: "Default",
+          description: "Default theme with standard colors",
+          cssVariables: {} as Record<string, string>,
+        },
+        {
+          id: "dark",
+          name: "Dark Mode",
+          description: "Dark theme for low-light environments",
+          cssVariables: {
+            "--background": "0 0% 5%",
+            "--foreground": "0 0% 95%",
+          } as Record<string, string>,
+        },
+      ];
+
+      defaultThemes.forEach((theme, index) => {
+        defaultRegistry.set(theme.id, {
+          config: {
+            ...theme,
+            type: "theme" as const,
+          },
+          status: {
+            isAvailable: true,
+            isLoading: false,
+          },
+          userPreferences: {
+            isEnabled: theme.id === "default", // Enable default theme
+            priority: index + 1,
+          },
+        });
+      });
+
+      set(providerRegistry, defaultRegistry);
+    }
+  },
+);
+
+// Registry management atoms
+export const addProviderAtom = atom(
+  null,
+  (get, set, entry: ProviderRegistryEntry) => {
+    const registry = new Map(get(providerRegistry));
+    registry.set(entry.config.id, entry);
+    set(providerRegistry, registry);
+  },
+);
+
+export const removeProviderAtom = atom(null, (get, set, providerId: string) => {
+  const registry = new Map(get(providerRegistry));
+  registry.delete(providerId);
+  set(providerRegistry, registry);
+});
+
+export const updateProviderStatusAtom = atom(
+  null,
+  (get, set, providerId: string, status: Partial<ProviderStatus>) => {
+    const registry = new Map(get(providerRegistry));
+    const entry = registry.get(providerId);
+    if (entry) {
+      registry.set(providerId, {
+        ...entry,
+        status: { ...entry.status, ...status },
+      });
+      set(providerRegistry, registry);
+    }
+  },
+);
+
+export const updateProviderPreferencesAtom = atom(
+  null,
+  (
+    get,
+    set,
+    providerId: string,
+    preferences: Partial<ProviderRegistryEntry["userPreferences"]>,
+  ) => {
+    const registry = new Map(get(providerRegistry));
+    const entry = registry.get(providerId);
+    if (entry) {
+      registry.set(providerId, {
+        ...entry,
+        userPreferences: { ...entry.userPreferences, ...preferences },
+      });
+      set(providerRegistry, registry);
+    }
+  },
+);
+
+// Provider availability checking
+export const checkProviderAvailabilityAtom = atom(
+  null,
+  async (get, set, providerId: string) => {
+    const registry = get(providerRegistry);
+    const entry = registry.get(providerId);
+
+    if (!entry) return;
+
+    // Set loading state
+    set(updateProviderStatusAtom, providerId, { isLoading: true });
+
+    try {
+      // Only check availability for providers that have async loading
+      if (entry.config.type !== "theme" && "load" in entry.config) {
+        const provider = await entry.config.load();
+        const isAvailable = await provider.isAvailable();
+
+        set(updateProviderStatusAtom, providerId, {
+          isAvailable,
+          isLoading: false,
+          lastChecked: new Date(),
+          error: undefined,
+        });
+      } else {
+        // Theme providers are always available
+        set(updateProviderStatusAtom, providerId, {
+          isAvailable: true,
+          isLoading: false,
+          lastChecked: new Date(),
+          error: undefined,
+        });
+      }
+    } catch (error) {
+      console.error(
+        `Failed to check availability for provider ${providerId}:`,
+        error,
+      );
+      set(updateProviderStatusAtom, providerId, {
+        isAvailable: false,
+        isLoading: false,
+        lastChecked: new Date(),
+        error: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  },
+);
+
+// Derived atoms for each provider type
+export const lyricsProvidersAtom = atom((get) => {
+  const registry = get(providerRegistry);
+  if (!registry) return [];
+  return Array.from(registry.values())
+    .filter(
+      (
+        entry,
+      ): entry is ProviderRegistryEntry & { config: LyricsProviderConfig } =>
+        entry.config.type === "lyrics",
+    )
+    .sort((a, b) => a.userPreferences.priority - b.userPreferences.priority);
+});
+
+export const artworkProvidersAtom = atom((get) => {
+  const registry = get(providerRegistry);
+  if (!registry) return [];
+  return Array.from(registry.values())
+    .filter(
+      (
+        entry,
+      ): entry is ProviderRegistryEntry & { config: ArtworkProviderConfig } =>
+        entry.config.type === "artwork",
+    )
+    .sort((a, b) => a.userPreferences.priority - b.userPreferences.priority);
+});
+
+export const playerSourcesAtom = atom((get) => {
+  const registry = get(providerRegistry);
+  if (!registry) return [];
+  return Array.from(registry.values())
+    .filter(
+      (
+        entry,
+      ): entry is ProviderRegistryEntry & { config: PlayerSourceConfig } =>
+        entry.config.type === "player-source",
+    )
+    .sort((a, b) => a.userPreferences.priority - b.userPreferences.priority);
+});
+
+export const themesAtom = atom((get) => {
+  const registry = get(providerRegistry);
+  if (!registry) return [];
+  return Array.from(registry.values())
+    .filter(
+      (entry): entry is ProviderRegistryEntry & { config: ThemeConfig } =>
+        entry.config.type === "theme",
+    )
+    .sort((a, b) => a.userPreferences.priority - b.userPreferences.priority);
+});
+
+// Helper atoms for enabled providers only
+export const enabledLyricsProvidersAtom = atom((get) => {
+  return get(lyricsProvidersAtom).filter(
+    (entry) => entry.userPreferences.isEnabled,
+  );
+});
+
+export const enabledArtworkProvidersAtom = atom((get) => {
+  return get(artworkProvidersAtom).filter(
+    (entry) => entry.userPreferences.isEnabled,
+  );
+});
+
+export const selectedPlayerSourceAtom = atom((get) => {
+  return (
+    get(playerSourcesAtom).find((entry) => entry.userPreferences.isEnabled) ||
+    null
+  );
+});
+
+export const selectedThemeAtom = atom((get) => {
+  return (
+    get(themesAtom).find((entry) => entry.userPreferences.isEnabled) || null
+  );
+});
+
+// Legacy compatibility atoms - simplified versions that delegate to new system
+export const playerIdAtom = atom(
+  (get) => {
+    const selectedSource = get(selectedPlayerSourceAtom);
+    return selectedSource?.config.id || "local";
+  },
+  (get, set, newPlayerId: string) => {
+    // Update registry to enable the selected player source
+    const sources = get(playerSourcesAtom);
+    sources.forEach((source) => {
+      set(updateProviderPreferencesAtom, source.config.id, {
+        isEnabled: source.config.id === newPlayerId,
+      });
+    });
+  },
+);
+
+export const lyricsProviderIdsAtom = atom(
+  (get) => get(lyricsProvidersAtom).map((entry) => entry.config.id),
+  (_get, set, newProviderIds: string[]) => {
+    // Update priorities based on new order
+    newProviderIds.forEach((id, index) => {
+      set(updateProviderPreferencesAtom, id, { priority: index + 1 });
+    });
+  },
+);
+
+export const artworkProviderIdsAtom = atom(
+  (get) => get(artworkProvidersAtom).map((entry) => entry.config.id),
+  (_get, set, newProviderIds: string[]) => {
+    // Update priorities based on new order
+    newProviderIds.forEach((id, index) => {
+      set(updateProviderPreferencesAtom, id, { priority: index + 1 });
+    });
+  },
+);
+
+export const selectedLyricsProviderIdAtom = atom((get) => {
+  const enabled = get(enabledLyricsProvidersAtom);
+  return enabled[0]?.config.id || null;
+});
+
+export const selectedArtworkProviderIdAtom = atom((get) => {
+  const enabled = get(enabledArtworkProvidersAtom);
+  return enabled[0]?.config.id || null;
+});
+
+// Player instance cache
+const playerInstanceCache = atom<Map<string, Player>>(new Map());
+
+export const getPlayerInstanceAtom = atom(
+  null,
+  (get, _set, playerId: string) => {
+    return get(playerInstanceCache).get(playerId) || null;
+  },
+);
+
+export const setPlayerInstanceAtom = atom(
+  null,
+  (
+    get,
+    set,
+    { playerId, instance }: { playerId: string; instance: Player },
+  ) => {
+    const cache = new Map(get(playerInstanceCache));
+    cache.set(playerId, instance);
+    set(playerInstanceCache, cache);
+  },
+);
+
+// Settings UI atoms
+export const isSettingsOpenAtom = atom(false);
+
+export const toggleSettingsAtom = atom(null, (get, set) => {
+  set(isSettingsOpenAtom, !get(isSettingsOpenAtom));
+});
+
+// Keep old AppSettings interface for localStorage compatibility temporarily
 export const defaultSettings: AppSettings = {
   playerId: "local",
   lyricsProviderIds: ["lrclib", "local-server", "simulated"],
@@ -26,10 +464,6 @@ export const defaultSettings: AppSettings = {
   enabledArtworkProviders: new Set(["itunes"]),
 };
 
-/**
- * Persistent settings atom (stored in localStorage)
- * Custom serialization to handle Set types
- */
 export const settingsAtom = atomWithStorage<AppSettings>(
   "LIVE_LYRICS_SETTINGS",
   defaultSettings,
@@ -40,7 +474,6 @@ export const settingsAtom = atomWithStorage<AppSettings>(
         if (storedValue === null) return initialValue;
 
         const parsed = JSON.parse(storedValue);
-        // Ensure all required fields exist with proper defaults and convert arrays back to Sets
         return {
           playerId: parsed.playerId || initialValue.playerId,
           lyricsProviderIds:
@@ -62,7 +495,6 @@ export const settingsAtom = atomWithStorage<AppSettings>(
     },
     setItem: (key, value) => {
       try {
-        // Convert Sets to arrays for serialization
         const serializable = {
           ...value,
           enabledLyricsProviders: Array.from(value.enabledLyricsProviders),
@@ -79,416 +511,9 @@ export const settingsAtom = atomWithStorage<AppSettings>(
   },
 );
 
-/**
- * Individual setting atoms (derived from main settings)
- */
-export const playerIdAtom = atom(
-  (get) => {
-    const settings = get(settingsAtom);
-    return settings.playerId;
-  },
-  (get, set, newPlayerId: string) => {
-    const currentSettings = get(settingsAtom);
-    set(settingsAtom, { ...currentSettings, playerId: newPlayerId });
-  },
-);
-
-export const lyricsProviderIdsAtom = atom(
-  (get) => get(settingsAtom).lyricsProviderIds,
-  (get, set, newProviderIds: string[]) => {
-    const currentSettings = get(settingsAtom);
-    set(settingsAtom, {
-      ...currentSettings,
-      lyricsProviderIds: newProviderIds,
-    });
-  },
-);
-
-export const artworkProviderIdsAtom = atom(
-  (get) => get(settingsAtom).artworkProviderIds,
-  (get, set, newProviderIds: string[]) => {
-    const currentSettings = get(settingsAtom);
-    set(settingsAtom, {
-      ...currentSettings,
-      artworkProviderIds: newProviderIds,
-    });
-  },
-);
-
-export const enabledLyricsProvidersAtom = atom(
-  (get) => get(settingsAtom).enabledLyricsProviders,
-  (get, set, newEnabledProviders: Set<string>) => {
-    const currentSettings = get(settingsAtom);
-    set(settingsAtom, {
-      ...currentSettings,
-      enabledLyricsProviders: newEnabledProviders,
-    });
-  },
-);
-
-export const enabledArtworkProvidersAtom = atom(
-  (get) => get(settingsAtom).enabledArtworkProviders,
-  (get, set, newEnabledProviders: Set<string>) => {
-    const currentSettings = get(settingsAtom);
-    set(settingsAtom, {
-      ...currentSettings,
-      enabledArtworkProviders: newEnabledProviders,
-    });
-  },
-);
-
-/**
- * Configuration atoms - provide metadata without instantiating providers
- */
-export const availablePlayersAtom = atom(() => getPlayerConfigs());
-export const availableLyricsProvidersAtom = atom(() =>
-  getLyricsProviderConfigs(),
-);
-export const availableArtworkProvidersAtom = atom(() =>
-  getArtworkProviderConfigs(),
-);
-
-/**
- * Atoms for tracking provider availability with individual loading states
- */
-
-// Cache atoms to store availability results and loading states
-const lyricsProviderAvailabilityCache = atom<Record<string, boolean>>({});
-const lyricsProviderLoadingStates = atom<Record<string, boolean>>({});
-const artworkProviderAvailabilityCache = atom<Record<string, boolean>>({});
-const artworkProviderLoadingStates = atom<Record<string, boolean>>({});
-const playerAvailabilityCache = atom<Record<string, boolean>>({});
-const playerLoadingStates = atom<Record<string, boolean>>({});
-
-// Sync atom that combines cached availability with current order/enabled state and loading states
-export const lyricsProvidersWithStatusAtom = atom((get) => {
-  const configs = get(availableLyricsProvidersAtom);
-  const providerIds = get(lyricsProviderIdsAtom);
-  const enabledProviders = get(enabledLyricsProvidersAtom);
-  const cache = get(lyricsProviderAvailabilityCache);
-  const loadingStates = get(lyricsProviderLoadingStates);
-
-  // Create ordered list based on priority, with enabled status
-  const orderedConfigs = providerIds
-    .map((id) => configs.find((config) => config.id === id))
-    .filter(Boolean) as typeof configs;
-
-  // Add any configs not in the priority list at the end
-  const missingConfigs = configs.filter(
-    (config) => !providerIds.includes(config.id),
-  );
-  const allConfigs = [...orderedConfigs, ...missingConfigs];
-
-  return allConfigs.map((config) => ({
-    ...config,
-    isAvailable: cache[config.id] ?? true, // Default to true until checked
-    isEnabled: enabledProviders.has(config.id),
-    priority: providerIds.indexOf(config.id) + 1 || 999,
-    isLoading: loadingStates[config.id] ?? false,
-  }));
-});
-
-export const artworkProvidersWithStatusAtom = atom((get) => {
-  const configs = get(availableArtworkProvidersAtom);
-  const providerIds = get(artworkProviderIdsAtom);
-  const enabledProviders = get(enabledArtworkProvidersAtom);
-  const cache = get(artworkProviderAvailabilityCache);
-  const loadingStates = get(artworkProviderLoadingStates);
-
-  // Create ordered list based on priority, with enabled status
-  const orderedConfigs = providerIds
-    .map((id) => configs.find((config) => config.id === id))
-    .filter(Boolean) as typeof configs;
-
-  // Add any configs not in the priority list at the end
-  const missingConfigs = configs.filter(
-    (config) => !providerIds.includes(config.id),
-  );
-  const allConfigs = [...orderedConfigs, ...missingConfigs];
-
-  return allConfigs.map((config) => ({
-    ...config,
-    isAvailable: cache[config.id] ?? true, // Default to true until checked
-    isEnabled: enabledProviders.has(config.id),
-    priority: providerIds.indexOf(config.id) + 1 || 999,
-    isLoading: loadingStates[config.id] ?? false,
-  }));
-});
-
-// Write-only atoms to update individual provider states
-export const updateLyricsProviderStateAtom = atom(
-  null,
-  (
-    get,
-    set,
-    update: { id: string; isAvailable?: boolean; isLoading?: boolean },
-  ) => {
-    if (update.isAvailable !== undefined) {
-      const cache = get(lyricsProviderAvailabilityCache);
-      set(lyricsProviderAvailabilityCache, {
-        ...cache,
-        [update.id]: update.isAvailable,
-      });
-    }
-    if (update.isLoading !== undefined) {
-      const loadingStates = get(lyricsProviderLoadingStates);
-      set(lyricsProviderLoadingStates, {
-        ...loadingStates,
-        [update.id]: update.isLoading,
-      });
-    }
-  },
-);
-
-export const updateArtworkProviderStateAtom = atom(
-  null,
-  (
-    get,
-    set,
-    update: { id: string; isAvailable?: boolean; isLoading?: boolean },
-  ) => {
-    if (update.isAvailable !== undefined) {
-      const cache = get(artworkProviderAvailabilityCache);
-      set(artworkProviderAvailabilityCache, {
-        ...cache,
-        [update.id]: update.isAvailable,
-      });
-    }
-    if (update.isLoading !== undefined) {
-      const loadingStates = get(artworkProviderLoadingStates);
-      set(artworkProviderLoadingStates, {
-        ...loadingStates,
-        [update.id]: update.isLoading,
-      });
-    }
-  },
-);
-
-// Helper atoms to check availability for individual providers
-export const checkLyricsProviderAvailabilityAtom = atom(
-  null,
-  async (_get, set, providerId: string) => {
-    set(updateLyricsProviderStateAtom, { id: providerId, isLoading: true });
-
-    try {
-      const provider = await loadLyricsProvider(providerId);
-      const isAvailable = await provider.isAvailable();
-      set(updateLyricsProviderStateAtom, {
-        id: providerId,
-        isAvailable,
-        isLoading: false,
-      });
-    } catch (error) {
-      console.error(`Failed to check availability for ${providerId}:`, error);
-      set(updateLyricsProviderStateAtom, {
-        id: providerId,
-        isAvailable: false,
-        isLoading: false,
-      });
-    }
-  },
-);
-
-export const checkArtworkProviderAvailabilityAtom = atom(
-  null,
-  async (_get, set, providerId: string) => {
-    set(updateArtworkProviderStateAtom, { id: providerId, isLoading: true });
-
-    try {
-      const provider = await loadArtworkProvider(providerId);
-      const isAvailable = await provider.isAvailable();
-      set(updateArtworkProviderStateAtom, {
-        id: providerId,
-        isAvailable,
-        isLoading: false,
-      });
-    } catch (error) {
-      console.error(`Failed to check availability for ${providerId}:`, error);
-      set(updateArtworkProviderStateAtom, {
-        id: providerId,
-        isAvailable: false,
-        isLoading: false,
-      });
-    }
-  },
-);
-
-// Player availability status atom - sync like providers
-export const remotePlayerWithStatusAtom = atom((get) => {
-  const cache = get(playerAvailabilityCache);
-  const loadingStates = get(playerLoadingStates);
-
-  // Only track remote player since that's what we show in settings
-  return {
-    id: "remote",
-    name: "Server",
-    description: "Connect to a remote server",
-    isAvailable: cache["remote"] ?? true, // Default to true until checked
-    isLoading: loadingStates["remote"] ?? false,
-  };
-});
-
-// Write-only atom to update player state
-export const updatePlayerStateAtom = atom(
-  null,
-  (
-    get,
-    set,
-    update: { id: string; isAvailable?: boolean; isLoading?: boolean },
-  ) => {
-    if (update.isAvailable !== undefined) {
-      const cache = get(playerAvailabilityCache);
-      set(playerAvailabilityCache, {
-        ...cache,
-        [update.id]: update.isAvailable,
-      });
-    }
-    if (update.isLoading !== undefined) {
-      const loadingStates = get(playerLoadingStates);
-      set(playerLoadingStates, {
-        ...loadingStates,
-        [update.id]: update.isLoading,
-      });
-    }
-  },
-);
-
-// Helper atom to check availability for individual players
-export const checkPlayerAvailabilityAtom = atom(
-  null,
-  async (_get, set, playerId: string) => {
-    set(updatePlayerStateAtom, { id: playerId, isLoading: true });
-
-    try {
-      const player = await loadPlayer(playerId);
-      const isAvailable = await player.isAvailable();
-      set(updatePlayerStateAtom, {
-        id: playerId,
-        isAvailable,
-        isLoading: false,
-      });
-    } catch (error) {
-      console.error(`Failed to check availability for ${playerId}:`, error);
-      set(updatePlayerStateAtom, {
-        id: playerId,
-        isAvailable: false,
-        isLoading: false,
-      });
-    }
-  },
-);
-
-export const playersWithStatusAtom = atom(async (get) => {
-  const configs = get(availablePlayersAtom);
-  const statusPromises = configs.map(async (config) => {
-    try {
-      const player = await loadPlayer(config.id);
-      const isAvailable = await player.isAvailable();
-      return { ...config, isAvailable };
-    } catch (error) {
-      console.error(`Failed to check availability for ${config.id}:`, error);
-      return { ...config, isAvailable: false };
-    }
-  });
-
-  return Promise.all(statusPromises);
-});
-
-/**
- * Provider instance atoms with lazy loading and caching
- * These atoms provide the actual enabled providers in priority order
- */
-const playerInstancesAtom = atom<Map<string, Player>>(new Map());
-
-export const currentPlayerAtom = atom(
-  async (get): Promise<Player | null> => {
-    const playerId = get(playerIdAtom);
-    const instances = get(playerInstancesAtom);
-
-    // Return cached instance if available
-    if (instances.has(playerId)) {
-      return instances.get(playerId)!;
-    }
-
-    try {
-      const provider = await loadPlayer(playerId);
-      instances.set(playerId, provider);
-      return provider;
-    } catch (error) {
-      console.error(`Failed to load player "${playerId}":`, error);
-      return null;
-    }
-  },
-  (get, set, instance: Player | null) => {
-    if (instance) {
-      const instances = new Map(get(playerInstancesAtom));
-      instances.set(instance.getId(), instance);
-      set(playerInstancesAtom, instances);
-    }
-  },
-);
-
-/**
- * Provider atoms that return the first enabled provider in priority order
- * for compatibility with components that expect a single provider
- */
-export const currentLyricsProviderAtom = atom(
-  async (get): Promise<LyricsProvider | null> => {
-    const providerIds = get(lyricsProviderIdsAtom);
-    const enabledProviders = get(enabledLyricsProvidersAtom);
-
-    // Get the first enabled provider
-    const firstEnabledId = providerIds.find((id) => enabledProviders.has(id));
-    if (!firstEnabledId) return null;
-
-    try {
-      return await loadLyricsProvider(firstEnabledId);
-    } catch (error) {
-      console.error(
-        `Failed to load lyrics provider "${firstEnabledId}":`,
-        error,
-      );
-      return null;
-    }
-  },
-);
-
-export const currentArtworkProviderAtom = atom(
-  async (get): Promise<ArtworkProvider | null> => {
-    const providerIds = get(artworkProviderIdsAtom);
-    const enabledProviders = get(enabledArtworkProvidersAtom);
-
-    // Get the first enabled provider
-    const firstEnabledId = providerIds.find((id) => enabledProviders.has(id));
-    if (!firstEnabledId) return null;
-
-    try {
-      return await loadArtworkProvider(firstEnabledId);
-    } catch (error) {
-      console.error(
-        `Failed to load artwork provider "${firstEnabledId}":`,
-        error,
-      );
-      return null;
-    }
-  },
-);
-
-/**
- * Convenience atom to update multiple settings at once
- */
 export const updateSettingsAtom = atom(
   null,
   (_get, set, newSettings: Partial<AppSettings>) => {
     set(settingsAtom, (current) => ({ ...current, ...newSettings }));
   },
 );
-
-/**
- * Settings UI state atoms
- */
-export const isSettingsOpenAtom = atom(false);
-
-export const toggleSettingsAtom = atom(null, (get, set) => {
-  set(isSettingsOpenAtom, !get(isSettingsOpenAtom));
-});

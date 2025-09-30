@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { serve } from "@hono/node-server";
 import { execFile } from "child_process";
 import { cors } from "hono/cors";
+import type { SongResponse, ErrorResponse } from "./types";
 
 const app = new Hono();
 
@@ -22,7 +23,7 @@ const scriptLines = [
 
 const osascriptArgs = scriptLines.flatMap((line) => ["-e", line]);
 
-function getSongInfo(): Promise<any> {
+function getSongInfo(): Promise<SongResponse | ErrorResponse> {
   return new Promise((resolve) => {
     execFile("osascript", osascriptArgs, (error, stdout, stderr) => {
       if (error || stderr) {
@@ -34,21 +35,24 @@ function getSongInfo(): Promise<any> {
       console.log(output);
 
       if (output === "No song playing") {
-        resolve({ message: "No song playing" });
+        resolve({ error: "No song playing" });
         return;
       }
 
       const [name, artist, album, currentTime, duration, playerState] =
         output.split("\n");
 
-      resolve({
-        name,
-        artist,
-        album,
-        currentTime,
-        duration,
-        playerState,
-      });
+      // Convert AppleScript output to proper Song format
+      const song: SongResponse = {
+        name: name || "",
+        artist: artist || "",
+        album: album || "",
+        currentTime: parseFloat(currentTime) || 0,
+        duration: parseFloat(duration) || 0,
+        isPlaying: playerState === "playing",
+      };
+
+      resolve(song);
     });
   });
 }
@@ -57,7 +61,7 @@ app.get("/", (c) => c.text("Hello World"));
 
 app.get("/music", async (c) => {
   const songInfo = await getSongInfo();
-  if (songInfo.error) {
+  if ("error" in songInfo) {
     return c.json(songInfo, 404);
   }
   return c.json(songInfo);

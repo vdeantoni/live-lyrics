@@ -115,9 +115,9 @@ export class LocalPlayer implements Player {
           if (this.currentTime >= this.duration) {
             this.nextSong();
           }
+          this.lastUpdateTime = Date.now();
         }
       }
-      this.lastUpdateTime = Date.now();
     }, 100);
   }
 

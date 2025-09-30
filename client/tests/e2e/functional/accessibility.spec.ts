@@ -54,34 +54,22 @@ test.describe("Keyboard Navigation and Accessibility", () => {
   }) => {
     await page.setViewportSize({ width: 768, height: 1024 });
 
-    // Start the player first so seeking updates the time display
-    const playButton = page.locator('[data-testid="play-pause-button"]');
-    await playButton.click();
-
-    // Target the element with role="slider" within the slider wrapper
     const progressSlider = page.locator(
       '[data-testid="progress-slider"] [role="slider"]',
     );
     const currentTimeDisplay = page.locator('[data-testid="current-time"]');
 
-    // Focus the slider element
-    await progressSlider.focus();
-    await expect(progressSlider).toBeFocused();
+    // Ensure the player is paused and time is at the start.
+    await expect(currentTimeDisplay).toHaveText("0:00");
 
-    // Get initial time
-    const initialTime = await currentTimeDisplay.textContent();
-
-    // Use multiple arrow keys to make a more significant change
+    // Use locator.press(), which focuses the element and dispatches the key press.
+    // This is often more reliable for component-specific interactions.
     for (let i = 0; i < 10; i++) {
-      await page.keyboard.press("ArrowRight");
+      await progressSlider.press("ArrowRight");
     }
 
-    // Wait for the UI to update
-    await page.waitForTimeout(500);
-
-    // Time should have changed
-    const newTime = await currentTimeDisplay.textContent();
-    expect(newTime).not.toBe(initialTime);
+    // Assert that the time display has changed, confirming seeking works when paused.
+    await expect(currentTimeDisplay).not.toHaveText("0:00");
   });
 
   test("should support keyboard navigation in settings", async ({ page }) => {

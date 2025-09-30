@@ -1,11 +1,8 @@
 import { useAtomValue, useSetAtom } from "jotai";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
-import { songInfoAtom, rawLrcContentAtom } from "@/atoms/playerAtoms";
-import {
-  lyricsProviderIdsAtom,
-  enabledLyricsProvidersAtom,
-} from "@/atoms/settingsAtoms";
+import { playerStateAtom, rawLrcContentAtom } from "@/atoms/playerAtoms";
+import { enabledLyricsProvidersAtom } from "@/atoms/settingsAtoms";
 import { loadLyricsProvider } from "@/config/providers";
 
 /**
@@ -13,14 +10,13 @@ import { loadLyricsProvider } from "@/config/providers";
  * Components should use rawLrcContentAtom instead of returned values
  */
 export const useLyricsSync = () => {
-  const songInfo = useAtomValue(songInfoAtom);
-  const lyricsProviderIds = useAtomValue(lyricsProviderIdsAtom);
+  const playerState = useAtomValue(playerStateAtom);
   const enabledLyricsProviders = useAtomValue(enabledLyricsProvidersAtom);
   const setRawLrcContent = useSetAtom(rawLrcContentAtom);
 
   // Get enabled providers in priority order
-  const enabledProviderIds = (lyricsProviderIds || []).filter((id) =>
-    enabledLyricsProviders?.has(id),
+  const enabledProviderIds = enabledLyricsProviders.map(
+    (entry) => entry.config.id,
   );
 
   // Use React Query to fetch lyrics using priority-based fallback system
@@ -28,14 +24,14 @@ export const useLyricsSync = () => {
     queryKey: [
       "lyrics",
       enabledProviderIds,
-      songInfo.name,
-      songInfo.artist,
-      songInfo.album,
+      playerState.name,
+      playerState.artist,
+      playerState.album,
     ],
     queryFn: async (): Promise<string> => {
       if (
-        !songInfo.name ||
-        !songInfo.artist ||
+        !playerState.name ||
+        !playerState.artist ||
         enabledProviderIds.length === 0
       ) {
         return "";
@@ -56,7 +52,7 @@ export const useLyricsSync = () => {
           }
 
           // Check if provider supports this song
-          const supportsLyrics = await provider.supportsLyrics(songInfo);
+          const supportsLyrics = await provider.supportsLyrics(playerState);
           if (!supportsLyrics) {
             console.log(
               `Lyrics provider "${providerId}" doesn't support this song, trying next...`,
@@ -65,7 +61,7 @@ export const useLyricsSync = () => {
           }
 
           // Try to get lyrics
-          const lyrics = await provider.getLyrics(songInfo);
+          const lyrics = await provider.getLyrics(playerState);
           if (lyrics && lyrics.trim()) {
             console.log(
               `Successfully got lyrics from provider "${providerId}"`,
@@ -91,8 +87,8 @@ export const useLyricsSync = () => {
       return "";
     },
     enabled: !!(
-      songInfo.name &&
-      songInfo.artist &&
+      playerState.name &&
+      playerState.artist &&
       enabledProviderIds.length > 0
     ),
     staleTime: 1000 * 60 * 60 * 24 * 365, // 1 year - lyrics rarely change

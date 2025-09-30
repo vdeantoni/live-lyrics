@@ -1,57 +1,63 @@
-import { useAtomValue, useAtom, useSetAtom } from "jotai";
+import { useAtomValue, useSetAtom } from "jotai";
 import { arrayMove } from "@dnd-kit/sortable";
 import { useEffect, useRef } from "react";
 import {
   artworkProviderIdsAtom,
-  enabledArtworkProvidersAtom,
-  artworkProvidersWithStatusAtom,
-  checkArtworkProviderAvailabilityAtom,
+  artworkProvidersAtom,
+  checkProviderAvailabilityAtom,
+  updateProviderPreferencesAtom,
 } from "@/atoms/settingsAtoms";
 import { ProviderSection } from "./ProviderSection";
 
 export const ArtworkProviderSection = () => {
-  const artworkProviders = useAtomValue(artworkProvidersWithStatusAtom);
-  const [artworkProviderIds, setArtworkProviderIds] = useAtom(
-    artworkProviderIdsAtom,
-  );
-  const [enabledArtworkProviders, setEnabledArtworkProviders] = useAtom(
-    enabledArtworkProvidersAtom,
-  );
-  const checkAvailability = useSetAtom(checkArtworkProviderAvailabilityAtom);
+  const artworkProviders = useAtomValue(artworkProvidersAtom) || [];
+  const setArtworkProviderIds = useSetAtom(artworkProviderIdsAtom);
+  const updateProviderPreferences = useSetAtom(updateProviderPreferencesAtom);
+  const checkAvailability = useSetAtom(checkProviderAvailabilityAtom);
   const checkedProviders = useRef(new Set<string>());
+
+  // Convert new registry format to old ProviderSection format
+  const providersForSection = artworkProviders.map((entry) => ({
+    id: entry.config.id,
+    name: entry.config.name,
+    description: entry.config.description,
+    isAvailable: entry.status.isAvailable,
+    isEnabled: entry.userPreferences.isEnabled,
+    priority: entry.userPreferences.priority,
+    isLoading: entry.status.isLoading,
+  }));
 
   // Check availability for all providers on mount and when new providers are added
   useEffect(() => {
-    artworkProviders.forEach((provider) => {
+    artworkProviders.forEach((entry) => {
       // Only check if we haven't checked this provider yet and it's not currently loading
-      if (!checkedProviders.current.has(provider.id) && !provider.isLoading) {
-        checkedProviders.current.add(provider.id);
-        checkAvailability(provider.id);
+      if (
+        !checkedProviders.current.has(entry.config.id) &&
+        !entry.status.isLoading
+      ) {
+        checkedProviders.current.add(entry.config.id);
+        checkAvailability(entry.config.id);
       }
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- Only depend on provider IDs, not their status - prevents infinite re-renders
-  }, [artworkProviderIds, checkAvailability]);
+  }, [artworkProviders.map((p) => p.config.id).join(","), checkAvailability]);
 
   const handleToggle = (id: string, enabled: boolean) => {
-    const newSet = new Set(enabledArtworkProviders);
-    if (enabled) {
-      newSet.add(id);
-    } else {
-      newSet.delete(id);
-    }
-    setEnabledArtworkProviders(newSet);
+    updateProviderPreferences(id, { isEnabled: enabled });
   };
 
   const handleReorder = (activeId: string, overId: string) => {
-    const oldIndex = artworkProviderIds.indexOf(activeId);
-    const newIndex = artworkProviderIds.indexOf(overId);
-    setArtworkProviderIds(arrayMove(artworkProviderIds, oldIndex, newIndex));
+    const currentIds = artworkProviders.map((entry) => entry.config.id);
+    const oldIndex = currentIds.indexOf(activeId);
+    const newIndex = currentIds.indexOf(overId);
+    const newOrder = arrayMove(currentIds, oldIndex, newIndex);
+    setArtworkProviderIds(newOrder);
   };
 
   return (
     <ProviderSection
       title="Artwork Provider"
-      providers={artworkProviders}
+      providers={providersForSection}
       onToggle={handleToggle}
       onReorder={handleReorder}
       testId="artwork-provider-section"

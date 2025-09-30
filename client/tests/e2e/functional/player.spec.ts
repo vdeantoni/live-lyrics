@@ -172,12 +172,14 @@ test.describe("Player Component", () => {
 
         await page.mouse.click(clickX, clickY);
 
-        // Wait for the player to update and check the visual time display
-        await page.waitForTimeout(300);
+        // Wait for the player to update by asserting the time is no longer the initial value.
+        // This is a robust, auto-retrying assertion that replaces the flaky `waitForTimeout`.
+        await expect(currentTimeDisplay).not.toHaveText(initialTime!);
+
+        // Now that we know the time has updated, we can safely get the new value.
         const newTime = await currentTimeDisplay.textContent();
 
         // The displayed time should have changed from initial and be > 4:00
-        expect(newTime).not.toBe(initialTime);
         expect(newTime).not.toBe("0:00");
 
         // Should be around 4:xx after clicking at 75%

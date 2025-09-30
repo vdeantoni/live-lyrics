@@ -1,11 +1,8 @@
 import { useAtomValue, useSetAtom } from "jotai";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
-import { songInfoAtom, artworkUrlsAtom } from "@/atoms/playerAtoms";
-import {
-  artworkProviderIdsAtom,
-  enabledArtworkProvidersAtom,
-} from "@/atoms/settingsAtoms";
+import { playerStateAtom, artworkUrlsAtom } from "@/atoms/playerAtoms";
+import { enabledArtworkProvidersAtom } from "@/atoms/settingsAtoms";
 import { loadArtworkProvider } from "@/config/providers";
 
 /**
@@ -13,14 +10,13 @@ import { loadArtworkProvider } from "@/config/providers";
  * Components should use artworkUrlsAtom instead of returned values
  */
 export const useArtworkSync = () => {
-  const songInfo = useAtomValue(songInfoAtom);
-  const artworkProviderIds = useAtomValue(artworkProviderIdsAtom);
+  const playerState = useAtomValue(playerStateAtom);
   const enabledArtworkProviders = useAtomValue(enabledArtworkProvidersAtom);
   const setArtworkUrls = useSetAtom(artworkUrlsAtom);
 
   // Get enabled providers in priority order
-  const enabledProviderIds = (artworkProviderIds || []).filter((id) =>
-    enabledArtworkProviders?.has(id),
+  const enabledProviderIds = enabledArtworkProviders.map(
+    (entry) => entry.config.id,
   );
 
   // Use React Query to fetch artwork using priority-based fallback system
@@ -28,14 +24,14 @@ export const useArtworkSync = () => {
     queryKey: [
       "artwork",
       enabledProviderIds,
-      songInfo.name,
-      songInfo.artist,
-      songInfo.album,
+      playerState.name,
+      playerState.artist,
+      playerState.album,
     ],
     queryFn: async (): Promise<string[]> => {
       if (
-        !songInfo.name ||
-        !songInfo.artist ||
+        !playerState.name ||
+        !playerState.artist ||
         enabledProviderIds.length === 0
       ) {
         return [];
@@ -56,7 +52,7 @@ export const useArtworkSync = () => {
           }
 
           // Try to get artwork
-          const artwork = await provider.getArtwork(songInfo);
+          const artwork = await provider.getArtwork(playerState);
           if (artwork && artwork.length > 0) {
             console.log(
               `Successfully got artwork from provider "${providerId}"`,
@@ -82,8 +78,8 @@ export const useArtworkSync = () => {
       return [];
     },
     enabled: !!(
-      songInfo.name &&
-      songInfo.artist &&
+      playerState.name &&
+      playerState.artist &&
       enabledProviderIds.length > 0
     ),
     staleTime: 1000 * 60 * 60 * 24 * 365, // 1 year - artwork rarely changes

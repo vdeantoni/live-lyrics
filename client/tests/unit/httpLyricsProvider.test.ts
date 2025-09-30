@@ -1,10 +1,31 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { HttpLyricsProvider } from "@/providers/httpLyricsProvider";
 import type { Song } from "@/types";
 
 // Mock the fetch function
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
+
+// Mock console methods to suppress test output noise
+const originalConsole = {
+  log: console.log,
+  warn: console.warn,
+  error: console.error,
+};
+
+beforeEach(() => {
+  // Suppress console output during tests
+  console.log = vi.fn();
+  console.warn = vi.fn();
+  console.error = vi.fn();
+});
+
+afterEach(() => {
+  // Restore original console methods
+  console.log = originalConsole.log;
+  console.warn = originalConsole.warn;
+  console.error = originalConsole.error;
+});
 
 describe("HttpLyricsProvider", () => {
   let provider: HttpLyricsProvider;
