@@ -46,9 +46,9 @@ const MainScreen = () => {
         </Button>
       </div>
 
-      {/* Lyrics Screen - Fades in when loading is complete */}
+      {/* Lyrics Screen - Shows when app is ready */}
       <AnimatePresence>
-        {!appState.isLoading && (
+        {appState.isReady && (
           <motion.div
             className="absolute inset-0"
             initial={{ opacity: 0 }}
@@ -61,9 +61,9 @@ const MainScreen = () => {
         )}
       </AnimatePresence>
 
-      {/* Loading Screen - Fades out when loading is complete */}
+      {/* Loading Screen - Shows only when loading AND not ready */}
       <AnimatePresence>
-        {appState.isLoading && (
+        {appState.isLoading && !appState.isReady && (
           <motion.div
             className="absolute inset-0"
             initial={{ opacity: 1 }}
