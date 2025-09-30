@@ -81,14 +81,7 @@ test.describe("Visual Regression Tests", () => {
         status: 200,
         contentType: "application/json",
         body: JSON.stringify({
-          results: [
-            {
-              artworkUrl100:
-                "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==", // 1x1 transparent PNG
-              artworkUrl600:
-                "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==",
-            },
-          ],
+          results: [], // No artwork results for stable visual tests
         }),
       });
     });
