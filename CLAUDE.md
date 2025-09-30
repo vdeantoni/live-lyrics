@@ -115,6 +115,7 @@ Both client and server compile to `dist/` directories:
   - Animated song name scrolling with hover pause/resume
   - Global keyboard shortcuts for playback control and navigation
   - Smooth iOS-style settings panel animations
+  - Animated loading screen with smooth transitions during app bootstrap
 
 ### Component Architecture
 
@@ -125,6 +126,10 @@ Both client and server compile to `dist/` directories:
   - `LyricsContent.tsx`: Actual lyrics rendering with synchronization
   - `Player.tsx`: Music playback controls with animated song name
   - `AnimatedSongName.tsx`: Framer Motion component for scrolling song titles
+- **Player/**: Main application screens and loading states
+  - `MainScreen.tsx`: Root screen component orchestrating loading/lyrics screen transitions
+  - `LoadingScreen.tsx`: Animated loading screen with floating music notes, rotating vinyl record, and soundwave bars
+  - `LyricsScreen.tsx`: Main lyrics display screen
 - **Settings/**: Comprehensive settings system with drag-and-drop provider management
   - `SettingsScreen.tsx`: Main settings panel with smooth slide animations
   - `PlayerSection.tsx`: Music player selection (Local/Remote)
@@ -263,6 +268,8 @@ The test infrastructure includes a sophisticated utility system for provider reg
   ```
 - **`renderWithProvidersOnly(ui, options)`**: Render without waiting, for testing loading states manually
 - **`createTestRegistry()`**: Factory function providing consistent mock data for all provider types
+- **`testRegistryFactory`**: Centralized factory for creating both unit test and E2E test registries
+- **`injectTestRegistry()`**: E2E helper for injecting test registry into browser window
 - **`TestProvider`**: React wrapper that handles Jotai state and bootstrap initialization
 
 **Provider Registry Testing**:
@@ -295,10 +302,12 @@ await renderWithProviders(<Component />, { testRegistry: customRegistry });
   - `tests/e2e/functional/playlist.spec.ts` - Playlist navigation and song seeking
   - `tests/e2e/functional/error-handling.spec.ts` - Error scenarios and graceful degradation
   - `tests/e2e/functional/accessibility.spec.ts` - Keyboard navigation and WCAG compliance
+  - `tests/e2e/functional/loading.spec.ts` - Loading screen animations and bootstrap delay simulation
   - `tests/e2e/visual/visual.spec.ts` - Visual regression screenshot generation
 - **Configuration**: `playwright.config.ts` with CI-optimized settings and multiple browser support
 - **Test Directory**: `./tests/e2e` (configured in Playwright config)
 - **Environment**: Runs against preview server (port 5173) with simulated player data
+- **Test Registry System**: Uses `injectTestRegistry()` helper to inject mock providers instead of HTTP mocking for more reliable tests
 - **Selectors**: Uses `[data-testid="..."]` attributes for reliable element targeting, with specific support for Radix UI components
 
 **Visual Regression (Lost Pixel)**:
