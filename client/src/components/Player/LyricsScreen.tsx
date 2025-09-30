@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useAtomValue } from "jotai";
 import { artworkUrlsAtom } from "@/atoms/playerAtoms";
 import { useArtworkSync } from "@/hooks/useArtworkSync";
@@ -13,33 +13,59 @@ const LyricsScreen = () => {
 
   const [currentArtworkUrl, setCurrentArtworkUrl] = useState("");
 
+  // Helper function to preload image before setting as background
+  const preloadImage = (url: string): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve();
+      img.onerror = () => reject(new Error(`Failed to load image: ${url}`));
+      img.src = url;
+    });
+  };
+
+  const selectAndLoadRandomArtwork = useCallback(async (urls: string[]) => {
+    const randomIndex = Math.floor(Math.random() * urls.length);
+    const selectedUrl = urls[randomIndex];
+
+    try {
+      await preloadImage(selectedUrl);
+      setCurrentArtworkUrl(selectedUrl);
+    } catch (error) {
+      console.warn("Failed to load artwork image:", error);
+      // Fallback: set URL anyway for graceful degradation
+      setCurrentArtworkUrl(selectedUrl);
+    }
+  }, []);
+
   useEffect(() => {
     if (artworkUrls && artworkUrls.length > 0) {
-      const randomIndex = Math.floor(Math.random() * artworkUrls.length);
-      setCurrentArtworkUrl(artworkUrls[randomIndex]);
+      // Load initial random artwork
+      void selectAndLoadRandomArtwork(artworkUrls);
 
+      // Set up interval for cycling artwork
       const intervalId = setInterval(() => {
-        const newRandomIndex = Math.floor(Math.random() * artworkUrls.length);
-        setCurrentArtworkUrl(artworkUrls[newRandomIndex]);
+        void selectAndLoadRandomArtwork(artworkUrls);
       }, 10000); // 10000 milliseconds = 10 seconds
 
       return () => clearInterval(intervalId);
     }
-  }, [artworkUrls]);
+  }, [artworkUrls, selectAndLoadRandomArtwork]);
 
   return (
     <div
       data-testid="lyrics-screen"
       className="relative h-full w-full overflow-hidden rounded-xl"
     >
-      {/* Background Image Layer with Effects */}
-      <div
-        data-testid="lyrics-background"
-        className="absolute inset-0 scale-110 bg-cover bg-center blur-sm brightness-75 contrast-125 grayscale transition-all duration-1000 ease-in-out"
-        style={{
-          backgroundImage: `url(${currentArtworkUrl})`,
-        }}
-      />
+      {/* Background Image Layer with Effects - Only render when we have an image */}
+      {currentArtworkUrl && (
+        <div
+          data-testid="lyrics-background"
+          className="absolute inset-0 scale-110 bg-cover bg-center blur-sm brightness-75 contrast-125 grayscale transition-all duration-1000 ease-in-out"
+          style={{
+            backgroundImage: `url(${currentArtworkUrl})`,
+          }}
+        />
+      )}
 
       {/* Dark Gradient Overlay for Better Text Contrast */}
       <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-black/60" />

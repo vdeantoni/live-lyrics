@@ -1,12 +1,7 @@
 import { useEffect } from "react";
 import { useAtomValue, useSetAtom } from "jotai";
 import { playerIdAtom, toggleSettingsAtom } from "@/atoms/settingsAtoms";
-import {
-  lyricsDataAtom,
-  songInfoAtom,
-  currentTimeAtom,
-  durationAtom,
-} from "@/atoms/playerAtoms";
+import { lyricsDataAtom, playerStateAtom } from "@/atoms/playerAtoms";
 import { loadPlayer } from "@/config/providers";
 
 /**
@@ -22,9 +17,8 @@ export const useKeyboardShortcuts = () => {
   const playerId = useAtomValue(playerIdAtom);
   const toggleSettings = useSetAtom(toggleSettingsAtom);
   const lyricsData = useAtomValue(lyricsDataAtom);
-  const songInfo = useAtomValue(songInfoAtom);
-  const currentTime = useAtomValue(currentTimeAtom);
-  const duration = useAtomValue(durationAtom);
+  const playerState = useAtomValue(playerStateAtom);
+  const { currentTime, duration, isPlaying } = playerState;
 
   useEffect(() => {
     const handleKeyDown = async (event: KeyboardEvent) => {
@@ -70,10 +64,10 @@ export const useKeyboardShortcuts = () => {
         case " ": // Space - Play/Pause
           if (hasModifier) return; // Don't trigger if modifier keys are pressed
           event.preventDefault();
-          if (playerId && songInfo) {
+          if (playerId && playerState) {
             const player = await getPlayer();
             if (player) {
-              if (songInfo.isPlaying) {
+              if (isPlaying) {
                 await player.pause();
               } else {
                 await player.play();
@@ -156,5 +150,13 @@ export const useKeyboardShortcuts = () => {
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [playerId, lyricsData, songInfo, currentTime, duration, toggleSettings]);
+  }, [
+    playerId,
+    lyricsData,
+    playerState,
+    currentTime,
+    duration,
+    isPlaying,
+    toggleSettings,
+  ]);
 };

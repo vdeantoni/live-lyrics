@@ -36,9 +36,7 @@ vi.mock("@/hooks/useKeyboardShortcuts", () => ({
 // Mock jotai hooks at module level
 import {
   songInfoAtom,
-  currentTimeAtom,
-  durationAtom,
-  isPlayingAtom,
+  playerStateAtom,
   rawLrcContentAtom,
   artworkUrlsAtom,
 } from "@/atoms/playerAtoms";
@@ -66,14 +64,17 @@ vi.mock("jotai", async () => {
             album: "Test Album",
             currentTime: 0,
             duration: 100,
-            playerState: "paused",
+            isPlaying: false,
           };
-        case currentTimeAtom:
-          return 0;
-        case durationAtom:
-          return 100;
-        case isPlayingAtom:
-          return false;
+        case playerStateAtom:
+          return {
+            currentTime: 0,
+            duration: 100,
+            isPlaying: false,
+            name: "Test Song",
+            artist: "Test Artist",
+            album: "Test Album",
+          };
         case rawLrcContentAtom:
           return null;
         case artworkUrlsAtom:

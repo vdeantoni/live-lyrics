@@ -3,8 +3,10 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { createAsyncStoragePersister } from "@tanstack/query-async-storage-persister";
 import { Provider as JotaiProvider } from "jotai";
+import { useAtomValue } from "jotai";
 import Player from "@/components/Player/Player";
-import { useAvailabilityChecks } from "@/hooks/useAvailabilityChecks";
+import { useBootstrap } from "@/hooks/useBootstrap";
+import { appStateAtom } from "@/atoms/settingsAtoms";
 
 // Create a client with aggressive caching
 const queryClient = new QueryClient();
@@ -18,8 +20,27 @@ const persister = createAsyncStoragePersister({
 
 // Inner component to use hooks inside Jotai Provider
 const AppContent = () => {
-  // Check provider availability on app startup
-  useAvailabilityChecks();
+  // Bootstrap the app (initializes registry + checks availability)
+  useBootstrap();
+
+  // Wait for bootstrap to complete
+  const appState = useAtomValue(appStateAtom);
+
+  if (appState.isLoading) {
+    return (
+      <div className="m-auto flex h-full w-full items-center justify-center">
+        <div className="text-white">Loading...</div>
+      </div>
+    );
+  }
+
+  if (appState.error) {
+    return (
+      <div className="m-auto flex h-full w-full items-center justify-center">
+        <div className="text-red-400">Error: {appState.error}</div>
+      </div>
+    );
+  }
 
   return (
     <div className="m-auto flex h-full w-full flex-col items-center p-2 lg:p-4 xl:p-8">

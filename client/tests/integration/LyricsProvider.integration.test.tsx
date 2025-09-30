@@ -3,7 +3,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import { Provider } from "jotai";
 import {
   songInfoAtom,
-  currentTimeAtom,
+  playerStateAtom,
   rawLrcContentAtom,
 } from "@/atoms/playerAtoms";
 
@@ -77,8 +77,15 @@ describe("LyricsProvider Integration", () => {
             duration: 355,
             isPlaying: false,
           };
-        case currentTimeAtom:
-          return 0;
+        case playerStateAtom:
+          return {
+            currentTime: 0,
+            duration: 355,
+            isPlaying: false,
+            name: "Bohemian Rhapsody",
+            artist: "Queen",
+            album: "A Night at the Opera",
+          };
         case rawLrcContentAtom:
           return "[00:00.00]Is this the real life?\n[00:05.00]Is this just fantasy?";
         default:
@@ -136,8 +143,15 @@ describe("LyricsProvider Integration", () => {
             duration: 355,
             isPlaying: false,
           };
-        case currentTimeAtom:
-          return 0;
+        case playerStateAtom:
+          return {
+            currentTime: 0,
+            duration: 355,
+            isPlaying: false,
+            name: "Bohemian Rhapsody",
+            artist: "Queen",
+            album: "A Night at the Opera",
+          };
         case rawLrcContentAtom:
           return ""; // Empty lyrics content
         default:
@@ -171,8 +185,15 @@ describe("LyricsProvider Integration", () => {
             duration: 355,
             isPlaying: false,
           };
-        case currentTimeAtom:
-          return 0;
+        case playerStateAtom:
+          return {
+            currentTime: 0,
+            duration: 355,
+            isPlaying: false,
+            name: "Bohemian Rhapsody",
+            artist: "Queen",
+            album: "A Night at the Opera",
+          };
         case rawLrcContentAtom:
           return null; // Loading state
         default:

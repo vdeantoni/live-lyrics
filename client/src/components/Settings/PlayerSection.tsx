@@ -1,8 +1,8 @@
 import { useAtomValue, useSetAtom } from "jotai";
 import {
   playerIdAtom,
-  remotePlayerWithStatusAtom,
-  checkPlayerAvailabilityAtom,
+  playerSourcesAtom,
+  checkProviderAvailabilityAtom,
 } from "@/atoms/settingsAtoms";
 import { CheckCircle, Circle, Loader2 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
@@ -10,32 +10,35 @@ import { useEffect, useRef } from "react";
 
 export const PlayerSection = () => {
   const currentPlayerId = useAtomValue(playerIdAtom);
-  const remotePlayerStatus = useAtomValue(remotePlayerWithStatusAtom);
+  const playerSources = useAtomValue(playerSourcesAtom) || [];
   const setPlayerId = useSetAtom(playerIdAtom);
-  const checkAvailability = useSetAtom(checkPlayerAvailabilityAtom);
+  const checkAvailability = useSetAtom(checkProviderAvailabilityAtom);
   const checkedPlayers = useRef(new Set<string>());
 
+  // Find the remote player from the registry
+  const remotePlayerEntry = playerSources.find(
+    (entry) => entry.config.id === "remote",
+  );
   const isRemotePlayer = currentPlayerId === "remote";
 
   // Check availability for remote player on mount and when needed
   useEffect(() => {
-    // Only check if we have remote player status and haven't checked this player yet and it's not currently loading
     if (
-      remotePlayerStatus &&
+      remotePlayerEntry &&
       !checkedPlayers.current.has("remote") &&
-      !remotePlayerStatus?.isLoading
+      !remotePlayerEntry.status.isLoading
     ) {
       checkedPlayers.current.add("remote");
       checkAvailability("remote");
     }
-  }, [checkAvailability, remotePlayerStatus]);
+  }, [checkAvailability, remotePlayerEntry]);
 
   const handleToggle = (enabled: boolean) => {
     setPlayerId(enabled ? "remote" : "local");
   };
 
-  // Add defensive check for remotePlayerStatus
-  if (!remotePlayerStatus) {
+  // Add defensive check for remotePlayerEntry
+  if (!remotePlayerEntry) {
     return (
       <div className="space-y-4" data-testid="player-section">
         <h3 className="text-lg font-semibold text-white">Remote Player</h3>
@@ -76,9 +79,9 @@ export const PlayerSection = () => {
       >
         <div className="flex items-center gap-3">
           <div data-testid="remote-player-status">
-            {remotePlayerStatus?.isLoading ? (
+            {remotePlayerEntry.status.isLoading ? (
               <Loader2 className="h-5 w-5 animate-spin text-blue-400" />
-            ) : remotePlayerStatus?.isAvailable ? (
+            ) : remotePlayerEntry.status.isAvailable ? (
               <CheckCircle className="h-5 w-5 text-green-400" />
             ) : (
               <Circle className="h-5 w-5 text-red-400" />
@@ -86,10 +89,10 @@ export const PlayerSection = () => {
           </div>
           <div>
             <div className="font-medium text-white">
-              {remotePlayerStatus?.name || "Server"}
+              {remotePlayerEntry.config.name}
             </div>
             <div className="text-sm text-zinc-400">
-              {remotePlayerStatus?.description || "Connect to a remote server"}
+              {remotePlayerEntry.config.description}
             </div>
           </div>
         </div>
@@ -98,7 +101,7 @@ export const PlayerSection = () => {
             data-testid="remote-player-toggle"
             checked={isRemotePlayer}
             onCheckedChange={handleToggle}
-            disabled={!remotePlayerStatus?.isAvailable}
+            disabled={!remotePlayerEntry.status.isAvailable}
           />
         </div>
       </div>

@@ -6,8 +6,7 @@ import Liricle from "liricle";
 import { useLyricsSync } from "@/hooks/useLyricsSync";
 import { useAtomValue, useSetAtom } from "jotai";
 import {
-  songInfoAtom,
-  currentTimeAtom,
+  playerStateAtom,
   rawLrcContentAtom,
   lyricsDataAtom,
   activeLineAtom,
@@ -16,8 +15,8 @@ import {
 
 const LyricsProvider = () => {
   // Read data from atoms
-  const songInfo = useAtomValue(songInfoAtom);
-  const currentTime = useAtomValue(currentTimeAtom);
+  const playerState = useAtomValue(playerStateAtom);
+  const { currentTime = 0, name, artist } = playerState || {};
   const rawLrcContent = useAtomValue(rawLrcContentAtom);
 
   // Action atoms
@@ -87,7 +86,7 @@ const LyricsProvider = () => {
     liricleRef.current.sync(currentTime);
   }, [currentTime]);
 
-  if (!songInfo.name || !songInfo.artist) return null;
+  if (!name || !artist) return null;
 
   // Show loading state while waiting for lyrics content to be fetched
   if (rawLrcContent === null) {
@@ -103,7 +102,7 @@ const LyricsProvider = () => {
 
   // Only show NoLyricsFound after delay and when we definitively have no lyrics
   if (showNoLyrics) {
-    return <NoLyricsFound songName={songInfo.name} artist={songInfo.artist} />;
+    return <NoLyricsFound songName={name} artist={artist} />;
   }
 
   return <LyricsContent />;

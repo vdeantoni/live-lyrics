@@ -253,6 +253,37 @@ Tests are organized in structured directories:
 - Excludes E2E tests via configuration to avoid conflicts
 - Supports coverage reporting and interactive UI mode
 
+**Test Utilities System** (`client/tests/helpers/`):
+The test infrastructure includes a sophisticated utility system for provider registry testing:
+
+- **`renderWithProviders(ui, options)`**: Main render function that automatically handles bootstrap and loading states
+  ```typescript
+  await renderWithProviders(<MyComponent />);
+  // Automatically waits for bootstrap completion
+  ```
+- **`renderWithProvidersOnly(ui, options)`**: Render without waiting, for testing loading states manually
+- **`createTestRegistry()`**: Factory function providing consistent mock data for all provider types
+- **`TestProvider`**: React wrapper that handles Jotai state and bootstrap initialization
+
+**Provider Registry Testing**:
+- **Deterministic Test Data**: LrcLib, Local Server, Simulated (lyrics); iTunes (artwork); Local, Remote (player sources)
+- **Isolated State**: Each test gets fresh provider registry to prevent cross-test pollution
+- **Mock Implementations**: All providers return `isAvailable: true` without network calls
+- **Custom Scenarios**: Easy modification of provider states for specific test cases
+- **Bootstrap Integration**: Automatic handling of app initialization and loading states
+
+**Usage Examples**:
+```typescript
+// Basic component test
+await renderWithProviders(<SettingsScreen />);
+expect(screen.getByText("LrcLib")).toBeInTheDocument();
+
+// Custom provider state
+const customRegistry = createTestRegistry();
+customRegistry.get("lrclib")!.status.isAvailable = false;
+await renderWithProviders(<Component />, { testRegistry: customRegistry });
+```
+
 **E2E Tests (Playwright)**:
 - **Performance Optimization**: CI uses Chromium-only (`test:e2e:install:ci`), local development supports all browsers
 - **Local Development Timeouts**: Environment-aware configuration with faster timeouts locally (5s test, 3s action) vs CI (30s test, 5s action)
@@ -278,6 +309,8 @@ Tests are organized in structured directories:
 - **Viewports**: Supports multiple device orientations (portrait/landscape)
 - **Background Loading**: Visual tests include robust background image loading detection to handle iTunes API CORS issues and network failures gracefully
 - **API Mocking**: Tests mock external APIs (iTunes artwork) to ensure consistent results regardless of network conditions
+- **Artwork Preloading**: LyricsScreen component preloads images before setting as background to prevent timing-based visual instability
+- **Enhanced Waiting**: Visual tests wait for both image loading completion and CSS transition completion (1200ms) for stable screenshots
 - **CI/CD Only**: Not designed for local development use
 
 ### TypeScript Configuration

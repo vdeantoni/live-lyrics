@@ -83,11 +83,17 @@ test.describe("Settings Functionality", () => {
       await expect(page.getByText("Configure your player")).toBeVisible();
 
       // Check player section
-      await expect(page.getByText("Remote Player")).toBeVisible();
+      await expect(
+        page.locator('[data-testid="player-section"] h3'),
+      ).toBeVisible();
 
       // Check provider sections (these load with individual loading states)
-      await expect(page.getByText("Lyrics Provider")).toBeVisible();
-      await expect(page.getByText("Artwork Provider")).toBeVisible();
+      await expect(
+        page.locator('[data-testid="lyrics-provider-section"] h3'),
+      ).toBeVisible();
+      await expect(
+        page.locator('[data-testid="artwork-provider-section"] h3'),
+      ).toBeVisible();
     });
 
     test("should allow drag and drop reordering of providers", async ({

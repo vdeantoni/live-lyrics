@@ -4,50 +4,39 @@ import { formatTime } from "@/lib/utils";
 import { ListMusic, Pause, Play, Search } from "lucide-react";
 import { useAtomValue, useSetAtom } from "jotai";
 import {
-  currentTimeAtom,
-  durationAtom,
-  isPlayingAtom,
-  songNameAtom,
-  artistAtom,
-  playAtom,
-  pauseAtom,
-  seekAtom,
-  isDraggingAtom,
+  playerStateAtom,
+  playerUIStateAtom,
+  playerControlAtom,
 } from "@/atoms/playerAtoms";
 import AnimatedSongName from "../LyricsVisualizer/AnimatedSongName";
 
 const PlayerControls = () => {
-  // Read atoms
-  const currentTime = useAtomValue(currentTimeAtom);
-  const duration = useAtomValue(durationAtom);
-  const isPlaying = useAtomValue(isPlayingAtom);
-  const songName = useAtomValue(songNameAtom);
-  const artist = useAtomValue(artistAtom);
+  // Read unified atoms
+  const playerState = useAtomValue(playerStateAtom);
+  const { currentTime, duration, isPlaying, name, artist } = playerState;
 
   // Action atoms
-  const play = useSetAtom(playAtom);
-  const pause = useSetAtom(pauseAtom);
-  const seek = useSetAtom(seekAtom);
-  const setDragging = useSetAtom(isDraggingAtom);
+  const playerControl = useSetAtom(playerControlAtom);
+  const setPlayerUIState = useSetAtom(playerUIStateAtom);
 
   const handlePlayPause = () => {
     if (isPlaying) {
-      pause();
+      playerControl({ type: "pause" });
     } else {
-      play();
+      playerControl({ type: "play" });
     }
   };
 
   const handleSliderChange = ([time]: number[]) => {
-    seek(time);
+    playerControl({ type: "seek", payload: time });
   };
 
   const handleSliderPointerDown = () => {
-    setDragging(true);
+    setPlayerUIState((prev) => ({ ...prev, isDragging: true }));
   };
 
   const handleSliderPointerUp = () => {
-    setDragging(false);
+    setPlayerUIState((prev) => ({ ...prev, isDragging: false }));
   };
 
   return (
@@ -59,7 +48,7 @@ const PlayerControls = () => {
         <AnimatedSongName
           data-testid="song-name"
           className="flex-1"
-          songName={songName}
+          songName={name}
         />
         <h3
           data-testid="artist-name"
@@ -81,7 +70,7 @@ const PlayerControls = () => {
           value={[currentTime]}
           min={0}
           max={duration || 0}
-          step={0.1}
+          step={5}
           className="rounded-md bg-zinc-700"
           onValueChange={handleSliderChange}
           onPointerDown={handleSliderPointerDown}

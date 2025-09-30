@@ -111,34 +111,6 @@ export interface LyricsProviderConfig {
   options?: Record<string, unknown>;
 }
 
-// Extended music source interface that includes plugin support
-export interface MusicSource {
-  /** Get current song information and playback state */
-  getSong(): Promise<Song>;
-  /** Start or resume playback */
-  play(): Promise<void>;
-  /** Pause playback */
-  pause(): Promise<void>;
-  /** Seek to a specific time position */
-  seek(time: number): Promise<void>;
-  /** Get the unique identifier for this source */
-  getId(): string;
-  /** Get a human-readable name for this source */
-  getName(): string;
-  /** Check if this source is currently available/connected */
-  isAvailable(): Promise<boolean>;
-  /** Get the lyrics provider associated with this source */
-  getLyricsProvider(): LyricsProvider | null;
-  /** Get the artwork provider associated with this source */
-  getArtworkProvider(): ArtworkProvider | null;
-}
-
-// Result type for source operations
-export interface SourceOperationResult {
-  success: boolean;
-  error?: string;
-}
-
 // Configuration for music sources with plugin support
 export interface SourceConfig {
   type: "remote" | "local";
