@@ -16,7 +16,7 @@ A beautiful web application that displays synchronized lyrics for songs currentl
 - **Playback Controls**: Control your music directly from the web interface
 - **Multiple Provider Management**: Drag-and-drop provider reordering with priority-based fallback system
 - **Comprehensive Settings**: Full settings panel with player switching and provider configuration
-- **Multiple Lyrics Sources**: Integrates with external APIs for comprehensive lyrics coverage
+- **Multiple Lyrics Sources**: Integrates with external APIs for comprehensive lyrics coverage with intelligent provider selection and quality-based matching
 
 ## 🛠 Tech Stack
 

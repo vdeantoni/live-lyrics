@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useAtomValue, useSetAtom } from "jotai";
-import { playerIdAtom, toggleSettingsAtom } from "@/atoms/settingsAtoms";
+import { selectedPlayerAtom, toggleSettingsAtom } from "@/atoms/appState";
 import { lyricsDataAtom, playerStateAtom } from "@/atoms/playerAtoms";
 import { loadPlayer } from "@/config/providers";
 
@@ -14,11 +14,13 @@ import { loadPlayer } from "@/config/providers";
  * - C: Toggle settings screen (blocked when Cmd/Ctrl/Alt are pressed to avoid conflicts with copy/paste)
  */
 export const useKeyboardShortcuts = () => {
-  const playerId = useAtomValue(playerIdAtom);
+  const selectedPlayer = useAtomValue(selectedPlayerAtom);
   const toggleSettings = useSetAtom(toggleSettingsAtom);
   const lyricsData = useAtomValue(lyricsDataAtom);
   const playerState = useAtomValue(playerStateAtom);
   const { currentTime, duration, isPlaying } = playerState;
+
+  const playerId = selectedPlayer?.config.id;
 
   useEffect(() => {
     const handleKeyDown = async (event: KeyboardEvent) => {

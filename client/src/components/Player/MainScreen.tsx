@@ -1,13 +1,19 @@
 import { useAtomValue, useSetAtom } from "jotai";
-import { isSettingsOpenAtom, toggleSettingsAtom } from "@/atoms/settingsAtoms";
+import {
+  coreAppStateAtom,
+  settingsOpenAtom,
+  toggleSettingsAtom,
+} from "@/atoms/appState";
 import { Settings, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import LyricsScreen from "./LyricsScreen";
 import SettingsScreen from "./SettingsScreen";
+import LoadingScreen from "./LoadingScreen";
 
 const MainScreen = () => {
-  const isSettingsOpen = useAtomValue(isSettingsOpenAtom);
+  const isSettingsOpen = useAtomValue(settingsOpenAtom);
+  const appState = useAtomValue(coreAppStateAtom);
   const toggleSettings = useSetAtom(toggleSettingsAtom);
 
   return (
@@ -40,8 +46,35 @@ const MainScreen = () => {
         </Button>
       </div>
 
-      {/* Lyrics Screen - Always visible, stays in place */}
-      <LyricsScreen />
+      {/* Lyrics Screen - Shows when app is ready */}
+      <AnimatePresence>
+        {appState.isReady && (
+          <motion.div
+            className="absolute inset-0"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5, ease: "easeInOut" }}
+          >
+            <LyricsScreen />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Loading Screen - Shows only when loading AND not ready */}
+      <AnimatePresence>
+        {appState.isLoading && !appState.isReady && (
+          <motion.div
+            className="absolute inset-0"
+            initial={{ opacity: 1 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5, ease: "easeInOut" }}
+          >
+            <LoadingScreen />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Settings Screen - Slides from bottom */}
       <AnimatePresence>

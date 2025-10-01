@@ -1,22 +1,10 @@
 import { test, expect } from "@playwright/test";
+import { injectTestRegistry } from "../helpers/injectTestRegistry";
 
 test.describe("Playlist Navigation", () => {
   test.beforeEach(async ({ page }) => {
-    // Mock lyrics API for simulated songs
-    await page.route("**/get*", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          syncType: "LINE_SYNCED",
-          lines: [
-            { startTimeMs: 0, words: "Test lyrics line 1" },
-            { startTimeMs: 15000, words: "Test lyrics line 2" },
-            { startTimeMs: 30000, words: "Test lyrics line 3" },
-          ],
-        }),
-      });
-    });
+    // Inject test registry instead of mocking HTTP requests
+    await injectTestRegistry(page);
 
     await page.goto("/");
     await page.waitForSelector('[data-testid="player"]');

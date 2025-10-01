@@ -1,23 +1,10 @@
 import { test, expect } from "@playwright/test";
+import { injectTestRegistry } from "../helpers/injectTestRegistry";
 
 test.describe("Player Component", () => {
   test.beforeEach(async ({ page }) => {
-    // Mock lyrics API for simulated songs
-    await page.route("**/get*", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          syncType: "LINE_SYNCED",
-          lines: [
-            { startTimeMs: 0, words: "Is this the real life?" },
-            { startTimeMs: 15000, words: "Is this just fantasy?" },
-            { startTimeMs: 30000, words: "Caught in a landslide" },
-            { startTimeMs: 45000, words: "No escape from reality" },
-          ],
-        }),
-      });
-    });
+    // Inject test registry instead of mocking HTTP requests
+    await injectTestRegistry(page);
 
     await page.goto("/");
 

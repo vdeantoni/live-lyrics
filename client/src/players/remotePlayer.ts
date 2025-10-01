@@ -38,7 +38,7 @@ export class RemotePlayer implements Player {
       album: json.album || "Unknown Album",
       duration: json.duration || 0,
       currentTime: parseFloat(json.currentTime || 0),
-      isPlaying: json.playerState === "playing",
+      isPlaying: json.isPlaying || false,
     };
   }
 
@@ -50,6 +50,7 @@ export class RemotePlayer implements Player {
     });
 
     if (!response.ok) {
+      console.error("[RemotePlayer] Failed to play:", response.status);
       throw new Error(`Failed to play: ${response.status}`);
     }
   }
@@ -62,6 +63,7 @@ export class RemotePlayer implements Player {
     });
 
     if (!response.ok) {
+      console.error("[RemotePlayer] Failed to pause:", response.status);
       throw new Error(`Failed to pause: ${response.status}`);
     }
   }

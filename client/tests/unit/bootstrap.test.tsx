@@ -1,15 +1,12 @@
 import { describe, it, expect } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
-import { Provider as JotaiProvider, useAtomValue } from "jotai";
-import { appStateAtom } from "@/atoms/settingsAtoms";
-import { useBootstrap } from "@/hooks/useBootstrap";
-import { createTestRegistry } from "../helpers/testRegistry";
+import { screen } from "@testing-library/react";
+import { renderWithProviders } from "../helpers/testUtils";
+import { useAtomValue } from "jotai";
+import { coreAppStateAtom } from "@/atoms/appState";
 
-// Simple test component that uses bootstrap
+// Simple test component that reads app state
 const TestBootstrapComponent = () => {
-  const testRegistry = createTestRegistry();
-  useBootstrap(testRegistry);
-  const appState = useAtomValue(appStateAtom);
+  const appState = useAtomValue(coreAppStateAtom);
 
   return (
     <div data-testid="app-state">
@@ -22,22 +19,14 @@ const TestBootstrapComponent = () => {
 
 describe("Bootstrap System", () => {
   it("should initialize app state correctly", async () => {
-    const { getByTestId } = render(
-      <JotaiProvider>
-        <TestBootstrapComponent />
-      </JotaiProvider>,
-    );
-
-    // Should show loading initially or ready after bootstrap
-    const appState = getByTestId("app-state");
-    expect(appState).toBeTruthy();
+    // Use regular renderWithProviders which waits for bootstrap completion
+    await renderWithProviders(<TestBootstrapComponent />);
 
     // The component should exist and not throw errors
+    const appState = screen.getByTestId("app-state");
     expect(appState).toBeInTheDocument();
 
-    // Wait for bootstrap to complete and show ready state
-    await waitFor(() => {
-      expect(screen.queryByTestId("ready")).toBeInTheDocument();
-    });
+    // Since we're using test registry, bootstrap should complete and show ready state
+    expect(screen.getByTestId("ready")).toBeInTheDocument();
   });
 });

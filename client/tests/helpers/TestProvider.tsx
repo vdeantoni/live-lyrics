@@ -1,60 +1,93 @@
 import React from "react";
 import { Provider as JotaiProvider, useAtomValue } from "jotai";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useBootstrap } from "@/hooks/useBootstrap";
-import {
-  appStateAtom,
-  type ProviderRegistryEntry,
-} from "@/atoms/settingsAtoms";
-import { createTestRegistry } from "./testRegistry";
+import { coreAppStateAtom } from "@/atoms/appState";
+import { providerRegistryAPI } from "@/api/providerAPI";
+import { createJotaiTestProviders } from "./testUtils";
+import type { LyricsProvider, ArtworkProvider, Player } from "@/types";
+import type { ProviderConfig } from "@/config/providers";
 
 interface TestProviderProps {
   children: React.ReactNode;
-  testRegistry?: Map<string, ProviderRegistryEntry>;
+  customProviders?: {
+    lyricsProviders?: ProviderConfig<LyricsProvider>[];
+    artworkProviders?: ProviderConfig<ArtworkProvider>[];
+    players?: ProviderConfig<Player>[];
+  };
 }
 
+// Create a test QueryClient that doesn't retry
+const createTestQueryClient = () =>
+  new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false,
+        gcTime: 0, // Updated from cacheTime
+      },
+      mutations: {
+        retry: false,
+      },
+    },
+  });
+
 /**
- * Test provider that automatically handles bootstrap and loading states
- * Use this instead of manually wrapping components with JotaiProvider + TestWrapper
+ * Test provider that sets up Jotai atoms directly for testing
+ * Uses the new providerRegistryAPI.replaceAll approach
  *
  * @example
  * ```typescript
  * import { TestProvider } from "./TestProvider";
- * import { createTestRegistry } from "./testRegistry";
+ * import { createJotaiTestProviders } from "./testUtils";
  *
- * // Basic usage with default test registry
+ * // Basic usage with default test providers
  * <TestProvider>
  *   <YourComponent />
  * </TestProvider>
  *
- * // With custom registry modifications
- * const customRegistry = createTestRegistry();
- * customRegistry.get("lrclib")!.status.isAvailable = false;
- *
- * <TestProvider testRegistry={customRegistry}>
+ * // With custom providers
+ * const customProviders = createJotaiTestProviders();
+ * <TestProvider customProviders={customProviders}>
  *   <YourComponent />
  * </TestProvider>
  * ```
  */
 export const TestProvider: React.FC<TestProviderProps> = ({
   children,
-  testRegistry,
+  customProviders,
 }) => {
+  const queryClient = createTestQueryClient();
+
   return (
-    <JotaiProvider>
-      <BootstrapWrapper testRegistry={testRegistry}>
-        {children}
-      </BootstrapWrapper>
-    </JotaiProvider>
+    <QueryClientProvider client={queryClient}>
+      <JotaiProvider>
+        <JotaiTestSetup customProviders={customProviders}>
+          <BootstrapWrapper>{children}</BootstrapWrapper>
+        </JotaiTestSetup>
+      </JotaiProvider>
+    </QueryClientProvider>
   );
 };
 
-const BootstrapWrapper: React.FC<TestProviderProps> = ({
+const JotaiTestSetup: React.FC<TestProviderProps> = ({
   children,
-  testRegistry,
+  customProviders,
 }) => {
-  const registry = testRegistry || createTestRegistry();
-  useBootstrap(registry);
-  const appState = useAtomValue(appStateAtom);
+  // Set up test providers synchronously on first render
+  React.useMemo(() => {
+    const providers = customProviders || createJotaiTestProviders();
+    providerRegistryAPI.replaceAll(providers);
+  }, [customProviders]);
+
+  return <>{children}</>;
+};
+
+const BootstrapWrapper: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
+  // Use the simplified bootstrap hook without passing registry
+  useBootstrap();
+  const appState = useAtomValue(coreAppStateAtom);
 
   // Show loading state until bootstrap is complete
   if (appState.isLoading) {

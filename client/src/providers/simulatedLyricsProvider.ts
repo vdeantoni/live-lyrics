@@ -123,6 +123,11 @@ export class SimulatedLyricsProvider implements LyricsProvider {
     return true; // Always available
   }
 
+  async isFetching(): Promise<boolean> {
+    // Simulated provider doesn't maintain persistent fetching state
+    return false;
+  }
+
   /**
    * Add lyrics to the simulated database
    */

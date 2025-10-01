@@ -1,10 +1,11 @@
 import type { Player, LyricsProvider, ArtworkProvider } from "@/types";
+import { getDefaultStore } from "jotai";
+import { appProvidersAtom } from "@/atoms/appState";
 
 /**
- * Centralized provider configuration with lazy loading
- * This eliminates duplication between settings atoms and sync hooks
+ * Built-in provider configurations (for reference and initialization)
  */
-export const PROVIDER_CONFIGS = {
+export const BUILTIN_PROVIDER_CONFIGS = {
   players: {
     local: {
       id: "local",
@@ -38,28 +39,6 @@ export const PROVIDER_CONFIGS = {
         return new LrclibLyricsProvider();
       },
     },
-    "local-server": {
-      id: "local-server",
-      name: "Local Server",
-      description: "Lyrics from your local server",
-      load: async (): Promise<LyricsProvider> => {
-        const { LocalServerLyricsProvider } = await import(
-          "@/providers/localServerLyricsProvider"
-        );
-        return new LocalServerLyricsProvider();
-      },
-    },
-    simulated: {
-      id: "simulated",
-      name: "Simulated",
-      description: "Hardcoded demo lyrics for classic songs",
-      load: async (): Promise<LyricsProvider> => {
-        const { SimulatedLyricsProvider } = await import(
-          "@/providers/simulatedLyricsProvider"
-        );
-        return new SimulatedLyricsProvider();
-      },
-    },
   },
   artworkProviders: {
     itunes: {
@@ -77,11 +56,13 @@ export const PROVIDER_CONFIGS = {
 } as const;
 
 /**
- * Helper functions to load providers by ID
+ * Helper functions to load providers by ID (works with new array-based atoms)
  */
 export const loadPlayer = async (playerId: string): Promise<Player> => {
-  const config =
-    PROVIDER_CONFIGS.players[playerId as keyof typeof PROVIDER_CONFIGS.players];
+  const store = getDefaultStore();
+  const providers = store.get(appProvidersAtom);
+  const config = providers.players.find((p) => p.id === playerId);
+
   if (!config) {
     throw new Error(`Unknown player: ${playerId}`);
   }
@@ -91,10 +72,10 @@ export const loadPlayer = async (playerId: string): Promise<Player> => {
 export const loadLyricsProvider = async (
   providerId: string,
 ): Promise<LyricsProvider> => {
-  const config =
-    PROVIDER_CONFIGS.lyricsProviders[
-      providerId as keyof typeof PROVIDER_CONFIGS.lyricsProviders
-    ];
+  const store = getDefaultStore();
+  const providers = store.get(appProvidersAtom);
+  const config = providers.lyrics.find((p) => p.id === providerId);
+
   if (!config) {
     throw new Error(`Unknown lyrics provider: ${providerId}`);
   }
@@ -104,10 +85,10 @@ export const loadLyricsProvider = async (
 export const loadArtworkProvider = async (
   providerId: string,
 ): Promise<ArtworkProvider> => {
-  const config =
-    PROVIDER_CONFIGS.artworkProviders[
-      providerId as keyof typeof PROVIDER_CONFIGS.artworkProviders
-    ];
+  const store = getDefaultStore();
+  const providers = store.get(appProvidersAtom);
+  const config = providers.artwork.find((p) => p.id === providerId);
+
   if (!config) {
     throw new Error(`Unknown artwork provider: ${providerId}`);
   }
@@ -115,25 +96,22 @@ export const loadArtworkProvider = async (
 };
 
 /**
- * Helper functions to get provider metadata without loading
+ * Helper functions to get provider metadata without loading (uses new array-based atoms)
  */
 export const getPlayerConfigs = () => {
-  return Object.values(PROVIDER_CONFIGS.players).map(
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    ({ load, ...config }) => config,
-  );
+  const store = getDefaultStore();
+  const providers = store.get(appProvidersAtom);
+  return providers.players;
 };
 
 export const getLyricsProviderConfigs = () => {
-  return Object.values(PROVIDER_CONFIGS.lyricsProviders).map(
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    ({ load, ...config }) => config,
-  );
+  const store = getDefaultStore();
+  const providers = store.get(appProvidersAtom);
+  return providers.lyrics;
 };
 
 export const getArtworkProviderConfigs = () => {
-  return Object.values(PROVIDER_CONFIGS.artworkProviders).map(
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    ({ load, ...config }) => config,
-  );
+  const store = getDefaultStore();
+  const providers = store.get(appProvidersAtom);
+  return providers.artwork;
 };

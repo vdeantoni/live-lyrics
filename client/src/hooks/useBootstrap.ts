@@ -1,31 +1,24 @@
 import { useSetAtom } from "jotai";
 import { useEffect, useRef } from "react";
 import {
-  appStateAtom,
-  initializeRegistryAtom,
-  checkProviderAvailabilityAtom,
-  lyricsProvidersAtom,
-  artworkProvidersAtom,
-  type ProviderRegistryEntry,
-} from "@/atoms/settingsAtoms";
+  updateCoreAppStateAtom,
+  effectiveLyricsProvidersAtom,
+  effectiveArtworkProvidersAtom,
+} from "@/atoms/appState";
 import { useAtomValue } from "jotai";
 
 /**
  * Simple bootstrap hook that:
- * 1. Initializes the provider registry
- * 2. Checks provider availability
- * 3. Updates app loading state so components can wait on it
+ * 1. Initializes the app state
+ * 2. Updates app loading state so components can wait on it
  *
- * @param testRegistry - Optional test registry for unit tests
+ * Note: Provider setup is now handled by the Jotai atoms directly.
+ * Tests can use providerRegistryAPI.replaceAll() before rendering.
  */
-export const useBootstrap = (
-  testRegistry?: Map<string, ProviderRegistryEntry>,
-) => {
-  const setAppState = useSetAtom(appStateAtom);
-  const initializeRegistry = useSetAtom(initializeRegistryAtom);
-  const checkProviderAvailability = useSetAtom(checkProviderAvailabilityAtom);
-  const lyricsProviders = useAtomValue(lyricsProvidersAtom);
-  const artworkProviders = useAtomValue(artworkProvidersAtom);
+export const useBootstrap = () => {
+  const setAppState = useSetAtom(updateCoreAppStateAtom);
+  const lyricsProviders = useAtomValue(effectiveLyricsProvidersAtom);
+  const artworkProviders = useAtomValue(effectiveArtworkProvidersAtom);
   const hasBootstrapped = useRef(false);
 
   useEffect(() => {
@@ -36,24 +29,13 @@ export const useBootstrap = (
       try {
         setAppState({ isLoading: true, isReady: false });
 
-        // 1. Initialize provider registry (with test data if provided)
-        initializeRegistry(testRegistry);
-
-        // Wait a tick for registry to be populated
+        // Wait a tick for provider atoms to be populated
         await new Promise((resolve) => setTimeout(resolve, 0));
 
-        // 2. Check provider availability (skip in test mode)
-        if (!testRegistry) {
-          const allProviders = [...lyricsProviders, ...artworkProviders];
-          allProviders.forEach((provider) => {
-            checkProviderAvailability(provider.config.id);
-          });
+        // Provider availability will be checked when they're actually used
+        // No need to pre-check availability during bootstrap
 
-          // Check remote player
-          checkProviderAvailability("remote");
-        }
-
-        // 3. Mark app as ready
+        // Mark app as ready
         setAppState({ isLoading: false, isReady: true });
       } catch (error) {
         console.error("Bootstrap failed:", error);
@@ -66,12 +48,5 @@ export const useBootstrap = (
     };
 
     bootstrap();
-  }, [
-    setAppState,
-    initializeRegistry,
-    checkProviderAvailability,
-    lyricsProviders,
-    artworkProviders,
-    testRegistry,
-  ]);
+  }, [setAppState, lyricsProviders, artworkProviders]);
 };

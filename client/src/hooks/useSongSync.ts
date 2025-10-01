@@ -2,7 +2,7 @@ import { useAtomValue, useSetAtom } from "jotai";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { syncFromSourceAtom } from "@/atoms/playerAtoms";
-import { playerIdAtom } from "@/atoms/settingsAtoms";
+import { selectedPlayerAtom } from "@/atoms/appState";
 import { loadPlayer } from "@/config/providers";
 
 /**
@@ -11,8 +11,10 @@ import { loadPlayer } from "@/config/providers";
  * Components should use individual atoms instead of returned values
  */
 export const useSongSync = () => {
-  const playerId = useAtomValue(playerIdAtom);
+  const selectedPlayer = useAtomValue(selectedPlayerAtom);
   const syncFromSource = useSetAtom(syncFromSourceAtom);
+
+  const playerId = selectedPlayer?.config.id;
 
   // Use React Query to fetch song data from the current player
   const { data: songData } = useQuery({

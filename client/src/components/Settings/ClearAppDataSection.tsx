@@ -3,11 +3,11 @@ import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
-import { settingsAtom, defaultSettings } from "@/atoms/settingsAtoms";
+import { resetProviderSettingsAtom } from "@/atoms/appState";
 import { clearAppData } from "@/utils/clearAppData";
 
 export const ClearAppDataSection = () => {
-  const setSettings = useSetAtom(settingsAtom);
+  const resetProviderSettings = useSetAtom(resetProviderSettingsAtom);
   const queryClient = useQueryClient();
   const [isClearing, setIsClearing] = useState(false);
 
@@ -16,8 +16,8 @@ export const ClearAppDataSection = () => {
     try {
       await clearAppData(queryClient);
 
-      // Reset settings to defaults in memory as well
-      setSettings(defaultSettings);
+      // Reset provider settings to defaults in memory as well
+      resetProviderSettings();
 
       // Show success message and reload the page to ensure clean state
       setTimeout(() => {

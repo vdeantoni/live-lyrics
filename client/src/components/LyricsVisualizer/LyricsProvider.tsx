@@ -11,13 +11,17 @@ import {
   lyricsDataAtom,
   activeLineAtom,
   activeWordAtom,
+  lyricsLoadingAtom,
 } from "@/atoms/playerAtoms";
+import { enabledLyricsProvidersAtom } from "@/atoms/appState";
 
 const LyricsProvider = () => {
   // Read data from atoms
   const playerState = useAtomValue(playerStateAtom);
   const { currentTime = 0, name, artist } = playerState || {};
   const rawLrcContent = useAtomValue(rawLrcContentAtom);
+  const lyricsLoading = useAtomValue(lyricsLoadingAtom);
+  const enabledLyricsProviders = useAtomValue(enabledLyricsProvidersAtom);
 
   // Action atoms
   const setLyricsData = useSetAtom(lyricsDataAtom);
@@ -27,21 +31,24 @@ const LyricsProvider = () => {
   const liricleRef = useRef<Liricle | null>(null);
   const [showNoLyrics, setShowNoLyrics] = useState(false);
 
-  // Trigger lyrics fetching (syncs to rawLrcContentAtom)
-  useLyricsSync();
+  // Trigger lyrics fetching and get current provider info
+  const { currentProvider } = useLyricsSync();
+
+  // Get current provider name for UI display
+  const currentProviderName = currentProvider
+    ? enabledLyricsProviders.find((p) => p.config.id === currentProvider)
+        ?.config.name || currentProvider
+    : null;
 
   // Delay showing "No Lyrics Found" to prevent flash during source switches
   useEffect(() => {
-    if (
-      rawLrcContent !== null &&
-      (!rawLrcContent || rawLrcContent.trim() === "")
-    ) {
+    if (!lyricsLoading && (!rawLrcContent || rawLrcContent.trim() === "")) {
       const timer = setTimeout(() => setShowNoLyrics(true), 500); // 500ms delay
       return () => clearTimeout(timer);
     } else {
       setShowNoLyrics(false);
     }
-  }, [rawLrcContent, setShowNoLyrics]);
+  }, [lyricsLoading, rawLrcContent, setShowNoLyrics]);
 
   // Initialize liricle when LRC content is available
   useEffect(() => {
@@ -88,14 +95,18 @@ const LyricsProvider = () => {
 
   if (!name || !artist) return null;
 
-  // Show loading state while waiting for lyrics content to be fetched
-  if (rawLrcContent === null) {
+  // Show loading state with current provider info
+  if (lyricsLoading) {
     return (
       <div
         className="flex h-full min-h-96 items-center justify-center"
         data-testid="lyrics-loading"
       >
-        <div className="text-zinc-400">Loading lyrics...</div>
+        <div className="text-zinc-400">
+          {currentProviderName
+            ? `Loading from ${currentProviderName}...`
+            : "Loading lyrics..."}
+        </div>
       </div>
     );
   }

@@ -7,7 +7,10 @@ interface NoLyricsFoundProps {
 
 const NoLyricsFound = ({ songName, artist }: NoLyricsFoundProps) => {
   return (
-    <div className="flex h-full min-h-96 flex-col items-center justify-center px-6 text-center">
+    <div
+      className="flex h-full min-h-96 flex-col items-center justify-center px-6 text-center"
+      data-testid="no-lyrics"
+    >
       <div className="relative mb-6">
         <div className="mb-4 flex h-24 w-24 items-center justify-center rounded-full bg-zinc-700/50">
           <Music className="h-12 w-12 text-zinc-400" />

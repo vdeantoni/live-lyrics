@@ -1,18 +1,24 @@
 import { useAtomValue, useSetAtom } from "jotai";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
-import { playerStateAtom, artworkUrlsAtom } from "@/atoms/playerAtoms";
-import { enabledArtworkProvidersAtom } from "@/atoms/settingsAtoms";
+import {
+  playerStateAtom,
+  artworkUrlsAtom,
+  artworkLoadingAtom,
+} from "@/atoms/playerAtoms";
+import { enabledArtworkProvidersAtom } from "@/atoms/appState";
 import { loadArtworkProvider } from "@/config/providers";
 
 /**
  * Hook that fetches artwork using enabled providers in priority order with fallback
- * Components should use artworkUrlsAtom instead of returned values
+ * Uses explicit loading state management via artworkLoadingAtom
+ * Components should use artworkUrlsAtom and artworkLoadingAtom for state
  */
 export const useArtworkSync = () => {
   const playerState = useAtomValue(playerStateAtom);
   const enabledArtworkProviders = useAtomValue(enabledArtworkProvidersAtom);
   const setArtworkUrls = useSetAtom(artworkUrlsAtom);
+  const setArtworkLoading = useSetAtom(artworkLoadingAtom);
 
   // Get enabled providers in priority order
   const enabledProviderIds = enabledArtworkProviders.map(
@@ -20,7 +26,11 @@ export const useArtworkSync = () => {
   );
 
   // Use React Query to fetch artwork using priority-based fallback system
-  const { data: artworkUrls } = useQuery({
+  const {
+    data: artworkUrls,
+    isLoading,
+    isFetching,
+  } = useQuery({
     queryKey: [
       "artwork",
       enabledProviderIds,
@@ -48,6 +58,16 @@ export const useArtworkSync = () => {
             console.warn(
               `Artwork provider "${providerId}" is not available, trying next...`,
             );
+            continue;
+          }
+
+          // Check if provider is currently fetching
+          const providerIsFetching = await provider.isFetching();
+          if (providerIsFetching) {
+            console.log(
+              `Artwork provider "${providerId}" is currently fetching, waiting...`,
+            );
+            // For now, skip to next provider. In the future, we could implement waiting logic
             continue;
           }
 
@@ -86,8 +106,30 @@ export const useArtworkSync = () => {
     gcTime: 1000 * 60 * 60 * 24 * 365, // 1 year - keep in cache for a year
   });
 
-  // Sync query result to atom
+  // Sync query result and loading state to atoms
   useEffect(() => {
-    setArtworkUrls(artworkUrls || []);
-  }, [artworkUrls, setArtworkUrls]);
+    // Update loading state based on React Query state
+    setArtworkLoading(isLoading || isFetching);
+  }, [isLoading, isFetching, setArtworkLoading]);
+
+  useEffect(() => {
+    // If no providers are enabled, set empty array and clear loading
+    if (enabledProviderIds.length === 0) {
+      setArtworkUrls([]);
+      setArtworkLoading(false);
+      return;
+    }
+
+    // Use explicit loading state - only update URLs when not loading
+    if (!isLoading && !isFetching) {
+      setArtworkUrls(artworkUrls || []);
+    }
+  }, [
+    artworkUrls,
+    setArtworkUrls,
+    enabledProviderIds.length,
+    isLoading,
+    isFetching,
+    setArtworkLoading,
+  ]);
 };

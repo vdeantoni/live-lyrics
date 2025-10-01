@@ -1,19 +1,18 @@
 import { useAtomValue, useSetAtom } from "jotai";
 import {
-  playerIdAtom,
-  playerSourcesAtom,
-  checkProviderAvailabilityAtom,
-} from "@/atoms/settingsAtoms";
-import { CheckCircle, Circle, Loader2 } from "lucide-react";
+  selectedPlayerAtom,
+  effectivePlayersAtom,
+  updateProviderSettingAtom,
+} from "@/atoms/appState";
+import { CheckCircle, Loader2 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
-import { useEffect, useRef } from "react";
 
 export const PlayerSection = () => {
-  const currentPlayerId = useAtomValue(playerIdAtom);
-  const playerSources = useAtomValue(playerSourcesAtom) || [];
-  const setPlayerId = useSetAtom(playerIdAtom);
-  const checkAvailability = useSetAtom(checkProviderAvailabilityAtom);
-  const checkedPlayers = useRef(new Set<string>());
+  const selectedPlayer = useAtomValue(selectedPlayerAtom);
+  const playerSources = useAtomValue(effectivePlayersAtom) || [];
+  const updateProviderSetting = useSetAtom(updateProviderSettingAtom);
+
+  const currentPlayerId = selectedPlayer?.config.id || "local";
 
   // Find the remote player from the registry
   const remotePlayerEntry = playerSources.find(
@@ -21,20 +20,23 @@ export const PlayerSection = () => {
   );
   const isRemotePlayer = currentPlayerId === "remote";
 
-  // Check availability for remote player on mount and when needed
-  useEffect(() => {
-    if (
-      remotePlayerEntry &&
-      !checkedPlayers.current.has("remote") &&
-      !remotePlayerEntry.status.isLoading
-    ) {
-      checkedPlayers.current.add("remote");
-      checkAvailability("remote");
-    }
-  }, [checkAvailability, remotePlayerEntry]);
-
   const handleToggle = (enabled: boolean) => {
-    setPlayerId(enabled ? "remote" : "local");
+    // Enable the selected player and disable the other
+    const targetPlayerId = enabled ? "remote" : "local";
+
+    playerSources.forEach((player) => {
+      if (player.config.id === targetPlayerId) {
+        // Enable the target player
+        updateProviderSetting("players", player.config.id, {
+          disabled: undefined,
+        });
+      } else {
+        // Disable other players
+        updateProviderSetting("players", player.config.id, {
+          disabled: true,
+        });
+      }
+    });
   };
 
   // Add defensive check for remotePlayerEntry
@@ -79,13 +81,7 @@ export const PlayerSection = () => {
       >
         <div className="flex items-center gap-3">
           <div data-testid="remote-player-status">
-            {remotePlayerEntry.status.isLoading ? (
-              <Loader2 className="h-5 w-5 animate-spin text-blue-400" />
-            ) : remotePlayerEntry.status.isAvailable ? (
-              <CheckCircle className="h-5 w-5 text-green-400" />
-            ) : (
-              <Circle className="h-5 w-5 text-red-400" />
-            )}
+            <CheckCircle className="h-5 w-5 text-green-400" />
           </div>
           <div>
             <div className="font-medium text-white">
@@ -101,7 +97,7 @@ export const PlayerSection = () => {
             data-testid="remote-player-toggle"
             checked={isRemotePlayer}
             onCheckedChange={handleToggle}
-            disabled={!remotePlayerEntry.status.isAvailable}
+            disabled={false}
           />
         </div>
       </div>

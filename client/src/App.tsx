@@ -6,7 +6,7 @@ import { Provider as JotaiProvider } from "jotai";
 import { useAtomValue } from "jotai";
 import Player from "@/components/Player/Player";
 import { useBootstrap } from "@/hooks/useBootstrap";
-import { appStateAtom } from "@/atoms/settingsAtoms";
+import { coreAppStateAtom } from "@/atoms/appState";
 
 // Create a client with aggressive caching
 const queryClient = new QueryClient();
@@ -24,15 +24,7 @@ const AppContent = () => {
   useBootstrap();
 
   // Wait for bootstrap to complete
-  const appState = useAtomValue(appStateAtom);
-
-  if (appState.isLoading) {
-    return (
-      <div className="m-auto flex h-full w-full items-center justify-center">
-        <div className="text-white">Loading...</div>
-      </div>
-    );
-  }
+  const appState = useAtomValue(coreAppStateAtom);
 
   if (appState.error) {
     return (

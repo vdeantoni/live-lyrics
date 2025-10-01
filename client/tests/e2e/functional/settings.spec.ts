@@ -1,7 +1,11 @@
 import { test, expect } from "@playwright/test";
+import { injectTestRegistry } from "../helpers/injectTestRegistry";
 
 test.describe("Settings Functionality", () => {
   test.beforeEach(async ({ page }) => {
+    // Inject test registry instead of mocking HTTP requests
+    await injectTestRegistry(page);
+
     await page.goto("/");
 
     // Clear settings from localStorage to ensure a clean state for each test
@@ -9,21 +13,6 @@ test.describe("Settings Functionality", () => {
 
     // Reload the page to apply the cleared storage
     await page.reload();
-
-    // Mock lyrics API for simulated songs
-    await page.route("**/get*", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          syncType: "LINE_SYNCED",
-          lines: [
-            { startTimeMs: 0, words: "Is this the real life?" },
-            { startTimeMs: 15000, words: "Is this just fantasy?" },
-          ],
-        }),
-      });
-    });
 
     await page.waitForSelector('[data-testid="player"]');
   });
@@ -108,9 +97,7 @@ test.describe("Settings Functionality", () => {
       await page.waitForSelector('[data-testid="settings-screen"]');
 
       // Wait for provider items to load
-      await page.waitForSelector('[data-testid^="provider-item-"]', {
-        timeout: 5000,
-      });
+      await page.waitForSelector('[data-testid^="provider-item-"]');
 
       // Find drag handles in lyrics provider section
       const lyricsSection = page.locator(
@@ -175,9 +162,7 @@ test.describe("Settings Functionality", () => {
       await page.waitForSelector('[data-testid="settings-screen"]');
 
       // Wait for provider items to appear
-      await page.waitForSelector('[data-testid^="provider-item-"]', {
-        timeout: 5000,
-      });
+      await page.waitForSelector('[data-testid^="provider-item-"]');
 
       // Should have provider status buttons (they may show spinners initially)
       const providerButtons = page.locator(
@@ -187,18 +172,14 @@ test.describe("Settings Functionality", () => {
       expect(buttonCount).toBeGreaterThan(0);
 
       // Eventually status should resolve to available/unavailable (no more spinners)
-      await page.waitForFunction(
-        () => {
-          const buttons = document.querySelectorAll(
-            '[data-testid="provider-status-button"]',
-          );
-          return Array.from(buttons).every(
-            (button) => !button.innerHTML.includes("animate-spin"),
-          );
-        },
-        {},
-        { timeout: 10000 },
-      );
+      await page.waitForFunction(() => {
+        const buttons = document.querySelectorAll(
+          '[data-testid="provider-status-button"]',
+        );
+        return Array.from(buttons).every(
+          (button) => !button.innerHTML.includes("animate-spin"),
+        );
+      });
     });
 
     test("should allow player switching", async ({ page }) => {
@@ -242,9 +223,7 @@ test.describe("Settings Functionality", () => {
       await page.waitForSelector('[data-testid="settings-screen"]');
 
       // Wait for provider buttons to load
-      await page.waitForSelector('[data-testid="provider-status-button"]', {
-        timeout: 5000,
-      });
+      await page.waitForSelector('[data-testid="provider-status-button"]');
 
       // Should have provider status buttons
       const providerButtons = page.locator(
@@ -278,18 +257,14 @@ test.describe("Settings Functionality", () => {
       await expect(playerStatus).toBeVisible();
 
       // Initially may show loading spinner, then should resolve to available/unavailable
-      await page.waitForFunction(
-        () => {
-          const statusElement = document.querySelector(
-            '[data-testid="remote-player-status"]',
-          );
-          return (
-            statusElement && !statusElement.innerHTML.includes("animate-spin")
-          );
-        },
-        {},
-        { timeout: 10000 },
-      );
+      await page.waitForFunction(() => {
+        const statusElement = document.querySelector(
+          '[data-testid="remote-player-status"]',
+        );
+        return (
+          statusElement && !statusElement.innerHTML.includes("animate-spin")
+        );
+      });
 
       // Should still be visible after loading
       await expect(playerStatus).toBeVisible();

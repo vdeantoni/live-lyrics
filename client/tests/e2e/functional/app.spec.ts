@@ -1,7 +1,11 @@
 import { test, expect } from "@playwright/test";
+import { injectTestRegistry } from "../helpers/injectTestRegistry";
 
 test.describe("Application Layout and Responsiveness", () => {
   test.beforeEach(async ({ page }) => {
+    // Inject test registry instead of mocking HTTP requests
+    await injectTestRegistry(page);
+
     await page.goto("/");
   });
 
@@ -49,6 +53,7 @@ test.describe("Application Layout and Responsiveness", () => {
 
 test.describe("Landscape Layout (Desktop/Tablet)", () => {
   test.beforeEach(async ({ page }) => {
+    await injectTestRegistry(page);
     await page.goto("/");
     await page.setViewportSize({ width: 1024, height: 768 });
   });
@@ -72,6 +77,7 @@ test.describe("Landscape Layout (Desktop/Tablet)", () => {
 
 test.describe("Responsive Transitions", () => {
   test.beforeEach(async ({ page }) => {
+    await injectTestRegistry(page);
     await page.goto("/");
   });
 
@@ -114,6 +120,7 @@ test.describe("Responsive Transitions", () => {
 
 test.describe("Performance and Loading", () => {
   test("should load quickly", async ({ page }) => {
+    await injectTestRegistry(page);
     const startTime = Date.now();
 
     await page.goto("/");
@@ -126,6 +133,7 @@ test.describe("Performance and Loading", () => {
 
 test.describe("Accessibility", () => {
   test.beforeEach(async ({ page }) => {
+    await injectTestRegistry(page);
     await page.goto("/");
   });
 
