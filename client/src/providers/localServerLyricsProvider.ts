@@ -59,4 +59,9 @@ export class LocalServerLyricsProvider implements LyricsProvider {
       return false;
     }
   }
+
+  async isFetching(): Promise<boolean> {
+    // Local server provider doesn't maintain persistent fetching state
+    return false;
+  }
 }

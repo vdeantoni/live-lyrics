@@ -195,6 +195,16 @@ The app uses a centralized configuration-based architecture with multiple provid
 - **Artwork Providers**: `ITunesArtworkProvider` for album cover fetching
 - Providers are loaded dynamically using `loadPlayer()`, `loadLyricsProvider()`, `loadArtworkProvider()`
 
+**Enhanced LrcLib Provider**:
+The `LrclibLyricsProvider` features sophisticated track selection with intelligent matching:
+
+- **Priority-Based Selection**: Enhanced LRC (word-level timing) → Regular LRC → Plain text
+- **Smart Tiebreakers**: Closest duration match → Most lyric lines for better sync accuracy
+- **Enhanced LRC Detection**: Recognizes `<00:10.50>` word timing and multiple timestamps per line
+- **Metadata Filtering**: Excludes `[ar:Artist]`, `[ti:Title]` tags from line counts for precise matching
+- **Comprehensive Error Handling**: Graceful fallback through all available tracks
+- **Performance Optimized**: Efficient algorithms with minimal API calls
+
 **Benefits of Atom-Based System**:
 - Eliminates registry side-effect imports (`import "@/registries/registerProviders"`)
 - Single source of truth for provider configuration

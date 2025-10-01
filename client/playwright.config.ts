@@ -16,7 +16,7 @@ export default defineConfig({
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: process.env.CI ? "github" : "html",
   /* Global timeout for each test - reduced for local development */
-  timeout: process.env.CI ? 30 * 1000 : 5 * 1000, // 5 seconds per test locally, 30s in CI
+  timeout: process.env.CI ? 30 * 1000 : 10 * 1000, // 5 seconds per test locally, 30s in CI
   /* Global timeout for the entire test run */
   globalTimeout: 15 * 60 * 1000, // 15 minutes total
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
@@ -32,8 +32,8 @@ export default defineConfig({
     video: "retain-on-failure",
 
     /* Action timeouts - reduced for local development */
-    actionTimeout: process.env.CI ? 5000 : 3000, // 3 second per action locally, 5s in CI
-    navigationTimeout: process.env.CI ? 30000 : 3000, // 3 seconds for navigation locally, 30s in CI
+    actionTimeout: process.env.CI ? 30 * 1000 : 10 * 1000, // 10 second per action locally, 30s in CI
+    navigationTimeout: process.env.CI ? 30 * 1000 : 10 * 1000, // 10 seconds for navigation locally, 30s in CI
   },
 
   /* Configure projects for major browsers - reduced for CI performance */

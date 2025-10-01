@@ -69,10 +69,12 @@ app.get("/music", async (c) => {
 
 app.post("/music", async (c) => {
   const body = await c.req.json();
+  console.log("[Server] Received music control request:", body);
   const commands: string[] = [];
 
   // Handle new action-based format
   if (body.action) {
+    console.log(`[Server] Processing action: ${body.action}`);
     switch (body.action) {
       case "play":
         commands.push("play");
@@ -89,6 +91,7 @@ app.post("/music", async (c) => {
   }
   // Handle old format for backward compatibility
   else {
+    console.log("[Server] Processing legacy format");
     const { playing, currentTime } = body;
 
     if (playing === true) {
@@ -103,6 +106,7 @@ app.post("/music", async (c) => {
   }
 
   if (commands.length > 0) {
+    console.log(`[Server] Executing AppleScript commands: ${commands.join(", ")}`);
     const scriptLines = [
       'tell application "Music"',
       ...commands.map((cmd) => `    ${cmd}`),
@@ -113,11 +117,13 @@ app.post("/music", async (c) => {
 
     execFile("osascript", osascriptArgs, (error, stdout, stderr) => {
       if (error || stderr) {
-        console.error(`Error executing AppleScript: ${error || stderr}`);
+        console.error(`[Server] Error executing AppleScript: ${error || stderr}`);
       } else {
-        console.log(`Music app command executed: ${commands.join(", ")}`);
+        console.log(`[Server] Music app command executed successfully: ${commands.join(", ")}`);
       }
     });
+  } else {
+    console.log("[Server] No commands to execute");
   }
 
   return c.json({ message: "Music app command received" });

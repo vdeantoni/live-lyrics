@@ -51,9 +51,7 @@ test.describe("Error Handling", () => {
     await page.setViewportSize({ width: 768, height: 1024 });
 
     // Player should still load
-    await page.waitForSelector('[data-testid="player"]', {
-      timeout: 10000,
-    });
+    await page.waitForSelector('[data-testid="player"]');
     await expect(page.locator('[data-testid="player-controls"]')).toBeVisible();
   });
 

@@ -1,9 +1,9 @@
 import { useAtomValue, useSetAtom } from "jotai";
 import {
-  isSettingsOpenAtom,
+  coreAppStateAtom,
+  settingsOpenAtom,
   toggleSettingsAtom,
-  appStateAtom,
-} from "@/atoms/settingsAtoms";
+} from "@/atoms/appState";
 import { Settings, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
@@ -12,8 +12,8 @@ import SettingsScreen from "./SettingsScreen";
 import LoadingScreen from "./LoadingScreen";
 
 const MainScreen = () => {
-  const isSettingsOpen = useAtomValue(isSettingsOpenAtom);
-  const appState = useAtomValue(appStateAtom);
+  const isSettingsOpen = useAtomValue(settingsOpenAtom);
+  const appState = useAtomValue(coreAppStateAtom);
   const toggleSettings = useSetAtom(toggleSettingsAtom);
 
   return (

@@ -3,10 +3,16 @@ import { render, type RenderOptions, waitFor } from "@testing-library/react";
 import { Provider as JotaiProvider } from "jotai";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { TestProvider } from "./TestProvider";
-import { type ProviderRegistryEntry } from "@/atoms/settingsAtoms";
+import type { LyricsProvider, ArtworkProvider, Player } from "@/types";
+import type { ProviderConfig } from "@/config/providers";
+import { createTestProviderConfigs } from "./testRegistryFactory";
 
 interface CustomRenderOptions extends Omit<RenderOptions, "wrapper"> {
-  testRegistry?: Map<string, ProviderRegistryEntry>;
+  customProviders?: {
+    lyricsProviders?: ProviderConfig<LyricsProvider>[];
+    artworkProviders?: ProviderConfig<ArtworkProvider>[];
+    players?: ProviderConfig<Player>[];
+  };
   /**
    * Whether to automatically wait for bootstrap to complete
    * @default true
@@ -28,13 +34,21 @@ const createTestQueryClient = () =>
     defaultOptions: {
       queries: {
         retry: false,
-        cacheTime: 0,
+        gcTime: 0, // Updated from cacheTime
       },
       mutations: {
         retry: false,
       },
     },
   });
+
+/**
+ * Create default test providers for Jotai atoms
+ * These are ProviderConfig objects that work with providerRegistryAPI.replaceAll()
+ */
+export const createJotaiTestProviders = () => {
+  return createTestProviderConfigs();
+};
 
 /**
  * ⚡ LIGHTWEIGHT: Simple render with minimal providers
@@ -103,11 +117,11 @@ export const renderWithAtomMocks = (
 };
 
 /**
- * 🚀 FULL INTEGRATION: Full provider registry with bootstrap
+ * 🚀 FULL INTEGRATION: Full provider setup with Jotai atoms and bootstrap
  * Use for integration tests and components that need complete app state
  *
  * @param ui - The component to render
- * @param options - Render options including optional testRegistry
+ * @param options - Render options including optional custom providers
  *
  * @example
  * ```typescript
@@ -115,11 +129,10 @@ export const renderWithAtomMocks = (
  * await renderWithProviders(<MyComponent />);
  * expect(screen.getByText("Hello")).toBeInTheDocument();
  *
- * // With custom test registry
- * const customRegistry = createTestRegistry();
- * // Modify the registry by setting custom provider states
- * customRegistry.get("lrclib")!.status.isAvailable = false;
- * await renderWithProviders(<MyComponent />, { testRegistry: customRegistry });
+ * // With custom providers
+ * const customProviders = createJotaiTestProviders();
+ * // Modify providers as needed
+ * await renderWithProviders(<MyComponent />, { customProviders });
  *
  * // Skip bootstrap waiting (useful for testing loading states)
  * await renderWithProviders(<MyComponent />, { waitForBootstrap: false });
@@ -130,10 +143,14 @@ export const renderWithProviders = async (
   ui: React.ReactElement,
   options: CustomRenderOptions = {},
 ) => {
-  const { testRegistry, waitForBootstrap = true, ...renderOptions } = options;
+  const {
+    customProviders,
+    waitForBootstrap = true,
+    ...renderOptions
+  } = options;
 
   const Wrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-    <TestProvider testRegistry={testRegistry}>{children}</TestProvider>
+    <TestProvider customProviders={customProviders}>{children}</TestProvider>
   );
 
   const result = render(ui, { wrapper: Wrapper, ...renderOptions });
@@ -158,10 +175,10 @@ export const renderWithProviders = async (
  * const { getByTestId } = renderWithProvidersOnly(<MyComponent />);
  * expect(getByTestId("loading")).toBeInTheDocument();
  *
- * // Or with custom registry
- * const customRegistry = createTestRegistry();
+ * // Or with custom providers
+ * const customProviders = createJotaiTestProviders();
  * const { getByTestId } = renderWithProvidersOnly(<MyComponent />, {
- *   testRegistry: customRegistry
+ *   customProviders
  * });
  * ```
  */
@@ -169,10 +186,10 @@ export const renderWithProvidersOnly = (
   ui: React.ReactElement,
   options: CustomRenderOptions = {},
 ) => {
-  const { testRegistry, ...renderOptions } = options;
+  const { customProviders, ...renderOptions } = options;
 
   const Wrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-    <TestProvider testRegistry={testRegistry}>{children}</TestProvider>
+    <TestProvider customProviders={customProviders}>{children}</TestProvider>
   );
 
   return render(ui, { wrapper: Wrapper, ...renderOptions });

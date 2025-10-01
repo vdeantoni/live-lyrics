@@ -6,10 +6,7 @@ import { Provider as JotaiProvider } from "jotai";
 import { useAtomValue } from "jotai";
 import Player from "@/components/Player/Player";
 import { useBootstrap } from "@/hooks/useBootstrap";
-import {
-  appStateAtom,
-  type ProviderRegistryEntry,
-} from "@/atoms/settingsAtoms";
+import { coreAppStateAtom } from "@/atoms/appState";
 
 // Create a client with aggressive caching
 const queryClient = new QueryClient();
@@ -23,16 +20,11 @@ const persister = createAsyncStoragePersister({
 
 // Inner component to use hooks inside Jotai Provider
 const AppContent = () => {
-  // Check if we're in E2E test mode with injected test registry
-  const testRegistry =
-    (window as unknown as { __TEST_REGISTRY__?: Map<string, unknown> })
-      .__TEST_REGISTRY__ || undefined;
-
   // Bootstrap the app (initializes registry + checks availability)
-  useBootstrap(testRegistry as Map<string, ProviderRegistryEntry> | undefined);
+  useBootstrap();
 
   // Wait for bootstrap to complete
-  const appState = useAtomValue(appStateAtom);
+  const appState = useAtomValue(coreAppStateAtom);
 
   if (appState.error) {
     return (

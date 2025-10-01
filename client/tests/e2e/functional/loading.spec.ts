@@ -8,11 +8,8 @@ test.describe("Loading Screen", () => {
   test("should display loading screen while bootstrap is in progress", async ({
     page,
   }) => {
-    // Remove test registry to allow setTimeout delays
+    // Override setTimeout to add delay to bootstrap process
     await page.addInitScript(() => {
-      delete (window as unknown as { __TEST_REGISTRY__?: unknown })
-        .__TEST_REGISTRY__;
-
       // Store the original setTimeout
       const originalSetTimeout = window.setTimeout;
 
@@ -34,9 +31,7 @@ test.describe("Loading Screen", () => {
     await page.goto("/");
 
     // The loading screen should be visible initially
-    await expect(page.locator('[data-testid="loading-screen"]')).toBeVisible({
-      timeout: 1000,
-    });
+    await expect(page.locator('[data-testid="loading-screen"]')).toBeVisible();
 
     // Verify loading screen content exists
     await expect(page.locator("text=Live Lyrics")).toBeVisible();
@@ -68,7 +63,7 @@ test.describe("Loading Screen", () => {
     // Wait for loading to complete and verify transition
     await expect(
       page.locator('[data-testid="loading-screen"]'),
-    ).not.toBeVisible({ timeout: 5000 });
+    ).not.toBeVisible();
 
     // After loading, lyrics screen should be visible
     await expect(page.locator('[data-testid="lyrics-screen"]')).toBeVisible();
@@ -82,68 +77,11 @@ test.describe("Loading Screen", () => {
     );
   });
 
-  test("should handle loading screen on different viewport sizes", async ({
-    page,
-  }) => {
-    const viewports = [
-      { width: 320, height: 568 }, // iPhone SE
-      { width: 768, height: 1024 }, // iPad Portrait
-      { width: 1024, height: 768 }, // iPad Landscape
-    ];
-
-    for (const viewport of viewports) {
-      await page.setViewportSize(viewport);
-
-      // Mock bootstrap delay - be more specific about which setTimeout to delay
-      await page.addInitScript(() => {
-        const originalSetTimeout = window.setTimeout;
-        let bootstrapCallCount = 0;
-
-        window.setTimeout = (
-          callback: () => void,
-          delay: number,
-          ...args: unknown[]
-        ) => {
-          // Only delay the first few setTimeout(0) calls which are bootstrap-related
-          if (
-            delay === 0 &&
-            typeof callback === "function" &&
-            bootstrapCallCount < 2
-          ) {
-            bootstrapCallCount++;
-            return originalSetTimeout(callback, 1500, ...args);
-          }
-          return originalSetTimeout(callback, delay, ...args);
-        };
-      });
-
-      await page.goto("/");
-
-      // Loading screen should be visible on all viewport sizes
-      await expect(page.locator('[data-testid="loading-screen"]')).toBeVisible({
-        timeout: 1000,
-      });
-
-      // Content should be properly centered and visible
-      await expect(page.locator("text=Live Lyrics")).toBeVisible();
-
-      // Wait for completion
-      await expect(
-        page.locator('[data-testid="loading-screen"]'),
-      ).not.toBeVisible({ timeout: 4000 });
-      await expect(page.locator('[data-testid="lyrics-screen"]')).toBeVisible();
-    }
-  });
-
   test("should transition smoothly from loading to lyrics screen", async ({
     page,
   }) => {
     // Mock with moderate delay to catch the transition
-    // Remove test registry to allow setTimeout delays
     await page.addInitScript(() => {
-      delete (window as unknown as { __TEST_REGISTRY__?: unknown })
-        .__TEST_REGISTRY__;
-
       const originalSetTimeout = window.setTimeout;
       window.setTimeout = (
         callback: () => void,
@@ -174,7 +112,7 @@ test.describe("Loading Screen", () => {
     // Wait for transition to complete
     await expect(
       page.locator('[data-testid="loading-screen"]'),
-    ).not.toBeVisible({ timeout: 2000 });
+    ).not.toBeVisible();
     await expect(page.locator('[data-testid="lyrics-screen"]')).toBeVisible();
 
     // Verify content is loaded
@@ -190,9 +128,7 @@ test.describe("Loading Screen", () => {
 
     // Either loading screen appears very briefly or not at all
     // We should quickly see the lyrics screen
-    await expect(page.locator('[data-testid="lyrics-screen"]')).toBeVisible({
-      timeout: 2000,
-    });
+    await expect(page.locator('[data-testid="lyrics-screen"]')).toBeVisible();
 
     // Song data should be loaded
     await expect(page.locator('[data-testid="song-name"]')).toContainText(

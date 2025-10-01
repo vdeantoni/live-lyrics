@@ -17,6 +17,7 @@ interface LRCLibTrack {
  */
 export class LrclibLyricsProvider implements LyricsProvider {
   private lrcLibUrl: string;
+  private _isFetching: boolean = false;
 
   constructor(lrcLibUrl: string = "https://lrclib.net/api") {
     this.lrcLibUrl = lrcLibUrl;
@@ -34,11 +35,160 @@ export class LrclibLyricsProvider implements LyricsProvider {
     return "Community-driven lyrics database with synchronized lyrics support";
   }
 
+  /**
+   * Enhanced selection algorithm to find the best track match
+   * Rules: 1) Enhanced LRC, 2) Regular LRC, 3) Plain text
+   * Tiebreakers: closest duration, then most lines
+   */
+  private selectBestTrack(
+    tracks: LRCLibTrack[],
+    songDuration: number,
+  ): LRCLibTrack | null {
+    // Filter tracks that have any lyrics
+    const tracksWithLyrics = tracks.filter(
+      (track) =>
+        (track.syncedLyrics && track.syncedLyrics.trim()) ||
+        (track.plainLyrics && track.plainLyrics.trim()),
+    );
+
+    if (tracksWithLyrics.length === 0) {
+      return null;
+    }
+
+    // If only one track, return it
+    if (tracksWithLyrics.length === 1) {
+      return tracksWithLyrics[0];
+    }
+
+    // Categorize tracks by lyrics type
+    const enhancedLrcTracks = tracksWithLyrics.filter((track) =>
+      this.isEnhancedLrc(track.syncedLyrics),
+    );
+    const regularLrcTracks = tracksWithLyrics.filter(
+      (track) =>
+        track.syncedLyrics &&
+        track.syncedLyrics.trim() &&
+        !this.isEnhancedLrc(track.syncedLyrics),
+    );
+    const plainTextTracks = tracksWithLyrics.filter(
+      (track) =>
+        (!track.syncedLyrics || !track.syncedLyrics.trim()) &&
+        track.plainLyrics &&
+        track.plainLyrics.trim(),
+    );
+
+    // Try each category in order of preference
+    const candidates = [
+      { tracks: enhancedLrcTracks, type: "Enhanced LRC" },
+      { tracks: regularLrcTracks, type: "Regular LRC" },
+      { tracks: plainTextTracks, type: "Plain text" },
+    ];
+
+    for (const { tracks: candidateTracks } of candidates) {
+      if (candidateTracks.length === 0) continue;
+
+      if (candidateTracks.length === 1) {
+        return candidateTracks[0];
+      }
+
+      // Apply tiebreaker rules: closest duration, then most lines
+      return this.applyTiebreakers(candidateTracks, songDuration);
+    }
+
+    return null;
+  }
+
+  /**
+   * Apply tiebreaker rules to select the best track from candidates
+   */
+  private applyTiebreakers(
+    tracks: LRCLibTrack[],
+    songDuration: number,
+  ): LRCLibTrack {
+    // Sort by duration difference (ascending), then by line count (descending)
+    return tracks.sort((a, b) => {
+      const durationDiffA = this.calculateDurationDifference(
+        a.duration,
+        songDuration,
+      );
+      const durationDiffB = this.calculateDurationDifference(
+        b.duration,
+        songDuration,
+      );
+
+      if (durationDiffA !== durationDiffB) {
+        return durationDiffA - durationDiffB;
+      }
+
+      // Duration is tied, compare line counts (higher is better)
+      const linesA = this.countLrcLines(a.syncedLyrics || a.plainLyrics || "");
+      const linesB = this.countLrcLines(b.syncedLyrics || b.plainLyrics || "");
+      return linesB - linesA;
+    })[0];
+  }
+
+  /**
+   * Detect if lyrics contain Enhanced LRC features (word-level timing)
+   */
+  private isEnhancedLrc(lyrics: string | null): boolean {
+    if (!lyrics) return false;
+
+    // Enhanced LRC typically has word-level timing markers like <00:10.50>
+    // or multiple timestamps per line
+    const wordTimingPattern = /<\d{2}:\d{2}\.\d{2}>/;
+    const multipleTimestampsPerLine =
+      /\[\d{2}:\d{2}\.\d{2}\].*\[\d{2}:\d{2}\.\d{2}\]/;
+
+    return (
+      wordTimingPattern.test(lyrics) || multipleTimestampsPerLine.test(lyrics)
+    );
+  }
+
+  /**
+   * Count the number of lyric lines (excluding metadata and empty lines)
+   */
+  private countLrcLines(lyrics: string): number {
+    if (!lyrics) return 0;
+
+    return lyrics.split("\n").filter((line) => {
+      const trimmed = line.trim();
+      // Count lines that have content after removing timestamps and metadata
+      const withoutTimestamps = trimmed
+        .replace(/^\[\d{2}:\d{2}\.\d{2}\]/, "")
+        .trim();
+      const withoutMetadata = withoutTimestamps
+        .replace(/^\[[\w\s:]+\]/, "")
+        .trim();
+      return withoutMetadata.length > 0;
+    }).length;
+  }
+
+  /**
+   * Calculate absolute duration difference in seconds
+   */
+  private calculateDurationDifference(
+    trackDuration: number,
+    songDuration: number,
+  ): number {
+    return Math.abs(trackDuration - songDuration);
+  }
+
+  /**
+   * Get human-readable lyrics type for logging
+   */
+  private getLyricsType(track: LRCLibTrack): string {
+    if (track.syncedLyrics && track.syncedLyrics.trim()) {
+      return this.isEnhancedLrc(track.syncedLyrics) ? "Enhanced LRC" : "synced";
+    }
+    return "plain text";
+  }
+
   async getLyrics(song: Song): Promise<string | null> {
     if (!song.name || !song.artist) {
       return null;
     }
 
+    this._isFetching = true;
     try {
       const searchUrl = new URL(`${this.lrcLibUrl}/search`);
       searchUrl.searchParams.set("track_name", song.name);
@@ -66,20 +216,26 @@ export class LrclibLyricsProvider implements LyricsProvider {
         return null;
       }
 
-      // Find the best match (first one for now, could implement better matching)
-      const track = tracks[0];
-      console.log(
-        "Found lyrics in LrcLib for:",
-        track.trackName,
-        "by",
-        track.artistName,
-      );
+      console.log(`Found ${tracks.length} potential matches in LrcLib`);
 
-      // Prefer synced lyrics, fall back to plain lyrics
-      return track.syncedLyrics || track.plainLyrics || null;
+      // Use enhanced selection algorithm to find the best match
+      const bestTrack = this.selectBestTrack(tracks, song.duration);
+      if (bestTrack) {
+        const lyricsType = this.getLyricsType(bestTrack);
+        const lyrics = bestTrack.syncedLyrics || bestTrack.plainLyrics;
+        console.log(
+          `Using ${lyricsType} lyrics from "${bestTrack.trackName}" by ${bestTrack.artistName}`,
+        );
+        return lyrics;
+      }
+
+      console.log("No lyrics found in any LrcLib tracks");
+      return null;
     } catch (error) {
       console.error("Failed to fetch lyrics from LrcLib:", error);
       return null;
+    } finally {
+      this._isFetching = false;
     }
   }
 
@@ -100,5 +256,9 @@ export class LrclibLyricsProvider implements LyricsProvider {
     } catch {
       return false;
     }
+  }
+
+  async isFetching(): Promise<boolean> {
+    return this._isFetching;
   }
 }

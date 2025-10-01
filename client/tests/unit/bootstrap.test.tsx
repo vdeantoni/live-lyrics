@@ -2,11 +2,11 @@ import { describe, it, expect } from "vitest";
 import { screen } from "@testing-library/react";
 import { renderWithProviders } from "../helpers/testUtils";
 import { useAtomValue } from "jotai";
-import { appStateAtom } from "@/atoms/settingsAtoms";
+import { coreAppStateAtom } from "@/atoms/appState";
 
 // Simple test component that reads app state
 const TestBootstrapComponent = () => {
-  const appState = useAtomValue(appStateAtom);
+  const appState = useAtomValue(coreAppStateAtom);
 
   return (
     <div data-testid="app-state">

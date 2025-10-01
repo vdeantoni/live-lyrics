@@ -1,6 +1,6 @@
 import { atom } from "jotai";
 import type { Song, LyricsData, LineData, WordData } from "@/types";
-import { playerIdAtom } from "@/atoms/settingsAtoms";
+import { selectedPlayerAtom } from "@/atoms/appState";
 import { loadPlayer } from "@/config/providers";
 
 const SEEK_END_TIMEOUT_MS = 1000;
@@ -21,6 +21,10 @@ export const activeWordAtom = atom<WordData | null>(null);
 
 export const artworkUrlsAtom = atom<string[]>([]);
 
+// Loading state atoms for explicit state management
+export const lyricsLoadingAtom = atom<boolean>(false);
+export const artworkLoadingAtom = atom<boolean>(false);
+
 export const playerUIStateAtom = atom({
   isDragging: false,
   isUserSeeking: false,
@@ -39,7 +43,8 @@ export const playerControlAtom = atom(
   ) => {
     const currentState = get(playerStateAtom);
     const currentUIState = get(playerUIStateAtom);
-    const playerId = get(playerIdAtom);
+    const selectedPlayer = get(selectedPlayerAtom);
+    const playerId = selectedPlayer?.config.id;
 
     if (!playerId) {
       console.error("No player selected");
@@ -112,7 +117,8 @@ export const syncFromSourceAtom = atom(
   null,
   async (get, set, songData: Song) => {
     const uiState = get(playerUIStateAtom);
-    const playerId = get(playerIdAtom);
+    const selectedPlayer = get(selectedPlayerAtom);
+    const playerId = selectedPlayer?.config.id;
 
     // Don't update during user interaction
     const canUpdateFromServer = !uiState.isDragging && !uiState.isUserSeeking;
@@ -121,7 +127,8 @@ export const syncFromSourceAtom = atom(
 
     try {
       // Only update if this is still the current player
-      if (get(playerIdAtom) !== playerId) return;
+      const currentSelectedPlayer = get(selectedPlayerAtom);
+      if (currentSelectedPlayer?.config.id !== playerId) return;
 
       const currentState = get(playerStateAtom);
 

@@ -40,20 +40,6 @@ export interface TagsData {
   ve?: string;
 }
 
-// Application settings interface
-export interface AppSettings {
-  /** ID of the selected player */
-  playerId: string;
-  /** Ordered list of lyrics provider IDs by priority (first = highest priority) */
-  lyricsProviderIds: string[];
-  /** Ordered list of artwork provider IDs by priority (first = highest priority) */
-  artworkProviderIds: string[];
-  /** Set of enabled lyrics provider IDs */
-  enabledLyricsProviders: Set<string>;
-  /** Set of enabled artwork provider IDs */
-  enabledArtworkProviders: Set<string>;
-}
-
 // Interface for player (local vs remote server)
 export interface Player {
   /** Unique identifier for this player */
@@ -88,6 +74,8 @@ export interface LyricsProvider {
   supportsLyrics(song: Song): Promise<boolean>;
   /** Check if this provider is currently available */
   isAvailable(): Promise<boolean>;
+  /** Check if this provider is currently fetching data */
+  isFetching(): Promise<boolean>;
 }
 
 // Interface for artwork providers
@@ -102,42 +90,6 @@ export interface ArtworkProvider {
   getArtwork(song: Song): Promise<string[]>;
   /** Check if this provider is currently available */
   isAvailable(): Promise<boolean>;
-}
-
-// Configuration types
-export interface LyricsProviderConfig {
-  type: "remote" | "local" | "lrclib" | "genius";
-  name: string;
-  options?: Record<string, unknown>;
-}
-
-// Configuration for music sources with plugin support
-export interface SourceConfig {
-  type: "remote" | "local";
-  name: string;
-  options?: Record<string, unknown>;
-  lyricsProvider?: LyricsProviderConfig;
-  artworkProvider?: LyricsProviderConfig;
-}
-
-// Registry entry types
-export interface PlayerRegistryEntry {
-  id: string;
-  name: string;
-  description: string;
-  factory: () => Player;
-}
-
-export interface LyricsProviderRegistryEntry {
-  id: string;
-  name: string;
-  description: string;
-  factory: () => LyricsProvider;
-}
-
-export interface ArtworkProviderRegistryEntry {
-  id: string;
-  name: string;
-  description: string;
-  factory: () => ArtworkProvider;
+  /** Check if this provider is currently fetching data */
+  isFetching(): Promise<boolean>;
 }

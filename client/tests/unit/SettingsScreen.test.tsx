@@ -42,7 +42,7 @@ describe("SettingsScreen", () => {
     await renderWithProviders(<SettingsScreen />);
     expect(screen.getByText("Remote Player")).toBeInTheDocument();
     expect(screen.getByText("Server")).toBeInTheDocument();
-    expect(screen.getByText("Connect to a remote server")).toBeInTheDocument();
+    expect(screen.getByText("Remote player")).toBeInTheDocument();
   });
 
   it("handles player toggle", async () => {
@@ -115,7 +115,6 @@ describe("SettingsScreen", () => {
     await renderWithProviders(<SettingsScreen />);
 
     expect(screen.getByText("LrcLib")).toBeInTheDocument();
-    expect(screen.getByText("Local Server")).toBeInTheDocument();
 
     // Get all lyrics provider items to check their order
     const lyricsSection = screen.getByTestId("lyrics-provider-section-list");

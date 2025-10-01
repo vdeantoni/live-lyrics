@@ -38,11 +38,12 @@ export class RemotePlayer implements Player {
       album: json.album || "Unknown Album",
       duration: json.duration || 0,
       currentTime: parseFloat(json.currentTime || 0),
-      isPlaying: json.playerState === "playing",
+      isPlaying: json.isPlaying || false,
     };
   }
 
   async play(): Promise<void> {
+    console.log("[RemotePlayer] Sending play command to server");
     const response = await fetch(`${this.baseUrl}/music`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -50,11 +51,14 @@ export class RemotePlayer implements Player {
     });
 
     if (!response.ok) {
+      console.error("[RemotePlayer] Failed to play:", response.status);
       throw new Error(`Failed to play: ${response.status}`);
     }
+    console.log("[RemotePlayer] Play command sent successfully");
   }
 
   async pause(): Promise<void> {
+    console.log("[RemotePlayer] Sending pause command to server");
     const response = await fetch(`${this.baseUrl}/music`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -62,8 +66,10 @@ export class RemotePlayer implements Player {
     });
 
     if (!response.ok) {
+      console.error("[RemotePlayer] Failed to pause:", response.status);
       throw new Error(`Failed to pause: ${response.status}`);
     }
+    console.log("[RemotePlayer] Pause command sent successfully");
   }
 
   async seek(time: number): Promise<void> {

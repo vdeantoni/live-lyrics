@@ -13,11 +13,14 @@ interface iTunesSearchResult {
  * iTunes API artwork provider
  */
 export class ITunesArtworkProvider implements ArtworkProvider {
+  private _isFetching: boolean = false;
+
   async getArtwork(song: Song): Promise<string[]> {
     if (!song.name || !song.artist) {
       return [];
     }
 
+    this._isFetching = true;
     try {
       const response = await fetch(
         `https://itunes.apple.com/search?term=${encodeURIComponent(
@@ -36,6 +39,8 @@ export class ITunesArtworkProvider implements ArtworkProvider {
     } catch (error) {
       console.error("Failed to fetch artwork from iTunes:", error);
       return [];
+    } finally {
+      this._isFetching = false;
     }
   }
 
@@ -63,5 +68,9 @@ export class ITunesArtworkProvider implements ArtworkProvider {
     } catch {
       return false;
     }
+  }
+
+  async isFetching(): Promise<boolean> {
+    return this._isFetching;
   }
 }
