@@ -183,6 +183,28 @@ Both client and server compile to `dist/` directories:
 4. React Query provides caching and persistence across sessions
 5. Components render synchronized lyrics with current playback position
 
+### Lyrics Normalization System
+
+The application uses a centralized normalization layer to ensure all lyrics are in Enhanced LRC format internally:
+
+**Format Detection**:
+- **Enhanced LRC**: Contains word-level timing markers `<00:10.50>` or multiple timestamps per line
+- **Normal LRC**: Contains only line-level timestamps `[00:10.00]`
+- **Plain Text**: No timing information
+
+**Normalization Strategy** (`client/src/utils/lyricsNormalizer.ts`):
+1. **Enhanced LRC** → Pass through unchanged
+2. **Normal LRC** → Add word-level timestamp for each word: `[00:10.00]Hello world` becomes `[00:10.00]<00:10.00>Hello <00:10.00>world`
+3. **Plain Text** → Add synthetic timestamps at 2-second intervals with word-level timing
+
+**Benefits**:
+- Single source of truth for format detection (`isEnhancedLrc()`, `isNormalLrc()`)
+- Components simplified to check data presence (`line.words`) instead of format flags
+- Normalization happens once in `useLyricsSync` before storing in `lyricsContentAtom`
+- All downstream consumers (Liricle parser, display components) work with consistent format
+
+**Test Coverage**: 34 comprehensive unit tests covering edge cases, Unicode, emojis, and performance scenarios
+
 ### Music Source Architecture
 
 **Atom-Based Provider System**:
