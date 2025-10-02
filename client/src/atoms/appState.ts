@@ -34,94 +34,50 @@ export const appProvidersAtom = atom<AppProviders>({
 
 // 3. User Provider Settings (persistent, sparse overrides only)
 // Split into separate atoms to prevent cross-contamination between provider types
-const playersSettingsAtom = atomWithStorage<Map<string, UserProviderOverride>>(
+
+/**
+ * Factory function to create provider settings atoms with Map<->localStorage serialization
+ */
+const createProviderSettingsAtom = (storageKey: string, settingsType: string) =>
+  atomWithStorage<Map<string, UserProviderOverride>>(storageKey, new Map(), {
+    getItem: (key, initialValue) => {
+      try {
+        const storedValue = localStorage.getItem(key);
+        if (storedValue === null) return initialValue;
+        const parsed = JSON.parse(storedValue);
+        return new Map(
+          Object.entries(parsed) as [string, UserProviderOverride][],
+        );
+      } catch {
+        return initialValue;
+      }
+    },
+    setItem: (key, value) => {
+      try {
+        localStorage.setItem(
+          key,
+          JSON.stringify(Object.fromEntries(value.entries())),
+        );
+      } catch (error) {
+        console.error(`Failed to save ${settingsType} settings:`, error);
+      }
+    },
+    removeItem: (key) => localStorage.removeItem(key),
+  });
+
+const playersSettingsAtom = createProviderSettingsAtom(
   "LIVE_LYRICS_PLAYER_SETTINGS",
-  new Map(),
-  {
-    getItem: (key, initialValue) => {
-      try {
-        const storedValue = localStorage.getItem(key);
-        if (storedValue === null) return initialValue;
-        const parsed = JSON.parse(storedValue);
-        return new Map(
-          Object.entries(parsed) as [string, UserProviderOverride][],
-        );
-      } catch {
-        return initialValue;
-      }
-    },
-    setItem: (key, value) => {
-      try {
-        localStorage.setItem(
-          key,
-          JSON.stringify(Object.fromEntries(value.entries())),
-        );
-      } catch (error) {
-        console.error("Failed to save player settings:", error);
-      }
-    },
-    removeItem: (key) => localStorage.removeItem(key),
-  },
+  "player",
 );
 
-const lyricsSettingsAtom = atomWithStorage<Map<string, UserProviderOverride>>(
+const lyricsSettingsAtom = createProviderSettingsAtom(
   "LIVE_LYRICS_LYRICS_SETTINGS",
-  new Map(),
-  {
-    getItem: (key, initialValue) => {
-      try {
-        const storedValue = localStorage.getItem(key);
-        if (storedValue === null) return initialValue;
-        const parsed = JSON.parse(storedValue);
-        return new Map(
-          Object.entries(parsed) as [string, UserProviderOverride][],
-        );
-      } catch {
-        return initialValue;
-      }
-    },
-    setItem: (key, value) => {
-      try {
-        localStorage.setItem(
-          key,
-          JSON.stringify(Object.fromEntries(value.entries())),
-        );
-      } catch (error) {
-        console.error("Failed to save lyrics settings:", error);
-      }
-    },
-    removeItem: (key) => localStorage.removeItem(key),
-  },
+  "lyrics",
 );
 
-const artworkSettingsAtom = atomWithStorage<Map<string, UserProviderOverride>>(
+const artworkSettingsAtom = createProviderSettingsAtom(
   "LIVE_LYRICS_ARTWORK_SETTINGS",
-  new Map(),
-  {
-    getItem: (key, initialValue) => {
-      try {
-        const storedValue = localStorage.getItem(key);
-        if (storedValue === null) return initialValue;
-        const parsed = JSON.parse(storedValue);
-        return new Map(
-          Object.entries(parsed) as [string, UserProviderOverride][],
-        );
-      } catch {
-        return initialValue;
-      }
-    },
-    setItem: (key, value) => {
-      try {
-        localStorage.setItem(
-          key,
-          JSON.stringify(Object.fromEntries(value.entries())),
-        );
-      } catch (error) {
-        console.error("Failed to save artwork settings:", error);
-      }
-    },
-    removeItem: (key) => localStorage.removeItem(key),
-  },
+  "artwork",
 );
 
 // Backwards compatibility: unified view of settings
@@ -167,16 +123,21 @@ export const replaceProvidersAtom = atom(
 export const updateProviderSettingAtom = atom(
   null,
   (
-    _get,
+    get,
     set,
     providerType: keyof AppProviderSettings,
     providerId: string,
     override: Partial<UserProviderOverride>,
   ) => {
-    const currentSettings = _get(
-      appProviderSettingsAtom,
-    ) as AppProviderSettings;
-    const typeSettings = new Map(currentSettings[providerType]);
+    // Read the specific settings atom directly for type safety
+    const settingsAtomMap = {
+      players: playersSettingsAtom,
+      lyrics: lyricsSettingsAtom,
+      artwork: artworkSettingsAtom,
+    };
+
+    const targetAtom = settingsAtomMap[providerType];
+    const typeSettings = new Map(get(targetAtom));
     const existingOverride = typeSettings.get(providerId) || {};
 
     // Merge with existing override
@@ -189,10 +150,7 @@ export const updateProviderSettingAtom = atom(
       typeSettings.set(providerId, newOverride);
     }
 
-    set(appProviderSettingsAtom, {
-      ...currentSettings,
-      [providerType]: typeSettings,
-    });
+    set(targetAtom, typeSettings);
   },
 );
 
@@ -201,17 +159,19 @@ export const updateProviderSettingAtom = atom(
  */
 export const removeProviderSettingAtom = atom(
   null,
-  (_get, set, providerType: keyof AppProviderSettings, providerId: string) => {
-    const currentSettings = _get(
-      appProviderSettingsAtom,
-    ) as AppProviderSettings;
-    const typeSettings = new Map(currentSettings[providerType]);
+  (get, set, providerType: keyof AppProviderSettings, providerId: string) => {
+    // Read the specific settings atom directly for type safety
+    const settingsAtomMap = {
+      players: playersSettingsAtom,
+      lyrics: lyricsSettingsAtom,
+      artwork: artworkSettingsAtom,
+    };
+
+    const targetAtom = settingsAtomMap[providerType];
+    const typeSettings = new Map(get(targetAtom));
     typeSettings.delete(providerId);
 
-    set(appProviderSettingsAtom, {
-      ...currentSettings,
-      [providerType]: typeSettings,
-    });
+    set(targetAtom, typeSettings);
   },
 );
 
@@ -409,10 +369,16 @@ export const setProviderConfigAtom = atom(
  */
 export const toggleProviderAtom = atom(
   null,
-  (_get, set, providerType: keyof AppProviderSettings, providerId: string) => {
-    const settings = (_get(appProviderSettingsAtom) as AppProviderSettings)[
-      providerType
-    ];
+  (get, set, providerType: keyof AppProviderSettings, providerId: string) => {
+    // Read the specific settings atom directly for type safety
+    const settingsAtomMap = {
+      players: playersSettingsAtom,
+      lyrics: lyricsSettingsAtom,
+      artwork: artworkSettingsAtom,
+    };
+
+    const targetAtom = settingsAtomMap[providerType];
+    const settings = get(targetAtom);
     const currentOverride = settings.get(providerId);
     const currentlyDisabled = currentOverride?.disabled === true;
 

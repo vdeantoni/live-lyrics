@@ -183,6 +183,37 @@ Both client and server compile to `dist/` directories:
 4. React Query provides caching and persistence across sessions
 5. Components render synchronized lyrics with current playback position
 
+### State Management Architecture
+
+**Jotai Atom Organization** (`client/src/atoms/`):
+
+The app uses a centralized, well-organized Jotai atom system divided into two main files:
+
+**`appState.ts`** - Application-wide state:
+- **Core atoms**: `coreAppStateAtom` (bootstrap state), `appProvidersAtom` (provider registry), `settingsOpenAtom` (UI state)
+- **Settings atoms**: `appProviderSettingsAtom` with custom localStorage serialization for Map types (split into separate atoms per provider type to prevent cross-contamination)
+- **Computed atoms**: `effectiveLyricsProvidersAtom`, `effectiveArtworkProvidersAtom`, `effectivePlayersAtom`, `selectedPlayerAtom` (combine configs with user overrides)
+- **Write-only action atoms**: `updateProviderSettingAtom`, `toggleProviderAtom`, `resetProviderSettingsAtom`, etc.
+- **Helper factory**: `createProviderSettingsAtom()` eliminates duplicate localStorage serialization code
+
+**`playerAtoms.ts`** - Music player state:
+- **Read atoms**: `playerStateAtom` (current song), `lyricsContentAtom`, `lyricsDataAtom`, `activeLineAtom`, `activeWordAtom`, `artworkUrlsAtom`, loading states
+- **Write-only action atoms**: `playerControlAtom` (play/pause/seek with optimistic updates), `syncFromSourceAtom` (server sync with conflict prevention)
+- **UI state atom**: `playerUIStateAtom` (isDragging, isUserSeeking)
+
+**Design Patterns**:
+- **Separation of concerns**: App-wide state vs player state
+- **Computed atoms**: Efficient derived state with granular subscriptions
+- **Write-only atoms**: Action dispatchers instead of setters for better encapsulation
+- **Optimistic updates**: Immediate UI feedback with rollback on errors
+- **Factory functions**: DRY code for repeated patterns (storage serialization)
+
+**Timing Constants** (`client/src/constants/timing.ts`):
+- `POLLING_INTERVALS.SONG_SYNC` (300ms)
+- `POLLING_INTERVALS.LYRICS_FETCH_POLL` (50ms)
+- `UI_DELAYS.NO_LYRICS_DISPLAY` (500ms)
+- `UI_DELAYS.SEEK_END_TIMEOUT` (1000ms)
+
 ### Lyrics Normalization System
 
 The application uses a centralized normalization layer to ensure all lyrics are in Enhanced LRC format internally:
@@ -446,6 +477,15 @@ Both workspaces use consistent TypeScript setup:
 - **Package Manager**: pnpm v9.6.0+ required for workspace management
 - **Server Development**: Uses `ts-node-dev` for hot reloading TypeScript
 - **Client Development**: Uses Vite's HMR for instant updates
+
+### IDE Configuration
+
+**IntelliJ IDEA / WebStorm**:
+- Root `tsconfig.json` provides monorepo-wide TypeScript context
+- Project references enable cross-workspace type checking
+- Workspace configs have `composite: true` for proper incremental builds
+- After setup: Restart IDE and "Invalidate Caches > Invalidate and Restart" if needed
+- TypeScript service path: Settings → Languages & Frameworks → TypeScript → Use from `project node_modules`
 
 ### Technology Stack
 

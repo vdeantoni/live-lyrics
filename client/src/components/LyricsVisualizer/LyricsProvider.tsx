@@ -12,8 +12,10 @@ import {
   activeLineAtom,
   activeWordAtom,
   lyricsLoadingAtom,
+  currentLyricsProviderAtom,
 } from "@/atoms/playerAtoms";
 import { enabledLyricsProvidersAtom } from "@/atoms/appState";
+import { UI_DELAYS } from "@/constants/timing";
 
 const LyricsProvider = () => {
   // Read data from atoms
@@ -21,6 +23,7 @@ const LyricsProvider = () => {
   const { currentTime = 0, name, artist } = playerState || {};
   const lyricsContent = useAtomValue(lyricsContentAtom);
   const lyricsLoading = useAtomValue(lyricsLoadingAtom);
+  const currentProvider = useAtomValue(currentLyricsProviderAtom);
   const enabledLyricsProviders = useAtomValue(enabledLyricsProvidersAtom);
 
   // Action atoms
@@ -31,8 +34,8 @@ const LyricsProvider = () => {
   const liricleRef = useRef<Liricle | null>(null);
   const [showNoLyrics, setShowNoLyrics] = useState(false);
 
-  // Trigger lyrics fetching and get current provider info
-  const { currentProvider } = useLyricsSync();
+  // Trigger lyrics fetching
+  useLyricsSync();
 
   // Get current provider name for UI display
   const currentProviderName = currentProvider
@@ -43,7 +46,10 @@ const LyricsProvider = () => {
   // Delay showing "No Lyrics Found" to prevent flash during source switches
   useEffect(() => {
     if (!lyricsLoading && (!lyricsContent || lyricsContent.trim() === "")) {
-      const timer = setTimeout(() => setShowNoLyrics(true), 500); // 500ms delay
+      const timer = setTimeout(
+        () => setShowNoLyrics(true),
+        UI_DELAYS.NO_LYRICS_DISPLAY,
+      );
       return () => clearTimeout(timer);
     } else {
       setShowNoLyrics(false);
