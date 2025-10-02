@@ -2,95 +2,77 @@ import type { Song } from "@/types";
 import type { ArtworkProvider } from "@/types";
 
 /**
- * Unsplash artwork provider - fetches random images based on song metadata and time of day
- * Uses Unsplash's free API to get high-quality images
+ * Lorem Picsum artwork provider - provides random high-quality placeholder images
+ * Uses Lorem Picsum's free API (no authentication required)
  */
 export class UnsplashArtworkProvider implements ArtworkProvider {
-  private readonly baseUrl = "https://source.unsplash.com";
-  private readonly imageSize = "800x800";
+  private readonly baseUrl = "https://picsum.photos";
 
   getId(): string {
     return "unsplash";
   }
 
   getName(): string {
-    return "Unsplash";
+    return "Random Images";
   }
 
   getDescription(): string {
-    return "Random high-quality images based on song mood and time of day";
+    return "Random high-quality images for visual variety";
   }
 
   /**
-   * Get time-based keywords for more contextual image selection
+   * Calculate optimal image size based on viewport dimensions and pixel density
    */
-  private getTimeBasedKeywords(): string {
-    const hour = new Date().getHours();
+  private getOptimalImageSize(): number {
+    // Get the larger viewport dimension
+    const maxDimension = Math.max(window.innerWidth, window.innerHeight);
 
-    if (hour >= 5 && hour < 12) {
-      return "morning,sunrise,dawn";
-    } else if (hour >= 12 && hour < 17) {
-      return "afternoon,daylight,bright";
-    } else if (hour >= 17 && hour < 21) {
-      return "evening,sunset,dusk";
-    } else {
-      return "night,stars,moonlight";
-    }
+    // Account for device pixel ratio (Retina displays)
+    const pixelRatio = window.devicePixelRatio || 1;
+    const targetSize = maxDimension * pixelRatio;
+
+    // Round up to nearest 200px for better caching
+    const roundedSize = Math.ceil(targetSize / 200) * 200;
+
+    // Cap at 2000px to avoid unnecessarily large images
+    return Math.min(roundedSize, 2000);
   }
 
-  /**
-   * Build search query from song metadata and time
-   */
-  private buildSearchQuery(song: Song): string {
-    const keywords: string[] = [];
-
-    // Add song-based keywords (use first word of song name as mood indicator)
-    if (song.name) {
-      const firstWord = song.name.split(" ")[0].toLowerCase();
-      keywords.push(firstWord);
-    }
-
-    // Add artist name for more specific results
-    if (song.artist) {
-      const firstArtistWord = song.artist.split(" ")[0].toLowerCase();
-      keywords.push(firstArtistWord);
-    }
-
-    // Add time-based ambiance
-    keywords.push(this.getTimeBasedKeywords());
-
-    // Add music-related keywords
-    keywords.push("music", "abstract", "colorful");
-
-    return keywords.join(",");
-  }
-
-  async getArtwork(song: Song): Promise<string[]> {
+  async getArtwork(
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _song: Song,
+  ): Promise<string[]> {
     try {
-      const query = this.buildSearchQuery(song);
+      const imageSize = this.getOptimalImageSize();
 
-      // Unsplash Source API automatically redirects to a random image
-      // We construct the URL with our search terms
-      const artworkUrl = `${this.baseUrl}/${this.imageSize}/?${query}`;
+      // Lorem Picsum provides random images by size
+      // Adding a random query parameter ensures we get different images each time
+      const randomSeed = Math.random();
+      const artworkUrl = `${this.baseUrl}/${imageSize}/${imageSize}?random=${randomSeed}`;
 
-      console.log(`Fetching Unsplash artwork with query: ${query}`);
+      console.log(
+        `Fetching Lorem Picsum image at ${imageSize}x${imageSize} (viewport: ${window.innerWidth}x${window.innerHeight}, DPR: ${window.devicePixelRatio})`,
+      );
 
       return [artworkUrl];
     } catch (error) {
-      console.error("Failed to fetch artwork from Unsplash:", error);
+      console.error("Failed to fetch artwork from Lorem Picsum:", error);
       return [];
     }
   }
 
-  async supportsArtwork(song: Song): Promise<boolean> {
-    // Unsplash can provide artwork for any song since it uses generic search
-    return !!(song.name || song.artist);
+  async supportsArtwork(
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _song: Song,
+  ): Promise<boolean> {
+    // Lorem Picsum can provide artwork for any song
+    return true;
   }
 
   async isAvailable(): Promise<boolean> {
     try {
-      // Test Unsplash availability with a simple HEAD request
-      const response = await fetch(`${this.baseUrl}/100x100/?test`, {
+      // Test Lorem Picsum availability with a simple HEAD request
+      const response = await fetch(`${this.baseUrl}/100/100`, {
         method: "HEAD",
       });
       return response.ok;
@@ -100,7 +82,7 @@ export class UnsplashArtworkProvider implements ArtworkProvider {
   }
 
   async isFetching(): Promise<boolean> {
-    // Unsplash provider doesn't maintain persistent fetching state
+    // Lorem Picsum provider doesn't maintain persistent fetching state
     // Images are loaded directly by the browser
     return false;
   }

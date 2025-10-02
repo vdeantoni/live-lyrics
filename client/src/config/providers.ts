@@ -54,9 +54,8 @@ export const BUILTIN_PROVIDER_CONFIGS = {
     },
     unsplash: {
       id: "unsplash",
-      name: "Unsplash",
-      description:
-        "Random high-quality images based on song mood and time of day",
+      name: "Random Images",
+      description: "High-quality random images optimized for your screen size",
       load: async (): Promise<ArtworkProvider> => {
         const { UnsplashArtworkProvider } = await import(
           "@/providers/unsplashArtworkProvider"
