@@ -117,7 +117,7 @@ app.post("/music", async (c) => {
 
     const osascriptArgs = scriptLines.flatMap((line) => ["-e", line]);
 
-    execFile("osascript", osascriptArgs, (error, stdout, stderr) => {
+    execFile("osascript", osascriptArgs, (error, _stdout, stderr) => {
       if (error || stderr) {
         console.error(
           `[Server] Error executing AppleScript: ${error || stderr}`,
