@@ -194,8 +194,7 @@ describe("lyricsNormalizer", () => {
 
       it("should handle single word lines", () => {
         const text = "Hello\nWorld";
-        const expected =
-          "[00:00.00]<00:00.00>Hello\n[00:02.00]<00:02.00>World";
+        const expected = "[00:00.00]<00:00.00>Hello\n[00:02.00]<00:02.00>World";
         expect(normalizeLyricsToEnhanced(text)).toBe(expected);
       });
 
