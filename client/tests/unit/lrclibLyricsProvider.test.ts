@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { LrclibLyricsProvider } from "@/providers/lrclibLyricsProvider";
+import { LrclibLyricsProvider } from "@/services/lrclibLyricsProvider";
 import type { Song } from "@/types";
 
 // Mock fetch globally

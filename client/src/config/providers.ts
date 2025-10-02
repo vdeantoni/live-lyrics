@@ -12,7 +12,7 @@ export const BUILTIN_PROVIDER_CONFIGS = {
       name: "Local",
       description: "Local player",
       load: async (): Promise<Player> => {
-        const { LocalPlayer } = await import("@/players/localPlayer");
+        const { LocalPlayer } = await import("@/services/localPlayer");
         return LocalPlayer.getInstance();
       },
     },
@@ -21,7 +21,7 @@ export const BUILTIN_PROVIDER_CONFIGS = {
       name: "Server",
       description: "Remote player",
       load: async (): Promise<Player> => {
-        const { RemotePlayer } = await import("@/players/remotePlayer");
+        const { RemotePlayer } = await import("@/services/remotePlayer");
         return new RemotePlayer();
       },
     },
@@ -34,7 +34,7 @@ export const BUILTIN_PROVIDER_CONFIGS = {
         "Community-driven lyrics database with synchronized lyrics support",
       load: async (): Promise<LyricsProvider> => {
         const { LrclibLyricsProvider } = await import(
-          "@/providers/lrclibLyricsProvider"
+          "@/services/lrclibLyricsProvider"
         );
         return new LrclibLyricsProvider();
       },
@@ -47,7 +47,7 @@ export const BUILTIN_PROVIDER_CONFIGS = {
       description: "Album artwork from iTunes Search API",
       load: async (): Promise<ArtworkProvider> => {
         const { ITunesArtworkProvider } = await import(
-          "@/providers/itunesArtworkProvider"
+          "@/services/itunesArtworkProvider"
         );
         return new ITunesArtworkProvider();
       },
@@ -58,7 +58,7 @@ export const BUILTIN_PROVIDER_CONFIGS = {
       description: "High-quality random images optimized for your screen size",
       load: async (): Promise<ArtworkProvider> => {
         const { UnsplashArtworkProvider } = await import(
-          "@/providers/unsplashArtworkProvider"
+          "@/services/unsplashArtworkProvider"
         );
         return new UnsplashArtworkProvider();
       },
