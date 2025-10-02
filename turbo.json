@@ -15,7 +15,8 @@
         "package.json",
         "tsconfig*.json",
         "vite.config.*",
-        "tailwind.config.*"
+        "tailwind.config.*",
+        "components.json"
       ],
       "outputs": [
         "dist/**",
@@ -83,7 +84,9 @@
         "package.json",
         "tsconfig*.json",
         "vite.config.*",
-        "vitest.config.*"
+        "vitest.config.*",
+        "playwright.config.*",
+        "lostpixel.config.*"
       ],
       "outputs": [
         "coverage/**"
