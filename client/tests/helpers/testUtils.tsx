@@ -1,11 +1,12 @@
 import React from "react";
 import { render, type RenderOptions, waitFor } from "@testing-library/react";
-import { Provider as JotaiProvider } from "jotai";
+import { Provider as JotaiProvider, useSetAtom } from "jotai";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { TestProvider } from "./TestProvider";
 import type { LyricsProvider, ArtworkProvider, Player } from "@/types";
 import type { ProviderConfig } from "@/config/providers";
 import { createTestProviderConfigs } from "./testRegistryFactory";
+import type { Atom } from "jotai";
 
 interface CustomRenderOptions extends Omit<RenderOptions, "wrapper"> {
   customProviders?: {
@@ -21,6 +22,14 @@ interface CustomRenderOptions extends Omit<RenderOptions, "wrapper"> {
 }
 
 interface LightweightRenderOptions extends Omit<RenderOptions, "wrapper"> {
+  /**
+   * Whether to include QueryClient for components that need it
+   * @default true
+   */
+  withQueryClient?: boolean;
+}
+
+interface AtomMockRenderOptions extends Omit<RenderOptions, "wrapper"> {
   /**
    * Whether to include QueryClient for components that need it
    * @default true
@@ -93,27 +102,67 @@ export const renderLightweight = (
  * For components that need specific atom values but no bootstrap
  *
  * @param ui - The component to render
- * @param atomMocks - Object mapping atoms to their mock values
+ * @param atomMocks - Map of atoms to their mock values
  * @param options - Additional render options
  *
  * @example
  * ```typescript
- * import { songInfoAtom, playerStateAtom } from '@/atoms/playerAtoms';
+ * import { songInfoAtom } from '@/atoms/playerAtoms';
  *
  * renderWithAtomMocks(<PlayerControls />, {
- *   [songInfoAtom]: { name: "Test Song", artist: "Test Artist", duration: 120 },
- *   [playerStateAtom]: { isPlaying: false, currentTime: 0 }
+ *   [songInfoAtom]: {
+ *     name: "Test Song",
+ *     artist: "Test Artist",
+ *     duration: 120,
+ *     currentTime: 30,
+ *     isPlaying: false,
+ *   }
  * });
  * ```
  */
 export const renderWithAtomMocks = (
   ui: React.ReactElement,
-  atomMocks: Record<string, unknown>,
-  options: LightweightRenderOptions = {},
+  atomMocks: Map<Atom<unknown>, unknown>,
+  options: AtomMockRenderOptions = {},
 ) => {
-  // TODO: Implement proper atom mocking with Jotai
-  // For now, fall back to lightweight render
-  return renderLightweight(ui, options);
+  const { withQueryClient = true, ...renderOptions } = options;
+
+  // Component to hydrate atoms with mock values
+  const AtomHydrator: React.FC<{ children: React.ReactNode }> = ({
+    children,
+  }) => {
+    // Set all atom values on mount
+    atomMocks.forEach((value, atom) => {
+      // eslint-disable-next-line react-hooks/rules-of-hooks
+      const setAtom = useSetAtom(atom);
+      React.useEffect(() => {
+        setAtom(value as never);
+      }, [setAtom]);
+    });
+
+    return <>{children}</>;
+  };
+
+  const Wrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+    if (withQueryClient) {
+      const queryClient = createTestQueryClient();
+      return (
+        <QueryClientProvider client={queryClient}>
+          <JotaiProvider>
+            <AtomHydrator>{children}</AtomHydrator>
+          </JotaiProvider>
+        </QueryClientProvider>
+      );
+    }
+
+    return (
+      <JotaiProvider>
+        <AtomHydrator>{children}</AtomHydrator>
+      </JotaiProvider>
+    );
+  };
+
+  return render(ui, { wrapper: Wrapper, ...renderOptions });
 };
 
 /**

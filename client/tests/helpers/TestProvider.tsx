@@ -56,7 +56,8 @@ export const TestProvider: React.FC<TestProviderProps> = ({
   children,
   customProviders,
 }) => {
-  const queryClient = createTestQueryClient();
+  // ✅ Memoize QueryClient to avoid creating new instance on every render
+  const queryClient = React.useMemo(() => createTestQueryClient(), []);
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -73,8 +74,8 @@ const JotaiTestSetup: React.FC<TestProviderProps> = ({
   children,
   customProviders,
 }) => {
-  // Set up test providers synchronously on first render
-  React.useMemo(() => {
+  // ✅ Use useEffect for side effects (not useMemo)
+  React.useEffect(() => {
     const providers = customProviders || createJotaiTestProviders();
     providerRegistryAPI.replaceAll(providers);
   }, [customProviders]);
