@@ -6,10 +6,3 @@ node_modules
 
 # Output
 dist/
-
-# TypeScript compiled output (should not be committed)
-*.js.map
-client/tests/**/*.js
-!client/tests/**/setup.js
-server/tests/**/*.js
-!server/tests/**/setup.js
