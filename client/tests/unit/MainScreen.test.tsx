@@ -37,8 +37,11 @@ describe("MainScreen", () => {
     const settingsButton = screen.getByTestId("settings-button");
     fireEvent.click(settingsButton);
 
+    // Wait for settings screen to appear (AnimatePresence needs time)
+    const settingsScreen = await screen.findByTestId("settings-screen");
+
     // Both screens are rendered now - lyrics stays in place, settings slides over
-    expect(screen.getByTestId("settings-screen")).toBeInTheDocument();
+    expect(settingsScreen).toBeInTheDocument();
     expect(screen.getByTestId("lyrics-screen")).toBeInTheDocument();
     expect(screen.queryByTestId("loading-screen")).not.toBeInTheDocument();
     expect(screen.getByTestId("close-settings-button")).toBeInTheDocument();
@@ -55,8 +58,9 @@ describe("MainScreen", () => {
     // Click to open settings
     fireEvent.click(settingsButton);
 
-    // Settings should now be visible
-    expect(screen.getByTestId("settings-screen")).toBeInTheDocument();
+    // Wait for settings screen to appear (AnimatePresence needs time)
+    const settingsScreen = await screen.findByTestId("settings-screen");
+    expect(settingsScreen).toBeInTheDocument();
   });
 
   it("has proper accessibility labels", async () => {
