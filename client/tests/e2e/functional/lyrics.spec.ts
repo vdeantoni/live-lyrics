@@ -254,56 +254,56 @@ test.describe("Lyrics Display", () => {
       expect(lineCount).toBeGreaterThanOrEqual(4);
     });
   });
+});
 
-  // Separate describe block for no-lyrics test to avoid beforeEach interference
-  test.describe("Visual Effects - No Lyrics", () => {
-    test("should handle no lyrics state gracefully", async ({ page }) => {
-      // Inject custom registry BEFORE navigation (no beforeEach interference)
-      await injectCustomTestRegistry(page, {
-        lyricsProviders: [], // No lyrics providers = no lyrics available
-        artworkProviders: [
-          {
-            id: "itunes",
-            name: "Test iTunes",
-            description: "Test artwork provider (no artwork)",
-            isEnabled: true,
-            isAvailable: true,
-          },
-        ],
-        players: [
-          {
-            id: "local",
-            name: "Local",
-            description: "Local test player",
-            isEnabled: true,
-            isAvailable: true,
-          },
-        ],
-      });
-
-      await page.goto("/");
-      await page.setViewportSize({ width: 768, height: 1024 });
-
-      // Wait for the app to be ready
-      await page.waitForSelector('[data-testid="lyrics-screen"]');
-
-      // Wait for song information to load
-      await page.waitForFunction(() => {
-        const songName = document.querySelector('[data-testid="song-name"]');
-        return songName && songName.textContent?.includes("Bohemian Rhapsody");
-      });
-
-      // Wait for lyrics system to process and show no-lyrics state
-      await page.waitForSelector('[data-testid="no-lyrics"]', {
-        timeout: 10000,
-      });
-      await expect(page.getByText("No Lyrics Found")).toBeVisible();
-
-      // Player should still be visible and functional
-      await expect(page.locator('[data-testid="player"]')).toBeVisible();
-      await expect(page.locator('[data-testid="song-name"]')).toContainText(
-        "Bohemian Rhapsody",
-      );
+// Separate top-level describe block to avoid parent beforeEach interference
+test.describe("Lyrics Display - No Lyrics State", () => {
+  test("should handle no lyrics state gracefully", async ({ page }) => {
+    // Inject custom registry BEFORE navigation
+    await injectCustomTestRegistry(page, {
+      lyricsProviders: [], // No lyrics providers = no lyrics available
+      artworkProviders: [
+        {
+          id: "itunes",
+          name: "Test iTunes",
+          description: "Test artwork provider (no artwork)",
+          isEnabled: true,
+          isAvailable: true,
+        },
+      ],
+      players: [
+        {
+          id: "local",
+          name: "Local",
+          description: "Local test player",
+          isEnabled: true,
+          isAvailable: true,
+        },
+      ],
     });
+
+    await page.goto("/");
+    await page.setViewportSize({ width: 768, height: 1024 });
+
+    // Wait for the app to be ready
+    await page.waitForSelector('[data-testid="lyrics-screen"]');
+
+    // Wait for song information to load
+    await page.waitForFunction(() => {
+      const songName = document.querySelector('[data-testid="song-name"]');
+      return songName && songName.textContent?.includes("Bohemian Rhapsody");
+    });
+
+    // Wait for lyrics system to process and show no-lyrics state
+    await page.waitForSelector('[data-testid="no-lyrics"]', {
+      timeout: 10000,
+    });
+    await expect(page.getByText("No Lyrics Found")).toBeVisible();
+
+    // Player should still be visible and functional
+    await expect(page.locator('[data-testid="player"]')).toBeVisible();
+    await expect(page.locator('[data-testid="song-name"]')).toContainText(
+      "Bohemian Rhapsody",
+    );
   });
 });

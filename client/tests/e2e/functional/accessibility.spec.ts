@@ -164,16 +164,26 @@ test.describe("Keyboard Navigation and Accessibility", () => {
     // Tab through interactive elements to verify logical order
     await page.keyboard.press("Tab");
 
-    // Should be able to reach focusable elements
+    // Should be able to reach focusable elements (including Radix UI components with ARIA roles)
     let foundFocusableElement = false;
-    for (let i = 0; i < 10; i++) {
-      const activeElement = await page.evaluate(
-        () => document.activeElement?.tagName,
-      );
+    for (let i = 0; i < 15; i++) {
+      const activeElement = await page.evaluate(() => {
+        const el = document.activeElement;
+        return {
+          tagName: el?.tagName,
+          role: el?.getAttribute("role"),
+          tabIndex: el?.getAttribute("tabindex"),
+        };
+      });
+
+      // Check for standard HTML elements, ARIA roles, or tabindex
       if (
-        activeElement === "BUTTON" ||
-        activeElement === "INPUT" ||
-        activeElement === "A"
+        activeElement.tagName === "BUTTON" ||
+        activeElement.tagName === "INPUT" ||
+        activeElement.tagName === "A" ||
+        activeElement.role === "slider" ||
+        activeElement.role === "button" ||
+        (activeElement.tabIndex !== null && activeElement.tabIndex !== "-1")
       ) {
         foundFocusableElement = true;
         break;
