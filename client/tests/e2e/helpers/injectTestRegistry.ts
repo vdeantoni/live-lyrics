@@ -1,6 +1,5 @@
 import type { Page } from "@playwright/test";
 
-// Force rebuild: 2025-10-02
 /**
  * Custom provider configuration for error handling tests
  */
