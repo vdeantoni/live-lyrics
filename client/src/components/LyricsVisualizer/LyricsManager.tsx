@@ -17,7 +17,7 @@ import {
 import { enabledLyricsProvidersAtom } from "@/atoms/appState";
 import { UI_DELAYS } from "@/constants/timing";
 
-const LyricsProvider = () => {
+const LyricsManager = () => {
   // Read data from atoms
   const playerState = useAtomValue(playerStateAtom);
   const { currentTime = 0, name, artist } = playerState || {};
@@ -125,4 +125,4 @@ const LyricsProvider = () => {
   return <LyricsContent />;
 };
 
-export default LyricsProvider;
+export default LyricsManager;

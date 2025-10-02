@@ -32,11 +32,9 @@ vi.mock("@/hooks/useKeyboardShortcuts", () => ({
   useKeyboardShortcuts: vi.fn(),
 }));
 
-// Mock the complex LyricsProvider component that was causing atom issues
-vi.mock("@/components/LyricsVisualizer/LyricsProvider", () => ({
-  default: () => (
-    <div data-testid="lyrics-provider">Mocked Lyrics Provider</div>
-  ),
+// Mock the complex LyricsManager component that was causing atom issues
+vi.mock("@/components/LyricsVisualizer/LyricsManager", () => ({
+  default: () => <div data-testid="lyrics-manager">Mocked Lyrics Manager</div>,
 }));
 
 // Mock SettingsScreen child components to avoid complex provider dependencies

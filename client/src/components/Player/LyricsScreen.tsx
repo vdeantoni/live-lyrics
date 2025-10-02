@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useAtomValue } from "jotai";
 import { artworkUrlsAtom } from "@/atoms/playerAtoms";
 import { useArtworkSync } from "@/hooks/useArtworkSync";
-import LyricsProvider from "../LyricsVisualizer/LyricsProvider";
+import LyricsManager from "../LyricsVisualizer/LyricsManager";
 
 const LyricsScreen = () => {
   // Get artwork URLs from atom
@@ -78,7 +78,7 @@ const LyricsScreen = () => {
 
       {/* Lyrics Content Layer */}
       <div className="relative z-10 h-full">
-        <LyricsProvider />
+        <LyricsManager />
       </div>
     </div>
   );
