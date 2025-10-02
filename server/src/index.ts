@@ -23,7 +23,7 @@ const scriptLines = [
 
 const osascriptArgs = scriptLines.flatMap((line) => ["-e", line]);
 
-function getSongInfo(): Promise<SongResponse | ErrorResponse> {
+export function getSongInfo(): Promise<SongResponse | ErrorResponse> {
   return new Promise((resolve) => {
     execFile("osascript", osascriptArgs, (error, stdout, stderr) => {
       if (error || stderr) {
@@ -106,7 +106,9 @@ app.post("/music", async (c) => {
   }
 
   if (commands.length > 0) {
-    console.log(`[Server] Executing AppleScript commands: ${commands.join(", ")}`);
+    console.log(
+      `[Server] Executing AppleScript commands: ${commands.join(", ")}`,
+    );
     const scriptLines = [
       'tell application "Music"',
       ...commands.map((cmd) => `    ${cmd}`),
@@ -117,9 +119,13 @@ app.post("/music", async (c) => {
 
     execFile("osascript", osascriptArgs, (error, stdout, stderr) => {
       if (error || stderr) {
-        console.error(`[Server] Error executing AppleScript: ${error || stderr}`);
+        console.error(
+          `[Server] Error executing AppleScript: ${error || stderr}`,
+        );
       } else {
-        console.log(`[Server] Music app command executed successfully: ${commands.join(", ")}`);
+        console.log(
+          `[Server] Music app command executed successfully: ${commands.join(", ")}`,
+        );
       }
     });
   } else {
@@ -129,7 +135,12 @@ app.post("/music", async (c) => {
   return c.json({ message: "Music app command received" });
 });
 
-serve({
-  fetch: app.fetch,
-  port: 4000,
-});
+export { app };
+
+// Only start server if this file is run directly
+if (require.main === module) {
+  serve({
+    fetch: app.fetch,
+    port: 4000,
+  });
+}
