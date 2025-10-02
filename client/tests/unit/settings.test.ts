@@ -1,8 +1,8 @@
 import { describe, it, expect } from "vitest";
-import { LocalPlayer } from "@/players/localPlayer";
-import { RemotePlayer } from "@/players/remotePlayer";
-import { LrclibLyricsProvider } from "@/providers/lrclibLyricsProvider";
-import { ITunesArtworkProvider } from "@/providers/itunesArtworkProvider";
+import { LocalPlayer } from "@/services/localPlayer";
+import { RemotePlayer } from "@/services/remotePlayer";
+import { LrclibLyricsProvider } from "@/services/lrclibLyricsProvider";
+import { ITunesArtworkProvider } from "@/services/itunesArtworkProvider";
 
 describe("Players", () => {
   it("should create local player instance", () => {
