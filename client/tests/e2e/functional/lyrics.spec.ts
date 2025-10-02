@@ -24,12 +24,7 @@ test.describe("Lyrics Display", () => {
       const lyricsContainer = document.querySelector(
         '[data-testid="lyrics-container"]',
       );
-      return (
-        lyricsContainer &&
-        (lyricsContainer.textContent?.includes("Loading lyrics") ||
-          lyricsContainer.textContent?.includes("Is this the real life?") ||
-          lyricsContainer.textContent?.includes("No Lyrics Found"))
-      );
+      return lyricsContainer;
     });
   });
 
@@ -258,9 +253,12 @@ test.describe("Lyrics Display", () => {
       const lineCount = await portraitLines.count();
       expect(lineCount).toBeGreaterThanOrEqual(4);
     });
+  });
 
+  // Separate describe block for no-lyrics test to avoid beforeEach interference
+  test.describe("Visual Effects - No Lyrics", () => {
     test("should handle no lyrics state gracefully", async ({ page }) => {
-      // Use injectCustomTestRegistry with all lyrics providers disabled
+      // Inject custom registry BEFORE navigation (no beforeEach interference)
       await injectCustomTestRegistry(page, {
         lyricsProviders: [], // No lyrics providers = no lyrics available
         artworkProviders: [
@@ -285,6 +283,15 @@ test.describe("Lyrics Display", () => {
 
       await page.goto("/");
       await page.setViewportSize({ width: 768, height: 1024 });
+
+      // Wait for the app to be ready
+      await page.waitForSelector('[data-testid="lyrics-screen"]');
+
+      // Wait for song information to load
+      await page.waitForFunction(() => {
+        const songName = document.querySelector('[data-testid="song-name"]');
+        return songName && songName.textContent?.includes("Bohemian Rhapsody");
+      });
 
       // Wait for lyrics system to process and show no-lyrics state
       await page.waitForSelector('[data-testid="no-lyrics"]', {

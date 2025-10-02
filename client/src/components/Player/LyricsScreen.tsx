@@ -48,6 +48,9 @@ const LyricsScreen = () => {
       }, 10000); // 10000 milliseconds = 10 seconds
 
       return () => clearInterval(intervalId);
+    } else {
+      // Clear artwork when no providers are enabled or artwork URLs are empty
+      setCurrentArtworkUrl("");
     }
   }, [artworkUrls, selectAndLoadRandomArtwork]);
 

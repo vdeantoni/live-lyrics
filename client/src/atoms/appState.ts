@@ -33,62 +33,108 @@ export const appProvidersAtom = atom<AppProviders>({
 });
 
 // 3. User Provider Settings (persistent, sparse overrides only)
-export const appProviderSettingsAtom = atomWithStorage<AppProviderSettings>(
-  "LIVE_LYRICS_APP_PROVIDER_SETTINGS",
+// Split into separate atoms to prevent cross-contamination between provider types
+const playersSettingsAtom = atomWithStorage<Map<string, UserProviderOverride>>(
+  "LIVE_LYRICS_PLAYER_SETTINGS",
+  new Map(),
   {
-    players: new Map(),
-    lyrics: new Map(),
-    artwork: new Map(),
-  },
-  {
-    getItem: (key: string, initialValue: AppProviderSettings) => {
+    getItem: (key, initialValue) => {
       try {
         const storedValue = localStorage.getItem(key);
         if (storedValue === null) return initialValue;
-
         const parsed = JSON.parse(storedValue);
-
-        // Convert objects back to Maps
-        return {
-          players: new Map(
-            Object.entries(parsed.players || {}) as [
-              string,
-              UserProviderOverride,
-            ][],
-          ),
-          lyrics: new Map(
-            Object.entries(parsed.lyrics || {}) as [
-              string,
-              UserProviderOverride,
-            ][],
-          ),
-          artwork: new Map(
-            Object.entries(parsed.artwork || {}) as [
-              string,
-              UserProviderOverride,
-            ][],
-          ),
-        };
+        return new Map(
+          Object.entries(parsed) as [string, UserProviderOverride][],
+        );
       } catch {
         return initialValue;
       }
     },
     setItem: (key, value) => {
       try {
-        // Convert Maps to objects for JSON serialization
-        const serializable = {
-          players: Object.fromEntries(value.players.entries()),
-          lyrics: Object.fromEntries(value.lyrics.entries()),
-          artwork: Object.fromEntries(value.artwork.entries()),
-        };
-        localStorage.setItem(key, JSON.stringify(serializable));
+        localStorage.setItem(
+          key,
+          JSON.stringify(Object.fromEntries(value.entries())),
+        );
       } catch (error) {
-        console.error("Failed to save app provider settings:", error);
+        console.error("Failed to save player settings:", error);
       }
     },
-    removeItem: (key) => {
-      localStorage.removeItem(key);
+    removeItem: (key) => localStorage.removeItem(key),
+  },
+);
+
+const lyricsSettingsAtom = atomWithStorage<Map<string, UserProviderOverride>>(
+  "LIVE_LYRICS_LYRICS_SETTINGS",
+  new Map(),
+  {
+    getItem: (key, initialValue) => {
+      try {
+        const storedValue = localStorage.getItem(key);
+        if (storedValue === null) return initialValue;
+        const parsed = JSON.parse(storedValue);
+        return new Map(
+          Object.entries(parsed) as [string, UserProviderOverride][],
+        );
+      } catch {
+        return initialValue;
+      }
     },
+    setItem: (key, value) => {
+      try {
+        localStorage.setItem(
+          key,
+          JSON.stringify(Object.fromEntries(value.entries())),
+        );
+      } catch (error) {
+        console.error("Failed to save lyrics settings:", error);
+      }
+    },
+    removeItem: (key) => localStorage.removeItem(key),
+  },
+);
+
+const artworkSettingsAtom = atomWithStorage<Map<string, UserProviderOverride>>(
+  "LIVE_LYRICS_ARTWORK_SETTINGS",
+  new Map(),
+  {
+    getItem: (key, initialValue) => {
+      try {
+        const storedValue = localStorage.getItem(key);
+        if (storedValue === null) return initialValue;
+        const parsed = JSON.parse(storedValue);
+        return new Map(
+          Object.entries(parsed) as [string, UserProviderOverride][],
+        );
+      } catch {
+        return initialValue;
+      }
+    },
+    setItem: (key, value) => {
+      try {
+        localStorage.setItem(
+          key,
+          JSON.stringify(Object.fromEntries(value.entries())),
+        );
+      } catch (error) {
+        console.error("Failed to save artwork settings:", error);
+      }
+    },
+    removeItem: (key) => localStorage.removeItem(key),
+  },
+);
+
+// Backwards compatibility: unified view of settings
+export const appProviderSettingsAtom = atom(
+  (get) => ({
+    players: get(playersSettingsAtom),
+    lyrics: get(lyricsSettingsAtom),
+    artwork: get(artworkSettingsAtom),
+  }),
+  (_get, set, newValue: AppProviderSettings) => {
+    set(playersSettingsAtom, newValue.players);
+    set(lyricsSettingsAtom, newValue.lyrics);
+    set(artworkSettingsAtom, newValue.artwork);
   },
 );
 
@@ -238,10 +284,11 @@ const computeEffectiveProviders = <T>(
 
 /**
  * Effective lyrics providers (providers + user overrides)
+ * Only subscribes to lyrics settings changes
  */
 export const effectiveLyricsProvidersAtom = atom((get) => {
   const providers = get(appProvidersAtom).lyrics;
-  const settings = (get(appProviderSettingsAtom) as AppProviderSettings).lyrics;
+  const settings = get(lyricsSettingsAtom);
   return computeEffectiveProviders(providers, settings).sort(
     (a, b) => a.effectivePriority - b.effectivePriority,
   );
@@ -249,11 +296,11 @@ export const effectiveLyricsProvidersAtom = atom((get) => {
 
 /**
  * Effective artwork providers (providers + user overrides)
+ * Only subscribes to artwork settings changes
  */
 export const effectiveArtworkProvidersAtom = atom((get) => {
   const providers = get(appProvidersAtom).artwork;
-  const settings = (get(appProviderSettingsAtom) as AppProviderSettings)
-    .artwork;
+  const settings = get(artworkSettingsAtom);
   return computeEffectiveProviders(providers, settings).sort(
     (a, b) => a.effectivePriority - b.effectivePriority,
   );
@@ -261,10 +308,11 @@ export const effectiveArtworkProvidersAtom = atom((get) => {
 
 /**
  * Effective players (providers + user overrides)
+ * Only subscribes to player settings changes
  */
 export const effectivePlayersAtom = atom((get) => {
   const providers = get(appProvidersAtom).players;
-  const settings = get(appProviderSettingsAtom).players;
+  const settings = get(playersSettingsAtom);
   return computeEffectiveProviders(providers, settings).sort(
     (a, b) => a.effectivePriority - b.effectivePriority,
   );

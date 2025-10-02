@@ -155,4 +155,42 @@ test.describe("Error Handling", () => {
 
     expect(hasPlayerElements).toBe(true);
   });
+
+  test("should remove artwork background when all artwork providers are disabled", async ({
+    page,
+  }) => {
+    // Use custom registry with all artwork providers disabled
+    await injectCustomTestRegistry(page, {
+      artworkProviders: [
+        {
+          id: "itunes",
+          name: "iTunes",
+          description: "Album artwork from iTunes",
+          priority: 1,
+          isEnabled: false, // User disabled
+          isAvailable: true,
+        },
+        {
+          id: "unsplash",
+          name: "Random Images",
+          description: "Random high-quality images",
+          priority: 2,
+          isEnabled: false, // User disabled
+          isAvailable: true,
+        },
+      ],
+    });
+
+    await page.goto("/");
+    await page.setViewportSize({ width: 768, height: 1024 });
+    await page.waitForSelector('[data-testid="player"]');
+
+    // Should still show player and lyrics screen
+    await expect(page.locator('[data-testid="player-controls"]')).toBeVisible();
+    await expect(page.locator('[data-testid="lyrics-screen"]')).toBeVisible();
+
+    // Background artwork should NOT be present when all providers are disabled
+    const artworkBackground = page.locator('[data-testid="lyrics-background"]');
+    await expect(artworkBackground).not.toBeVisible();
+  });
 });

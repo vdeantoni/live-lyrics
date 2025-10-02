@@ -42,10 +42,8 @@ export class UnsplashArtworkProvider implements ArtworkProvider {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     _song: Song,
   ): Promise<string[]> {
-    console.log("[LoremPicsum] getArtwork() called");
     try {
       const imageSize = this.getOptimalImageSize();
-      console.log("[LoremPicsum] Calculated image size:", imageSize);
 
       // Lorem Picsum provides random images by size
       // Adding a random query parameter ensures we get different images each time
@@ -55,7 +53,6 @@ export class UnsplashArtworkProvider implements ArtworkProvider {
       console.log(
         `Fetching Lorem Picsum image at ${imageSize}x${imageSize} (viewport: ${window.innerWidth}x${window.innerHeight}, DPR: ${window.devicePixelRatio})`,
       );
-      console.log("[LoremPicsum] Generated URL:", artworkUrl);
 
       return [artworkUrl];
     } catch (error) {
@@ -73,17 +70,30 @@ export class UnsplashArtworkProvider implements ArtworkProvider {
   }
 
   async isAvailable(): Promise<boolean> {
-    console.log("[LoremPicsum] Checking availability...");
     try {
-      // Test Lorem Picsum availability with a simple HEAD request
-      const response = await fetch(`${this.baseUrl}/100/100`, {
-        method: "HEAD",
-      });
-      const available = response.ok;
-      console.log("[LoremPicsum] Available:", available);
-      return available;
+      // Lorem Picsum doesn't support HEAD requests (returns 405)
+      // Test with a small GET request instead
+      const response = await fetch(
+        `${this.baseUrl}/50/50?random=${Date.now()}`,
+        {
+          method: "GET",
+        },
+      );
+
+      if (!response.ok) {
+        console.warn(
+          `[LoremPicsum] Availability check returned ${response.status}: ${response.statusText}`,
+        );
+        return false;
+      }
+
+      console.log("[LoremPicsum] Provider is available");
+      return true;
     } catch (error) {
-      console.error("[LoremPicsum] Availability check failed:", error);
+      console.error(
+        "[LoremPicsum] Availability check failed:",
+        error instanceof Error ? error.message : String(error),
+      );
       return false;
     }
   }
