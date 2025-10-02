@@ -2,21 +2,22 @@ import { useAtomValue, useSetAtom } from "jotai";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   playerStateAtom,
-  rawLrcContentAtom,
+  lyricsContentAtom,
   lyricsLoadingAtom,
 } from "@/atoms/playerAtoms";
 import { enabledLyricsProvidersAtom } from "@/atoms/appState";
 import { loadLyricsProvider } from "@/config/providers";
+import { normalizeLyricsToEnhanced } from "@/utils/lyricsNormalizer";
 
 /**
  * Hook that fetches lyrics using enabled providers sequentially with individual loading states
  * Uses explicit loading state management via lyricsLoadingAtom
- * Components should use rawLrcContentAtom and lyricsLoadingAtom for state
+ * Components should use lyricsContentAtom and lyricsLoadingAtom for state
  */
 export const useLyricsSync = () => {
   const playerState = useAtomValue(playerStateAtom);
   const enabledLyricsProviders = useAtomValue(enabledLyricsProvidersAtom);
-  const setRawLrcContent = useSetAtom(rawLrcContentAtom);
+  const setLyricsContent = useSetAtom(lyricsContentAtom);
   const setLyricsLoading = useSetAtom(lyricsLoadingAtom);
 
   // Track current provider being tried for UI feedback
@@ -52,7 +53,7 @@ export const useLyricsSync = () => {
 
     // If no providers enabled, clear state
     if (enabledProviderIds.length === 0) {
-      setRawLrcContent("");
+      setLyricsContent("");
       setLyricsLoading(false);
       setCurrentProvider(null);
       return;
@@ -60,7 +61,7 @@ export const useLyricsSync = () => {
 
     // If no song info, don't fetch
     if (!songIdentity.name || !songIdentity.artist) {
-      setRawLrcContent("");
+      setLyricsContent("");
       setLyricsLoading(false);
       setCurrentProvider(null);
       return;
@@ -150,12 +151,14 @@ export const useLyricsSync = () => {
         );
 
         if (!abortController.signal.aborted) {
-          setRawLrcContent(lyrics);
+          // Normalize lyrics to enhanced format before storing
+          const normalizedLyrics = normalizeLyricsToEnhanced(lyrics);
+          setLyricsContent(normalizedLyrics);
         }
       } catch (error) {
         if (!abortController.signal.aborted) {
           console.error("Error fetching lyrics:", error);
-          setRawLrcContent("");
+          setLyricsContent("");
         }
       } finally {
         if (!abortController.signal.aborted) {
@@ -171,7 +174,7 @@ export const useLyricsSync = () => {
       abortController.abort();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [songIdentity, enabledProviderIds, setRawLrcContent, setLyricsLoading]);
+  }, [songIdentity, enabledProviderIds, setLyricsContent, setLyricsLoading]);
 
   // Cleanup on unmount
   useEffect(() => {

@@ -8,19 +8,51 @@
 import type { Player, LyricsProvider, ArtworkProvider } from "@/types";
 
 /**
- * Mock LRC lyrics data for Bohemian Rhapsody - centralized for all tests
+ * Mock lyrics data for Bohemian Rhapsody - centralized for all tests
+ * Provides different formats for testing various lyrics display scenarios
  */
-export const BOHEMIAN_RHAPSODY_LRC = `[00:00.00]Is this the real life?
-[00:15.00]Is this just fantasy?
-[00:30.00]Caught in a landslide
-[00:45.00]No escape from reality
-[01:00.00]Open your eyes
-[01:15.00]Look up to the skies and see
-[01:30.00]I'm just a poor boy, I need no sympathy
-[01:45.00]Because I'm easy come, easy go
-[02:00.00]Little high, little low
-[02:15.00]Any way the wind blows, doesn't really matter to me
-[02:30.00]To me`;
+
+/** Enhanced LRC format with word-level timing */
+export const BOHEMIAN_RHAPSODY_ENHANCED_LRC = `[00:00.00]<00:00.00>Is <00:00.30>this <00:00.50>the <00:00.80>real <00:01.20>life?
+[00:02.00]<00:02.00>Is <00:02.30>this <00:02.50>just <00:02.90>fantasy?
+[00:04.00]<00:04.00>Caught <00:04.40>in <00:04.60>a <00:04.80>landslide
+[00:06.00]<00:06.00>No <00:06.40>escape <00:06.90>from <00:07.20>reality
+[00:08.00]<00:08.00>Open <00:08.40>your <00:08.70>eyes
+[00:10.00]<00:10.00>Look <00:10.30>up <00:10.50>to <00:10.70>the <00:10.90>skies <00:11.30>and <00:11.50>see
+[00:13.00]<00:13.00>I'm <00:13.20>just <00:13.50>a <00:13.70>poor <00:14.10>boy, <00:14.50>I <00:14.70>need <00:15.00>no <00:15.30>sympathy
+[00:17.00]<00:17.00>Because <00:17.50>I'm <00:17.80>easy <00:18.20>come, <00:18.60>easy <00:19.00>go
+[00:20.00]<00:20.00>Little <00:20.40>high, <00:20.80>little <00:21.20>low
+[00:22.00]<00:22.00>Any <00:22.30>way <00:22.60>the <00:22.80>wind <00:23.20>blows, <00:23.70>doesn't <00:24.20>really <00:24.70>matter <00:25.20>to <00:25.50>me
+[00:27.00]<00:27.00>To <00:27.50>me`;
+
+/** Standard LRC format with line-level timing only */
+export const BOHEMIAN_RHAPSODY_NORMAL_LRC = `[00:00.00]Is this the real life?
+[00:02.00]Is this just fantasy?
+[00:04.00]Caught in a landslide
+[00:06.00]No escape from reality
+[00:08.00]Open your eyes
+[00:10.00]Look up to the skies and see
+[00:13.00]I'm just a poor boy, I need no sympathy
+[00:17.00]Because I'm easy come, easy go
+[00:20.00]Little high, little low
+[00:22.00]Any way the wind blows, doesn't really matter to me
+[00:27.00]To me`;
+
+/** Plain text format with no timing information */
+export const BOHEMIAN_RHAPSODY_PLAIN_TEXT = `Is this the real life?
+Is this just fantasy?
+Caught in a landslide
+No escape from reality
+Open your eyes
+Look up to the skies and see
+I'm just a poor boy, I need no sympathy
+Because I'm easy come, easy go
+Little high, little low
+Any way the wind blows, doesn't really matter to me
+To me`;
+
+/** Default export for backward compatibility */
+export const BOHEMIAN_RHAPSODY_LRC = BOHEMIAN_RHAPSODY_ENHANCED_LRC;
 
 /**
  * Test lyrics provider that only returns lyrics for Bohemian Rhapsody

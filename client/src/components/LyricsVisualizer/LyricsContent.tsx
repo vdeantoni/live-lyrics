@@ -57,7 +57,7 @@ const LyricsContent: React.FC = () => {
           }}
           onClick={() => handleLineClick({ ...line, index })}
         >
-          {lyricsData.enhanced && line.words
+          {line.words
             ? line.words.map((word, wordIndex) => (
                 <span key={`${wordIndex}-${word.text}`}>{word.text} </span>
               ))
@@ -339,13 +339,7 @@ const LyricsContent: React.FC = () => {
 
   // Word-level cursor positioning (matching reference implementation)
   useEffect(() => {
-    if (
-      !activeWord ||
-      !activeLine ||
-      !contentRef.current ||
-      !cursorRef.current ||
-      !lyricsData?.enhanced
-    )
+    if (!activeWord || !activeLine || !contentRef.current || !cursorRef.current)
       return;
 
     const activeLineElement = contentRef.current.children[
@@ -363,18 +357,7 @@ const LyricsContent: React.FC = () => {
     cursor.style.top = `${wordElement.offsetTop + wordElement.offsetHeight}px`;
     cursor.style.left = `${wordElement.offsetLeft}px`;
     cursor.style.display = "block";
-  }, [activeWord, activeLine, lyricsData?.enhanced]);
-
-  // Show/hide cursor based on enhanced mode
-  useEffect(() => {
-    if (!cursorRef.current) return;
-
-    if (lyricsData?.enhanced) {
-      cursorRef.current.style.display = "block";
-    } else {
-      cursorRef.current.style.display = "none";
-    }
-  }, [lyricsData?.enhanced]);
+  }, [activeWord, activeLine]);
 
   return (
     <div

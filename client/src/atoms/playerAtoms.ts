@@ -14,7 +14,8 @@ export const playerStateAtom = atom<Song>({
   isPlaying: false,
 });
 
-export const rawLrcContentAtom = atom<string | null>(null);
+// Lyrics content atom (stores normalized enhanced LRC format)
+export const lyricsContentAtom = atom<string | null>(null);
 export const lyricsDataAtom = atom<LyricsData | null>(null);
 export const activeLineAtom = atom<LineData | null>(null);
 export const activeWordAtom = atom<WordData | null>(null);

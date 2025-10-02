@@ -1,5 +1,8 @@
 import { test, Page } from "@playwright/test";
-import { injectTestRegistry } from "../helpers/injectTestRegistry";
+import {
+  injectTestRegistry,
+  injectTestRegistryWithLyricsFormat,
+} from "../helpers/injectTestRegistry";
 
 /**
  * Utility function to wait for app to be ready for screenshots
@@ -282,6 +285,104 @@ test.describe("Visual Regression Tests", () => {
 
     await page.screenshot({
       path: "lost-pixel/loading-screen-mobile.png",
+      fullPage: true,
+    });
+  });
+
+  test("lyrics with enhanced lrc format", async ({ page }) => {
+    await page.setViewportSize({ width: 768, height: 1024 });
+    await injectTestRegistryWithLyricsFormat(page, "enhanced");
+    await page.goto("/");
+
+    await waitForAppReady(page);
+
+    await page.locator('[data-testid="lyrics-screen"]').screenshot({
+      path: "lost-pixel/lyrics-enhanced-lrc.png",
+    });
+  });
+
+  test("lyrics with normal lrc format", async ({ page }) => {
+    await page.setViewportSize({ width: 768, height: 1024 });
+    await injectTestRegistryWithLyricsFormat(page, "normal");
+    await page.goto("/");
+
+    await waitForAppReady(page);
+
+    await page.locator('[data-testid="lyrics-screen"]').screenshot({
+      path: "lost-pixel/lyrics-normal-lrc.png",
+    });
+  });
+
+  test("lyrics with plain text format", async ({ page }) => {
+    await page.setViewportSize({ width: 768, height: 1024 });
+    await injectTestRegistryWithLyricsFormat(page, "plain");
+    await page.goto("/");
+
+    await waitForAppReady(page);
+
+    await page.locator('[data-testid="lyrics-screen"]').screenshot({
+      path: "lost-pixel/lyrics-plain-text.png",
+    });
+  });
+
+  test("lyrics formats landscape comparison", async ({ page }) => {
+    await page.setViewportSize({ width: 1024, height: 768 });
+
+    // Test enhanced LRC in landscape
+    await injectTestRegistryWithLyricsFormat(page, "enhanced");
+    await page.goto("/");
+    await waitForAppReady(page);
+    await page.screenshot({
+      path: "lost-pixel/lyrics-enhanced-landscape.png",
+      fullPage: true,
+    });
+
+    // Test normal LRC in landscape
+    await injectTestRegistryWithLyricsFormat(page, "normal");
+    await page.goto("/");
+    await waitForAppReady(page);
+    await page.screenshot({
+      path: "lost-pixel/lyrics-normal-landscape.png",
+      fullPage: true,
+    });
+
+    // Test plain text in landscape
+    await injectTestRegistryWithLyricsFormat(page, "plain");
+    await page.goto("/");
+    await waitForAppReady(page);
+    await page.screenshot({
+      path: "lost-pixel/lyrics-plain-landscape.png",
+      fullPage: true,
+    });
+  });
+
+  test("lyrics formats mobile comparison", async ({ page }) => {
+    await page.setViewportSize({ width: 320, height: 568 });
+
+    // Test enhanced LRC on mobile
+    await injectTestRegistryWithLyricsFormat(page, "enhanced");
+    await page.goto("/");
+    await waitForAppReady(page);
+    await page.screenshot({
+      path: "lost-pixel/lyrics-enhanced-mobile.png",
+      fullPage: true,
+    });
+
+    // Test normal LRC on mobile
+    await injectTestRegistryWithLyricsFormat(page, "normal");
+    await page.goto("/");
+    await waitForAppReady(page);
+    await page.screenshot({
+      path: "lost-pixel/lyrics-normal-mobile.png",
+      fullPage: true,
+    });
+
+    // Test plain text on mobile
+    await injectTestRegistryWithLyricsFormat(page, "plain");
+    await page.goto("/");
+    await waitForAppReady(page);
+    await page.screenshot({
+      path: "lost-pixel/lyrics-plain-mobile.png",
       fullPage: true,
     });
   });
