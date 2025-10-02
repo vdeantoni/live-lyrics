@@ -4,8 +4,8 @@ import { renderWithProviders } from "../helpers/testUtils";
 import LyricsScreen from "@/components/Player/LyricsScreen";
 
 // Mock the child components
-vi.mock("@/components/LyricsVisualizer/LyricsProvider", () => ({
-  default: () => <div data-testid="lyrics-provider">Lyrics Provider</div>,
+vi.mock("@/components/LyricsVisualizer/LyricsManager", () => ({
+  default: () => <div data-testid="lyrics-manager">Lyrics Manager</div>,
 }));
 
 // Mock the useArtworkSync hook
@@ -22,14 +22,14 @@ describe("LyricsScreen", () => {
     await renderWithProviders(<LyricsScreen />);
 
     expect(screen.getByTestId("lyrics-screen")).toBeInTheDocument();
-    expect(screen.getByTestId("lyrics-provider")).toBeInTheDocument();
+    expect(screen.getByTestId("lyrics-manager")).toBeInTheDocument();
   });
 
   it("renders when no song is playing", async () => {
     await renderWithProviders(<LyricsScreen />);
 
     expect(screen.getByTestId("lyrics-screen")).toBeInTheDocument();
-    expect(screen.getByTestId("lyrics-provider")).toBeInTheDocument();
+    expect(screen.getByTestId("lyrics-manager")).toBeInTheDocument();
   });
 
   it("handles loading artwork state", async () => {
