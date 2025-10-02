@@ -69,7 +69,7 @@ export function normalizeLyricsToEnhanced(lyrics: string): string {
 
 /**
  * Convert Normal LRC to Enhanced LRC by adding word-level timing
- * Strategy: Add a single word timestamp at the beginning matching the line timestamp
+ * Strategy: Split text into words and add the same timestamp for each word
  */
 function normalizeNormalLrcToEnhanced(lyrics: string): string {
   const lines = lyrics.split("\n");
@@ -85,17 +85,27 @@ function normalizeNormalLrcToEnhanced(lyrics: string): string {
       }
 
       const timestamp = timestampMatch[1];
-      const textAfterTimestamp = line.slice(timestampMatch[0].length);
+      const textAfterTimestamp = line.slice(timestampMatch[0].length).trim();
 
-      // Add word-level timestamp at the start of the text
-      return `[${timestamp}]<${timestamp}>${textAfterTimestamp}`;
+      if (!textAfterTimestamp) {
+        // Empty line, just return the timestamp
+        return line;
+      }
+
+      // Split text into words and add timestamp for each word
+      const words = textAfterTimestamp.split(/\s+/);
+      const enhancedWords = words
+        .map((word) => `<${timestamp}>${word}`)
+        .join(" ");
+
+      return `[${timestamp}]${enhancedWords}`;
     })
     .join("\n");
 }
 
 /**
  * Convert plain text to Enhanced LRC by adding synthetic timestamps
- * Strategy: Add timestamps at 2-second intervals with word-level timing
+ * Strategy: Add timestamps at 2-second intervals with word-level timing for each word
  */
 function normalizePlainTextToEnhanced(text: string): string {
   const lines = text.split("\n").filter((line) => line.trim() !== "");
@@ -108,8 +118,13 @@ function normalizePlainTextToEnhanced(text: string): string {
       const remainingSeconds = seconds % 60;
       const timestamp = `${minutes.toString().padStart(2, "0")}:${remainingSeconds.toString().padStart(2, "0")}.00`;
 
-      // Add both line and word-level timing
-      return `[${timestamp}]<${timestamp}>${line.trim()}`;
+      // Split text into words and add timestamp for each word
+      const words = line.trim().split(/\s+/);
+      const enhancedWords = words
+        .map((word) => `<${timestamp}>${word}`)
+        .join(" ");
+
+      return `[${timestamp}]${enhancedWords}`;
     })
     .join("\n");
 }
