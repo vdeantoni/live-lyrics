@@ -127,20 +127,36 @@ export const renderWithAtomMocks = (
 ) => {
   const { withQueryClient = true, ...renderOptions } = options;
 
-  // Component to hydrate atoms with mock values
+  // Component to set a single atom value
+  const AtomSetter: React.FC<{ atom: Atom<unknown>; value: unknown }> = ({
+    atom,
+    value,
+  }) => {
+    const setAtom = useSetAtom(atom);
+    React.useEffect(() => {
+      setAtom(value as never);
+    }, [setAtom, value]);
+    return null;
+  };
+
+  // Component to hydrate all atoms with mock values
   const AtomHydrator: React.FC<{ children: React.ReactNode }> = ({
     children,
   }) => {
-    // Set all atom values on mount
-    atomMocks.forEach((value, atom) => {
-      // eslint-disable-next-line react-hooks/rules-of-hooks
-      const setAtom = useSetAtom(atom);
-      React.useEffect(() => {
-        setAtom(value as never);
-      }, [setAtom]);
-    });
+    // Convert Map to array for stable iteration
+    const atomEntries = React.useMemo(
+      () => Array.from(atomMocks.entries()),
+      [],
+    );
 
-    return <>{children}</>;
+    return (
+      <>
+        {atomEntries.map(([atom, value], index) => (
+          <AtomSetter key={index} atom={atom} value={value} />
+        ))}
+        {children}
+      </>
+    );
   };
 
   const Wrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => {

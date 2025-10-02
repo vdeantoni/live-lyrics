@@ -7,7 +7,7 @@ import { useLyricsSync } from "@/hooks/useLyricsSync";
 import { useAtomValue, useSetAtom } from "jotai";
 import {
   playerStateAtom,
-  rawLrcContentAtom,
+  lyricsContentAtom,
   lyricsDataAtom,
   activeLineAtom,
   activeWordAtom,
@@ -19,7 +19,7 @@ const LyricsProvider = () => {
   // Read data from atoms
   const playerState = useAtomValue(playerStateAtom);
   const { currentTime = 0, name, artist } = playerState || {};
-  const rawLrcContent = useAtomValue(rawLrcContentAtom);
+  const lyricsContent = useAtomValue(lyricsContentAtom);
   const lyricsLoading = useAtomValue(lyricsLoadingAtom);
   const enabledLyricsProviders = useAtomValue(enabledLyricsProvidersAtom);
 
@@ -42,13 +42,13 @@ const LyricsProvider = () => {
 
   // Delay showing "No Lyrics Found" to prevent flash during source switches
   useEffect(() => {
-    if (!lyricsLoading && (!rawLrcContent || rawLrcContent.trim() === "")) {
+    if (!lyricsLoading && (!lyricsContent || lyricsContent.trim() === "")) {
       const timer = setTimeout(() => setShowNoLyrics(true), 500); // 500ms delay
       return () => clearTimeout(timer);
     } else {
       setShowNoLyrics(false);
     }
-  }, [lyricsLoading, rawLrcContent, setShowNoLyrics]);
+  }, [lyricsLoading, lyricsContent, setShowNoLyrics]);
 
   // Initialize liricle when LRC content is available
   useEffect(() => {
@@ -56,7 +56,7 @@ const LyricsProvider = () => {
     setActiveLine(null);
     setActiveWord(null);
 
-    if (!rawLrcContent) {
+    if (!lyricsContent) {
       setLyricsData(null);
       return;
     }
@@ -76,7 +76,7 @@ const LyricsProvider = () => {
     });
 
     // Load the raw LRC content directly
-    liricle.load({ text: rawLrcContent });
+    liricle.load({ text: lyricsContent });
 
     return () => {
       liricleRef.current = null;
@@ -84,7 +84,7 @@ const LyricsProvider = () => {
       setActiveLine(null);
       setActiveWord(null);
     };
-  }, [rawLrcContent, setLyricsData, setActiveLine, setActiveWord]);
+  }, [lyricsContent, setLyricsData, setActiveLine, setActiveWord]);
 
   // Sync with current time
   useEffect(() => {

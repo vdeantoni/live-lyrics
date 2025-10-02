@@ -1,5 +1,8 @@
 import { test, expect } from "@playwright/test";
-import { injectTestRegistry } from "../helpers/injectTestRegistry";
+import {
+  injectTestRegistry,
+  injectCustomTestRegistry,
+} from "../helpers/injectTestRegistry";
 
 test.describe("Lyrics Display", () => {
   test.beforeEach(async ({ page }) => {
@@ -257,111 +260,36 @@ test.describe("Lyrics Display", () => {
     });
 
     test("should handle no lyrics state gracefully", async ({ page }) => {
-      // Set up no-lyrics providers BEFORE navigation (skip global injectTestRegistry)
-      await page.addInitScript(() => {
-        // Wait for provider API to be available
-        const waitForProviderAPI = () => {
-          return new Promise<void>((resolve) => {
-            let attempts = 0;
-            const maxAttempts = 50;
-
-            const checkForAPI = () => {
-              attempts++;
-              const providerRegistryAPI = (
-                window as Window & { providerRegistryAPI?: unknown }
-              ).providerRegistryAPI;
-              if (providerRegistryAPI) {
-                console.log(
-                  "[NoLyricsTest] Provider API found, setting up no-lyrics providers",
-                );
-
-                // Replace with providers that return no lyrics
-                providerRegistryAPI.replaceAll({
-                  lyricsProviders: [
-                    {
-                      id: "no-lyrics",
-                      name: "No Lyrics Provider",
-                      description: "Provider that returns no lyrics",
-                      load: async () => ({
-                        getId: () => "no-lyrics",
-                        getName: () => "No Lyrics Provider",
-                        getDescription: () => "Provider that returns no lyrics",
-                        isAvailable: async () => true,
-                        supportsLyrics: async () => true, // Support the song but return no lyrics
-                        getLyrics: async () => {
-                          console.log(
-                            "[NoLyricsTest] getLyrics called - returning null",
-                          );
-                          return null; // Always return no lyrics
-                        },
-                      }),
-                    },
-                  ],
-                  artworkProviders: [
-                    {
-                      id: "itunes",
-                      name: "iTunes",
-                      description: "iTunes Search API",
-                      load: async () => ({
-                        getId: () => "itunes",
-                        getName: () => "iTunes",
-                        getDescription: () => "iTunes Search API",
-                        isAvailable: async () => true,
-                        getArtwork: async () => [],
-                      }),
-                    },
-                  ],
-                  players: [
-                    {
-                      id: "local",
-                      name: "Local",
-                      description: "Local player",
-                      load: async () => ({
-                        getId: () => "local",
-                        getName: () => "Local",
-                        getDescription: () => "Local player",
-                        isAvailable: async () => true,
-                        getSong: async () => ({
-                          name: "Bohemian Rhapsody",
-                          artist: "Queen",
-                          album: "A Night at the Opera",
-                          duration: 355,
-                          currentTime: 0,
-                          isPlaying: false,
-                        }),
-                        play: async () => {},
-                        pause: async () => {},
-                        seek: async () => {},
-                      }),
-                    },
-                  ],
-                });
-
-                console.log(
-                  "[NoLyricsTest] No-lyrics providers setup completed",
-                );
-                resolve();
-              } else if (attempts < maxAttempts) {
-                setTimeout(checkForAPI, 100);
-              } else {
-                console.error(
-                  "[NoLyricsTest] Failed to find provider API after max attempts",
-                );
-                resolve(); // Continue anyway
-              }
-            };
-            checkForAPI();
-          });
-        };
-
-        waitForProviderAPI().catch(console.error);
+      // Use injectCustomTestRegistry with all lyrics providers disabled
+      await injectCustomTestRegistry(page, {
+        lyricsProviders: [], // No lyrics providers = no lyrics available
+        artworkProviders: [
+          {
+            id: "itunes",
+            name: "Test iTunes",
+            description: "Test artwork provider (no artwork)",
+            isEnabled: true,
+            isAvailable: true,
+          },
+        ],
+        players: [
+          {
+            id: "local",
+            name: "Local",
+            description: "Local test player",
+            isEnabled: true,
+            isAvailable: true,
+          },
+        ],
       });
 
       await page.goto("/");
       await page.setViewportSize({ width: 768, height: 1024 });
 
       // Wait for lyrics system to process and show no-lyrics state
-      await page.waitForSelector('[data-testid="no-lyrics"]');
+      await page.waitForSelector('[data-testid="no-lyrics"]', {
+        timeout: 10000,
+      });
       await expect(page.getByText("No Lyrics Found")).toBeVisible();
 
       // Player should still be visible and functional

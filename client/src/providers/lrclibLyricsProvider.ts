@@ -1,5 +1,6 @@
 import type { Song } from "@/types";
 import type { LyricsProvider } from "@/types";
+import { isEnhancedLrc } from "@/utils/lyricsNormalizer";
 
 interface LRCLibTrack {
   id: number;
@@ -62,13 +63,13 @@ export class LrclibLyricsProvider implements LyricsProvider {
 
     // Categorize tracks by lyrics type
     const enhancedLrcTracks = tracksWithLyrics.filter((track) =>
-      this.isEnhancedLrc(track.syncedLyrics),
+      isEnhancedLrc(track.syncedLyrics),
     );
     const regularLrcTracks = tracksWithLyrics.filter(
       (track) =>
         track.syncedLyrics &&
         track.syncedLyrics.trim() &&
-        !this.isEnhancedLrc(track.syncedLyrics),
+        !isEnhancedLrc(track.syncedLyrics),
     );
     const plainTextTracks = tracksWithLyrics.filter(
       (track) =>
@@ -128,23 +129,6 @@ export class LrclibLyricsProvider implements LyricsProvider {
   }
 
   /**
-   * Detect if lyrics contain Enhanced LRC features (word-level timing)
-   */
-  private isEnhancedLrc(lyrics: string | null): boolean {
-    if (!lyrics) return false;
-
-    // Enhanced LRC typically has word-level timing markers like <00:10.50>
-    // or multiple timestamps per line
-    const wordTimingPattern = /<\d{2}:\d{2}\.\d{2}>/;
-    const multipleTimestampsPerLine =
-      /\[\d{2}:\d{2}\.\d{2}\].*\[\d{2}:\d{2}\.\d{2}\]/;
-
-    return (
-      wordTimingPattern.test(lyrics) || multipleTimestampsPerLine.test(lyrics)
-    );
-  }
-
-  /**
    * Count the number of lyric lines (excluding metadata and empty lines)
    */
   private countLrcLines(lyrics: string): number {
@@ -178,7 +162,7 @@ export class LrclibLyricsProvider implements LyricsProvider {
    */
   private getLyricsType(track: LRCLibTrack): string {
     if (track.syncedLyrics && track.syncedLyrics.trim()) {
-      return this.isEnhancedLrc(track.syncedLyrics) ? "Enhanced LRC" : "synced";
+      return isEnhancedLrc(track.syncedLyrics) ? "Enhanced LRC" : "synced";
     }
     return "plain text";
   }

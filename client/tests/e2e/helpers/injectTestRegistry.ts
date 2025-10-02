@@ -10,6 +10,7 @@ interface CustomProviderConfig {
   priority?: number;
   isEnabled: boolean;
   isAvailable: boolean;
+  lyricsFormat?: LyricsFormat; // Optional: specify lyrics format for testing
 }
 
 interface CustomTestRegistryConfig {
@@ -17,6 +18,49 @@ interface CustomTestRegistryConfig {
   artworkProviders?: CustomProviderConfig[];
   players?: CustomProviderConfig[];
 }
+
+/**
+ * Lyrics format types for testing different scenarios
+ */
+export type LyricsFormat = "enhanced" | "normal" | "plain";
+
+/**
+ * Get lyrics content based on format type
+ */
+const getLyricsForFormat = (format: LyricsFormat): string => {
+  // Enhanced LRC with word-level timing
+  const enhancedLrc = `[00:00.00]<00:00.00>Test <00:00.30>line <00:00.50>one <00:00.80>with <00:01.20>words
+[00:02.00]<00:02.00>Test <00:02.30>line <00:02.50>two <00:02.90>here
+[00:04.00]<00:04.00>Test <00:04.40>line <00:04.60>three <00:04.80>now
+[00:06.00]<00:06.00>Test <00:06.40>line <00:06.90>four <00:07.20>today
+[00:08.00]<00:08.00>Test <00:08.40>line <00:08.70>five
+[00:10.00]<00:10.00>Test <00:10.30>line <00:10.50>six <00:10.70>more <00:10.90>words <00:11.30>here`;
+
+  // Normal LRC with line-level timing only
+  const normalLrc = `[00:00.00]Test line one with words
+[00:02.00]Test line two here
+[00:04.00]Test line three now
+[00:06.00]Test line four today
+[00:08.00]Test line five
+[00:10.00]Test line six more words here`;
+
+  // Plain text with no timing
+  const plainText = `Test line one with words
+Test line two here
+Test line three now
+Test line four today
+Test line five
+Test line six more words here`;
+
+  switch (format) {
+    case "enhanced":
+      return enhancedLrc;
+    case "normal":
+      return normalLrc;
+    case "plain":
+      return plainText;
+  }
+};
 
 /**
  * Default test registry configuration
@@ -96,17 +140,11 @@ const injectProviderRegistry = async (
         if (!providerConfig.isAvailable) return null;
         if (song.name === "Bohemian Rhapsody" && song.artist === "Queen") {
           debugLog(`${providerConfig.name} returning Bohemian Rhapsody lyrics`);
-          return `[00:00.00]Is this the real life?
-[00:15.00]Is this just fantasy?
-[00:30.00]Caught in a landslide
-[00:45.00]No escape from reality
-[01:00.00]Open your eyes
-[01:15.00]Look up to the skies and see
-[01:30.00]I'm just a poor boy, I need no sympathy
-[01:45.00]Because I'm easy come, easy go
-[02:00.00]Little high, little low
-[02:15.00]Any way the wind blows, doesn't really matter to me
-[02:30.00]To me`;
+          // Use format from window global (set by injectTestRegistryWithLyricsFormat)
+          const format =
+            (window as Window & { __TEST_LYRICS_FORMAT__?: string })
+              .__TEST_LYRICS_FORMAT__ || "enhanced";
+          return getLyricsForFormat(format);
         }
         debugLog(`${providerConfig.name} no lyrics found for song:`, {
           name: song.name,
@@ -431,4 +469,21 @@ export const injectCustomTestRegistry = async (
   config: CustomTestRegistryConfig,
 ) => {
   await injectProviderRegistry(page, config);
+};
+
+/**
+ * Inject test registry with a specific lyrics format
+ * Useful for visual regression testing of different lyrics display modes
+ */
+export const injectTestRegistryWithLyricsFormat = async (
+  page: Page,
+  format: LyricsFormat,
+) => {
+  await page.addInitScript((formatStr: string) => {
+    (
+      window as Window & { __TEST_LYRICS_FORMAT__?: string }
+    ).__TEST_LYRICS_FORMAT__ = formatStr;
+  }, format);
+
+  await injectProviderRegistry(page, getDefaultConfig());
 };

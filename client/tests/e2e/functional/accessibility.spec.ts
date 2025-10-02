@@ -150,6 +150,9 @@ test.describe("Keyboard Navigation and Accessibility", () => {
   test("should support screen reader navigation patterns", async ({ page }) => {
     await page.setViewportSize({ width: 768, height: 1024 });
 
+    // Wait for loading screen to complete and main app to render
+    await page.waitForSelector('[data-testid="player"]', { timeout: 10000 });
+
     // Check that main content areas have proper landmark roles or structure
     const main = page.locator('main, [role="main"], #root');
     await expect(main).toBeVisible();
