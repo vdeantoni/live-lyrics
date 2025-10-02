@@ -52,6 +52,18 @@ export const BUILTIN_PROVIDER_CONFIGS = {
         return new ITunesArtworkProvider();
       },
     },
+    unsplash: {
+      id: "unsplash",
+      name: "Unsplash",
+      description:
+        "Random high-quality images based on song mood and time of day",
+      load: async (): Promise<ArtworkProvider> => {
+        const { UnsplashArtworkProvider } = await import(
+          "@/providers/unsplashArtworkProvider"
+        );
+        return new UnsplashArtworkProvider();
+      },
+    },
   },
 } as const;
 
