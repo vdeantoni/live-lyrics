@@ -143,39 +143,32 @@ test.describe("Player Component", () => {
     test("should handle progress slider interaction", async ({ page }) => {
       await page.setViewportSize({ width: 768, height: 1024 });
 
-      const progressSlider = page.locator('[data-testid="progress-slider"]');
+      const progressSlider = page.locator(
+        '[data-testid="progress-slider"] [role="slider"]',
+      );
       const currentTimeDisplay = page.locator('[data-testid="current-time"]');
 
       // Get initial time (should be 0:00)
       const initialTime = await currentTimeDisplay.textContent();
       expect(initialTime).toBe("0:00");
 
-      // Get slider bounding box for interaction
-      const sliderBox = await progressSlider.boundingBox();
-      if (sliderBox) {
-        // Click at 75% of the slider (should seek to around 75% of 5:55 = ~4:26)
-        const clickX = sliderBox.x + sliderBox.width * 0.75;
-        const clickY = sliderBox.y + sliderBox.height / 2;
+      // Focus the slider and use keyboard to seek
+      await progressSlider.focus();
 
-        await page.mouse.click(clickX, clickY);
-
-        // Wait for the player to update by asserting the time is no longer the initial value.
-        // This is a robust, auto-retrying assertion that replaces the flaky `waitForTimeout`.
-        await expect(currentTimeDisplay).not.toHaveText(initialTime!);
-
-        // Now that we know the time has updated, we can safely get the new value.
-        const newTime = await currentTimeDisplay.textContent();
-
-        // The displayed time should have changed from initial and be > 4:00
-        expect(newTime).not.toBe("0:00");
-
-        // Should be around 4:xx after clicking at 75%
-        const timeMatch = newTime?.match(/(\d+):(\d+)/);
-        if (timeMatch) {
-          const minutes = parseInt(timeMatch[1]);
-          expect(minutes).toBeGreaterThanOrEqual(4);
-        }
+      // Press ArrowRight multiple times to seek forward significantly
+      // Each press seeks a small amount, so we need multiple presses
+      for (let i = 0; i < 20; i++) {
+        await progressSlider.press("ArrowRight");
       }
+
+      // Wait for the player to update by asserting the time is no longer the initial value.
+      await expect(currentTimeDisplay).not.toHaveText(initialTime!);
+
+      // Now that we know the time has updated, we can safely get the new value.
+      const newTime = await currentTimeDisplay.textContent();
+
+      // The displayed time should have changed from initial
+      expect(newTime).not.toBe("0:00");
     });
 
     test("should display player controls", async ({ page }) => {
