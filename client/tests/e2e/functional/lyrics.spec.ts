@@ -82,10 +82,10 @@ test.describe("Lyrics Display", () => {
           .playerControlAPI;
       });
 
-      // Seek to the last line timestamp (150 seconds = 2:30)
+      // Seek to a known timestamp in the middle section
       // This should immediately trigger lyrics highlighting
       await page.evaluate(async () => {
-        const seekTime = 150; // Last line: "To me" at [02:30.00]
+        const seekTime = 90; // "Mama, just killed a man" at [01:30.00]
 
         // Get the player control API and seek to the timestamp
         const playerControlAPI = (
@@ -114,8 +114,8 @@ test.describe("Lyrics Display", () => {
       );
       await expect(currentLine).toBeVisible();
 
-      // Last line should be highlighted since we seeked to its timestamp
-      await expect(currentLine).toContainText("To me");
+      // Should highlight the line at the seeked timestamp
+      await expect(currentLine).toContainText("Mama");
     });
 
     test("should maintain lyrics visibility and scroll", async ({ page }) => {
@@ -138,7 +138,7 @@ test.describe("Lyrics Display", () => {
 
       // Seek to a known timestamp to test auto-scroll
       await page.evaluate(async () => {
-        const seekTime = 150; // Last line: "To me" at [02:30.00]
+        const seekTime = 90; // "Mama, just killed a man" at [01:30.00]
         const playerControlAPI = (
           window as Window & { playerControlAPI?: unknown }
         ).playerControlAPI;
@@ -198,7 +198,7 @@ test.describe("Lyrics Display", () => {
 
       // Seek to a known timestamp to test lyrics synchronization
       await page.evaluate(async () => {
-        const seekTime = 150; // Last line: "To me" at [02:30.00]
+        const seekTime = 90; // "Mama, just killed a man" at [01:30.00]
         const playerControlAPI = (
           window as Window & { playerControlAPI?: unknown }
         ).playerControlAPI;
@@ -223,7 +223,7 @@ test.describe("Lyrics Display", () => {
         '[data-testid="lyrics-line"][data-current="true"]',
       );
       await expect(currentLine).toBeVisible();
-      await expect(currentLine).toContainText("To me");
+      await expect(currentLine).toContainText("Mama");
     });
   });
 

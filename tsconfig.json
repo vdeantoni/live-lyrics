@@ -1,7 +1,8 @@
 {
   "compilerOptions": {
     "composite": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "noEmit": true
   },
   "files": [],
   "references": [
