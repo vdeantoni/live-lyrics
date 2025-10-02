@@ -293,3 +293,345 @@ export const injectTestRegistry = async (page: Page) => {
     });
   });
 };
+
+/**
+ * Custom provider configuration for error handling tests
+ */
+interface CustomProviderConfig {
+  id: string;
+  name: string;
+  description: string;
+  priority?: number;
+  isEnabled: boolean;
+  isAvailable: boolean;
+}
+
+interface CustomTestRegistryConfig {
+  lyricsProviders?: CustomProviderConfig[];
+  artworkProviders?: CustomProviderConfig[];
+  players?: CustomProviderConfig[];
+}
+
+/**
+ * Inject a custom test registry with configurable provider availability and enabled states
+ * This is useful for testing error scenarios and provider fallback behavior
+ */
+export const injectCustomTestRegistry = async (
+  page: Page,
+  config: CustomTestRegistryConfig,
+) => {
+  await page.addInitScript((configStr: string) => {
+    const config = JSON.parse(configStr) as CustomTestRegistryConfig;
+
+    const debugLog = (message: string, data?: unknown) => {
+      console.log(`[CustomTestRegistry] ${message}`, data || "");
+    };
+
+    const waitForProviderAPI = () => {
+      return new Promise<void>((resolve, reject) => {
+        let attempts = 0;
+        const maxAttempts = 50;
+
+        const checkForAPI = () => {
+          attempts++;
+
+          if (typeof window !== "undefined") {
+            Promise.resolve().then(async () => {
+              try {
+                const providerRegistryAPI = window["providerRegistryAPI"];
+                if (!providerRegistryAPI) {
+                  throw new Error("providerRegistryAPI is undefined");
+                }
+
+                debugLog(
+                  "providerRegistryAPI found, setting up custom registry",
+                );
+
+                // Create singleton-like test player state
+                const testPlayerState = {
+                  currentTime: 0,
+                  isPlaying: false,
+                  startTime: 0,
+                };
+
+                // Helper to create lyrics provider with custom availability
+                const createCustomLyricsProvider = (
+                  providerConfig: CustomProviderConfig,
+                ) => ({
+                  getId: () => providerConfig.id,
+                  getName: () => providerConfig.name,
+                  getDescription: () => providerConfig.description,
+                  isAvailable: () =>
+                    Promise.resolve(providerConfig.isAvailable),
+                  isFetching: () => Promise.resolve(false),
+                  supportsLyrics: async (song: {
+                    name: string;
+                    artist: string;
+                    album?: string;
+                  }) => {
+                    if (!providerConfig.isAvailable) return false;
+                    return (
+                      song.name === "Bohemian Rhapsody" &&
+                      song.artist === "Queen"
+                    );
+                  },
+                  getLyrics: async (song: {
+                    name: string;
+                    artist: string;
+                    album?: string;
+                  }) => {
+                    if (!providerConfig.isAvailable) return null;
+                    if (
+                      song.name === "Bohemian Rhapsody" &&
+                      song.artist === "Queen"
+                    ) {
+                      return `[00:00.00]Is this the real life?
+[00:15.00]Is this just fantasy?
+[00:30.00]Caught in a landslide
+[00:45.00]No escape from reality
+[01:00.00]Open your eyes
+[01:15.00]Look up to the skies and see
+[01:30.00]I'm just a poor boy, I need no sympathy
+[01:45.00]Because I'm easy come, easy go
+[02:00.00]Little high, little low
+[02:15.00]Any way the wind blows, doesn't really matter to me
+[02:30.00]To me`;
+                    }
+                    return null;
+                  },
+                });
+
+                // Helper to create artwork provider with custom availability
+                const createCustomArtworkProvider = (
+                  providerConfig: CustomProviderConfig,
+                ) => ({
+                  getId: () => providerConfig.id,
+                  getName: () => providerConfig.name,
+                  getDescription: () => providerConfig.description,
+                  isAvailable: () =>
+                    Promise.resolve(providerConfig.isAvailable),
+                  isFetching: () => Promise.resolve(false),
+                  getArtwork: async () => {
+                    if (!providerConfig.isAvailable) return [];
+                    return [];
+                  },
+                });
+
+                // Helper to create player with custom availability
+                const createCustomPlayerProvider = (
+                  providerConfig: CustomProviderConfig,
+                ) => ({
+                  getId: () => providerConfig.id,
+                  getName: () => providerConfig.name,
+                  getDescription: () => providerConfig.description,
+                  isAvailable: () =>
+                    Promise.resolve(providerConfig.isAvailable),
+                  getSong: async () => {
+                    if (!providerConfig.isAvailable) return null;
+
+                    if (testPlayerState.isPlaying) {
+                      const now = Date.now();
+                      testPlayerState.currentTime = Math.min(
+                        (now - testPlayerState.startTime) / 1000,
+                        355,
+                      );
+                    }
+
+                    return {
+                      name: "Bohemian Rhapsody",
+                      artist: "Queen",
+                      album: "A Night at the Opera",
+                      duration: 355,
+                      currentTime: testPlayerState.currentTime,
+                      isPlaying: testPlayerState.isPlaying,
+                    };
+                  },
+                  play: async () => {
+                    testPlayerState.isPlaying = true;
+                    testPlayerState.startTime =
+                      Date.now() - testPlayerState.currentTime * 1000;
+                  },
+                  pause: async () => {
+                    testPlayerState.isPlaying = false;
+                  },
+                  seek: async (time: number) => {
+                    testPlayerState.currentTime = Math.max(
+                      0,
+                      Math.min(time, 355),
+                    );
+                    if (testPlayerState.isPlaying) {
+                      testPlayerState.startTime = Date.now() - time * 1000;
+                    }
+                  },
+                });
+
+                // Build provider arrays from config
+                const lyricsProviders =
+                  config.lyricsProviders?.map((providerConfig) => ({
+                    id: providerConfig.id,
+                    name: providerConfig.name,
+                    description: providerConfig.description,
+                    load: async () => {
+                      debugLog(
+                        `Loading custom ${providerConfig.name} provider (available: ${providerConfig.isAvailable})`,
+                      );
+                      return createCustomLyricsProvider(providerConfig);
+                    },
+                  })) || [];
+
+                const artworkProviders =
+                  config.artworkProviders?.map((providerConfig) => ({
+                    id: providerConfig.id,
+                    name: providerConfig.name,
+                    description: providerConfig.description,
+                    load: async () => {
+                      debugLog(
+                        `Loading custom ${providerConfig.name} provider (available: ${providerConfig.isAvailable})`,
+                      );
+                      return createCustomArtworkProvider(providerConfig);
+                    },
+                  })) || [];
+
+                const players =
+                  config.players?.map((providerConfig) => ({
+                    id: providerConfig.id,
+                    name: providerConfig.name,
+                    description: providerConfig.description,
+                    load: async () => {
+                      debugLog(
+                        `Loading custom ${providerConfig.name} player (available: ${providerConfig.isAvailable})`,
+                      );
+                      return createCustomPlayerProvider(providerConfig);
+                    },
+                  })) || [];
+
+                // Replace all providers
+                debugLog("Replacing providers with custom configuration");
+                providerRegistryAPI.replaceAll({
+                  players:
+                    players.length > 0
+                      ? players
+                      : [
+                          {
+                            id: "local",
+                            name: "Local",
+                            description: "Local test player",
+                            load: async () => {
+                              return createCustomPlayerProvider({
+                                id: "local",
+                                name: "Local",
+                                description: "Local test player",
+                                isEnabled: true,
+                                isAvailable: true,
+                              });
+                            },
+                          },
+                        ],
+                  lyricsProviders:
+                    lyricsProviders.length > 0
+                      ? lyricsProviders
+                      : [
+                          {
+                            id: "lrclib",
+                            name: "Test LrcLib",
+                            description: "Test lyrics provider",
+                            load: async () => {
+                              return createCustomLyricsProvider({
+                                id: "lrclib",
+                                name: "Test LrcLib",
+                                description: "Test lyrics provider",
+                                isEnabled: true,
+                                isAvailable: true,
+                              });
+                            },
+                          },
+                        ],
+                  artworkProviders:
+                    artworkProviders.length > 0
+                      ? artworkProviders
+                      : [
+                          {
+                            id: "itunes",
+                            name: "Test iTunes",
+                            description: "Test artwork provider",
+                            load: async () => {
+                              return createCustomArtworkProvider({
+                                id: "itunes",
+                                name: "Test iTunes",
+                                description: "Test artwork provider",
+                                isEnabled: true,
+                                isAvailable: true,
+                              });
+                            },
+                          },
+                        ],
+                });
+
+                // Set up provider settings based on config
+                try {
+                  const settings = {
+                    enabledLyricsProviders:
+                      config.lyricsProviders
+                        ?.filter((p) => p.isEnabled)
+                        .map((p) => p.id) || [],
+                    enabledArtworkProviders:
+                      config.artworkProviders
+                        ?.filter((p) => p.isEnabled)
+                        .map((p) => p.id) || [],
+                    lyricsProviderOrder:
+                      config.lyricsProviders?.map((p) => p.id) || [],
+                    artworkProviderOrder:
+                      config.artworkProviders?.map((p) => p.id) || [],
+                  };
+
+                  debugLog("Setting custom provider settings", settings);
+                  localStorage.setItem(
+                    "LIVE_LYRICS_APP_PROVIDER_SETTINGS",
+                    JSON.stringify(settings),
+                  );
+                } catch (settingsError) {
+                  debugLog(
+                    "Warning: Could not set custom settings:",
+                    settingsError,
+                  );
+                }
+
+                debugLog("Custom test registry setup completed");
+                resolve();
+              } catch (error) {
+                debugLog("Error loading provider API:", error);
+                if (attempts < maxAttempts) {
+                  setTimeout(checkForAPI, 100);
+                } else {
+                  reject(
+                    new Error(
+                      `Failed to load provider API after ${maxAttempts} attempts: ${error}`,
+                    ),
+                  );
+                }
+              }
+            });
+          } else {
+            if (attempts < maxAttempts) {
+              setTimeout(checkForAPI, 100);
+            } else {
+              reject(
+                new Error("Window object not available after max attempts"),
+              );
+            }
+          }
+        };
+
+        checkForAPI();
+      });
+    };
+
+    waitForProviderAPI().catch((error) => {
+      console.error(
+        "[CustomTestRegistry] Failed to inject custom test registry:",
+        error,
+      );
+      (window as Record<string, unknown>).__TEST_REGISTRY_FAILED__ = true;
+    });
+  }, JSON.stringify(config));
+};

@@ -37,7 +37,18 @@ You can run any pnpm command from the root directory by using the `--filter` opt
 
 ### Testing commands:
 
-#### Unit & Integration Tests (Vitest)
+#### Server Unit Tests (Vitest)
+- `cd server && pnpm test`: Run Vitest tests once
+- `cd server && pnpm test:watch`: Run Vitest tests in watch mode
+- `cd server && pnpm test:coverage`: Generate coverage reports
+- `pnpm --filter=server run test`: Run server tests from root
+
+**Running Single Tests**:
+- Run specific test file: `cd server && npx vitest tests/unit/routes.test.ts`
+- Run tests matching pattern: `cd server && npx vitest --reporter=verbose --run routes`
+- Run with coverage: `cd server && npx vitest --coverage`
+
+#### Client Unit & Integration Tests (Vitest)
 - `cd client && pnpm test`: Run Vitest tests once
 - `cd client && pnpm test:watch`: Run Vitest tests in watch mode
 - `cd client && pnpm test:ui`: Open Vitest UI
@@ -97,6 +108,7 @@ Both client and server compile to `dist/` directories:
   - `GET /music`: Returns current song info (name, artist, album, currentTime, duration, playerState)
   - `POST /music`: Controls playback (play/pause, seek)
 - **Build**: TypeScript compiles `src/` → `dist/` with `rootDir` and `outDir` configuration
+- **Testing**: Vitest with mocked `execFile` for unit testing routes and utilities
 
 ### Client (client/)
 
@@ -259,8 +271,23 @@ Tests are organized in structured directories:
 - `client/tests/e2e/functional/`: Playwright functional E2E tests by feature
 - `client/tests/e2e/visual/`: Playwright visual regression tests for Lost Pixel
 - `client/tests/setup/`: Test configuration and setup files
+- `server/tests/unit/`: Unit tests for server routes and utilities
+- `server/tests/setup/`: Server test configuration and setup files
 
-**Unit & Integration Tests (Vitest)**:
+**Server Unit Tests (Vitest)**:
+- Run with `pnpm test` or workspace-specific `cd server && pnpm test`
+- Configuration: `server/vitest.config.ts` with Node.js environment
+- Setup: `server/tests/setup/setup.ts` with console mocks
+- Uses node environment (not jsdom like client)
+- Mocks `child_process.execFile` to avoid calling real AppleScript
+- Tests cover:
+  - GET /music endpoint (song data retrieval)
+  - POST /music endpoint (playback controls)
+  - Both new action-based and legacy API formats
+  - getSongInfo parsing logic
+  - Error handling and edge cases
+
+**Client Unit & Integration Tests (Vitest)**:
 - Run with `pnpm test` or workspace-specific `cd client && pnpm test`
 - Configuration: `vitest.config.ts` with test includes/excludes
 - Setup: `client/tests/setup/setup.ts` with global mocks and testing library imports

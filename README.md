@@ -2,6 +2,7 @@
 
 A beautiful web application that displays synchronized lyrics for songs currently playing in your Apple Music app on macOS. Features real-time lyric synchronization, visual effects, and a responsive design that works great on both mobile and desktop.
 
+[![CI Tests](https://github.com/vdeantoni/live-lyrics/actions/workflows/ci.yml/badge.svg)](https://github.com/vdeantoni/live-lyrics/actions/workflows/ci.yml)
 ![Live Lyrics Demo](https://img.shields.io/badge/Platform-macOS-blue?logo=apple)
 ![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?logo=typescript&logoColor=white)
 ![React](https://img.shields.io/badge/React-20232A?logo=react&logoColor=61DAFB)
@@ -67,21 +68,29 @@ This will start:
 
 ### Unit Tests
 ```bash
-# Run all unit tests
+# Run all unit tests (client + server)
 pnpm test
 
-# Run with coverage
+# Run client tests with coverage
 cd client && pnpm test:coverage
 
-# Interactive test UI
+# Run server tests with coverage
+cd server && pnpm test:coverage
+
+# Interactive test UI (client only)
 cd client && pnpm test:ui
 ```
 
-The unit tests use a sophisticated test utilities system (`client/tests/helpers/`) that provides:
+**Client Tests**: The unit tests use a sophisticated test utilities system (`client/tests/helpers/`) that provides:
 - **`renderWithProviders()`**: Automated component rendering with provider registry setup
 - **`createTestRegistry()`**: Consistent mock data for all provider types
 - **Isolated State**: Each test gets fresh provider state to prevent cross-test pollution
 - **Bootstrap Integration**: Automatic handling of app initialization and loading states
+
+**Server Tests**: API endpoint tests with mocked `execFile` to avoid AppleScript dependencies:
+- GET /music endpoint tests (playing/paused states, error handling)
+- POST /music endpoint tests (play/pause/seek actions, legacy format support)
+- getSongInfo parsing logic tests
 
 ### End-to-End Tests
 ```bash
@@ -136,8 +145,11 @@ live-lyrics/
 │           ├── functional/ # Functional E2E tests
 │           └── visual/     # Visual regression tests
 ├── server/                 # Node.js backend API
-│   └── src/
-│       └── index.ts        # Hono server with AppleScript integration
+│   ├── src/
+│   │   └── index.ts        # Hono server with AppleScript integration
+│   └── tests/              # Test suites
+│       ├── unit/           # Unit tests (Vitest)
+│       └── setup/          # Test configuration
 ├── lost-pixel/             # Visual regression test screenshots
 └── .github/workflows/      # CI/CD workflows
 ```
