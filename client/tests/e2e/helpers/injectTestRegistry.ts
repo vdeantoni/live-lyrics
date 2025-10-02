@@ -25,44 +25,6 @@ interface CustomTestRegistryConfig {
 export type LyricsFormat = "enhanced" | "normal" | "plain";
 
 /**
- * Get lyrics content based on format type
- */
-const getLyricsForFormat = (format: LyricsFormat): string => {
-  // Enhanced LRC with word-level timing
-  const enhancedLrc = `[00:00.00]<00:00.00>Test <00:00.30>line <00:00.50>one <00:00.80>with <00:01.20>words
-[00:02.00]<00:02.00>Test <00:02.30>line <00:02.50>two <00:02.90>here
-[00:04.00]<00:04.00>Test <00:04.40>line <00:04.60>three <00:04.80>now
-[00:06.00]<00:06.00>Test <00:06.40>line <00:06.90>four <00:07.20>today
-[00:08.00]<00:08.00>Test <00:08.40>line <00:08.70>five
-[00:10.00]<00:10.00>Test <00:10.30>line <00:10.50>six <00:10.70>more <00:10.90>words <00:11.30>here`;
-
-  // Normal LRC with line-level timing only
-  const normalLrc = `[00:00.00]Test line one with words
-[00:02.00]Test line two here
-[00:04.00]Test line three now
-[00:06.00]Test line four today
-[00:08.00]Test line five
-[00:10.00]Test line six more words here`;
-
-  // Plain text with no timing
-  const plainText = `Test line one with words
-Test line two here
-Test line three now
-Test line four today
-Test line five
-Test line six more words here`;
-
-  switch (format) {
-    case "enhanced":
-      return enhancedLrc;
-    case "normal":
-      return normalLrc;
-    case "plain":
-      return plainText;
-  }
-};
-
-/**
  * Default test registry configuration
  */
 const getDefaultConfig = (): CustomTestRegistryConfig => ({
@@ -80,6 +42,13 @@ const getDefaultConfig = (): CustomTestRegistryConfig => ({
       id: "itunes",
       name: "Test iTunes",
       description: "Test artwork provider (no artwork)",
+      isEnabled: true,
+      isAvailable: true,
+    },
+    {
+      id: "unsplash",
+      name: "Test Unsplash",
+      description: "Test random images provider (no artwork)",
       isEnabled: true,
       isAvailable: true,
     },
@@ -108,6 +77,47 @@ const injectProviderRegistry = async (
 
     const debugLog = (message: string, data?: unknown) => {
       console.log(`[TestRegistry] ${message}`, data || "");
+    };
+
+    /**
+     * Get lyrics content based on format type
+     * This function must be defined inside the injected script
+     */
+    const getLyricsForFormat = (format: string): string => {
+      // Enhanced LRC with word-level timing
+      const enhancedLrc = `[00:00.00]<00:00.00>Test <00:00.30>line <00:00.50>one <00:00.80>with <00:01.20>words
+[00:02.00]<00:02.00>Test <00:02.30>line <00:02.50>two <00:02.90>here
+[00:04.00]<00:04.00>Test <00:04.40>line <00:04.60>three <00:04.80>now
+[00:06.00]<00:06.00>Test <00:06.40>line <00:06.90>four <00:07.20>today
+[00:08.00]<00:08.00>Test <00:08.40>line <00:08.70>five
+[00:10.00]<00:10.00>Test <00:10.30>line <00:10.50>six <00:10.70>more <00:10.90>words <00:11.30>here`;
+
+      // Normal LRC with line-level timing only
+      const normalLrc = `[00:00.00]Test line one with words
+[00:02.00]Test line two here
+[00:04.00]Test line three now
+[00:06.00]Test line four today
+[00:08.00]Test line five
+[00:10.00]Test line six more words here`;
+
+      // Plain text with no timing
+      const plainText = `Test line one with words
+Test line two here
+Test line three now
+Test line four today
+Test line five
+Test line six more words here`;
+
+      switch (format) {
+        case "enhanced":
+          return enhancedLrc;
+        case "normal":
+          return normalLrc;
+        case "plain":
+          return plainText;
+        default:
+          return enhancedLrc;
+      }
     };
 
     // Shared player state (singleton-like)
@@ -339,6 +349,19 @@ const injectProviderRegistry = async (
                                 id: "itunes",
                                 name: "Test iTunes",
                                 description: "Test artwork provider",
+                                isEnabled: true,
+                                isAvailable: true,
+                              }),
+                          },
+                          {
+                            id: "unsplash",
+                            name: "Test Unsplash",
+                            description: "Test random images provider",
+                            load: async () =>
+                              createArtworkProvider({
+                                id: "unsplash",
+                                name: "Test Unsplash",
+                                description: "Test random images provider",
                                 isEnabled: true,
                                 isAvailable: true,
                               }),

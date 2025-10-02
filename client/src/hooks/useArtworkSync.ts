@@ -6,7 +6,10 @@ import {
   artworkUrlsAtom,
   artworkLoadingAtom,
 } from "@/atoms/playerAtoms";
-import { enabledArtworkProvidersAtom } from "@/atoms/appState";
+import {
+  enabledArtworkProvidersAtom,
+  appProviderSettingsAtom,
+} from "@/atoms/appState";
 import { loadArtworkProvider } from "@/config/providers";
 
 /**
@@ -17,12 +20,19 @@ import { loadArtworkProvider } from "@/config/providers";
 export const useArtworkSync = () => {
   const playerState = useAtomValue(playerStateAtom);
   const enabledArtworkProviders = useAtomValue(enabledArtworkProvidersAtom);
+  const artworkSettings = useAtomValue(appProviderSettingsAtom).artwork;
   const setArtworkUrls = useSetAtom(artworkUrlsAtom);
   const setArtworkLoading = useSetAtom(artworkLoadingAtom);
 
   // Get enabled providers in priority order
   const enabledProviderIds = enabledArtworkProviders.map(
     (entry) => entry.config.id,
+  );
+
+  // Serialize artwork provider settings for cache key
+  // This ensures cache invalidates when user changes provider settings (enable/disable/priority/config)
+  const artworkSettingsKey = JSON.stringify(
+    Object.fromEntries(artworkSettings.entries()),
   );
 
   // Use React Query to fetch artwork using priority-based fallback system
@@ -33,7 +43,8 @@ export const useArtworkSync = () => {
   } = useQuery({
     queryKey: [
       "artwork",
-      enabledProviderIds,
+      artworkSettingsKey, // Invalidates when user changes artwork provider settings
+      enabledProviderIds, // Keep for readability
       playerState.name,
       playerState.artist,
       playerState.album,
