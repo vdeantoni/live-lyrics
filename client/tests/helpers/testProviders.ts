@@ -110,9 +110,16 @@ export class TestArtworkProvider implements ArtworkProvider {
 }
 
 /**
- * Test player provider that always returns Bohemian Rhapsody
+ * Test player provider with stateful playback simulation
+ * Tracks play/pause/seek state and simulates time progression
  */
 export class TestPlayer implements Player {
+  private state = {
+    currentTime: 0,
+    isPlaying: false,
+    startTime: 0,
+  };
+
   constructor(
     private id: string,
     private name: string,
@@ -135,25 +142,58 @@ export class TestPlayer implements Player {
   }
 
   async getSong() {
+    // Simulate time progression when playing
+    if (this.state.isPlaying) {
+      const now = Date.now();
+      const elapsed = (now - this.state.startTime) / 1000;
+      this.state.currentTime = Math.min(elapsed, 355); // Cap at song duration
+    }
+
     return {
       name: "Bohemian Rhapsody",
       artist: "Queen",
       album: "A Night at the Opera",
       duration: 355,
-      currentTime: 0,
-      isPlaying: false,
+      currentTime: this.state.currentTime,
+      isPlaying: this.state.isPlaying,
     };
   }
 
   async play(): Promise<void> {
-    // Mock implementation
+    this.state.isPlaying = true;
+    // Resume from current position
+    this.state.startTime = Date.now() - this.state.currentTime * 1000;
   }
 
   async pause(): Promise<void> {
-    // Mock implementation
+    // Update currentTime before pausing
+    if (this.state.isPlaying) {
+      const now = Date.now();
+      const elapsed = (now - this.state.startTime) / 1000;
+      this.state.currentTime = Math.min(elapsed, 355);
+    }
+    this.state.isPlaying = false;
   }
 
-  async seek(): Promise<void> {
-    // Mock implementation
+  async seek(time: number): Promise<void> {
+    // Clamp time to valid range [0, duration]
+    this.state.currentTime = Math.max(0, Math.min(time, 355));
+
+    // If playing, update startTime to maintain continuity
+    if (this.state.isPlaying) {
+      this.state.startTime = Date.now() - this.state.currentTime * 1000;
+    }
+  }
+
+  /**
+   * Test helper: Reset player to initial state
+   * Useful for resetting between tests
+   */
+  reset(): void {
+    this.state = {
+      currentTime: 0,
+      isPlaying: false,
+      startTime: 0,
+    };
   }
 }
