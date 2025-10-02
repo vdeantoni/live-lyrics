@@ -6,7 +6,7 @@ import type { ArtworkProvider } from "@/types";
  * Uses Unsplash's free API to get high-quality images
  */
 export class UnsplashArtworkProvider implements ArtworkProvider {
-  private readonly baseUrl = "https://source.unsplash.com/featured";
+  private readonly baseUrl = "https://source.unsplash.com";
   private readonly imageSize = "800x800";
 
   getId(): string {
