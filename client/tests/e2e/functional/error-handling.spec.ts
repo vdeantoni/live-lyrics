@@ -18,9 +18,9 @@ test.describe("Error Handling", () => {
           isAvailable: false, // Simulate API failure
         },
         {
-          id: "local-server",
-          name: "Local Server",
-          description: "Local server",
+          id: "local-lyrics",
+          name: "Local Lyrics",
+          description: "Local demo lyrics",
           priority: 2,
           isEnabled: true,
           isAvailable: false, // Both providers unavailable
@@ -68,9 +68,9 @@ test.describe("Error Handling", () => {
           isAvailable: true,
         },
         {
-          id: "local-server",
-          name: "Local Server",
-          description: "Local server",
+          id: "local-lyrics",
+          name: "Local Lyrics",
+          description: "Local demo lyrics",
           priority: 2,
           isEnabled: false, // User disabled this provider too
           isAvailable: true,
