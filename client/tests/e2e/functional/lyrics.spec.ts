@@ -259,9 +259,17 @@ test.describe("Lyrics Display", () => {
 // Separate top-level describe block to avoid parent beforeEach interference
 test.describe("Lyrics Display - No Lyrics State", () => {
   test("should handle no lyrics state gracefully", async ({ page }) => {
-    // Inject custom registry BEFORE navigation
+    // Inject custom registry with unavailable lyrics provider
     await injectCustomTestRegistry(page, {
-      lyricsProviders: [], // No lyrics providers = no lyrics available
+      lyricsProviders: [
+        {
+          id: "lrclib",
+          name: "LrcLib",
+          description: "Community lyrics database",
+          isEnabled: true,
+          isAvailable: false, // Provider unavailable = no lyrics
+        },
+      ],
       artworkProviders: [
         {
           id: "itunes",

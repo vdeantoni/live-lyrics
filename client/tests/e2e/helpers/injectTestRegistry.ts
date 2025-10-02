@@ -252,9 +252,13 @@ To me`;
           description: providerConfig.description,
           load: async () => {
             debugLog(
-              `Loading ${providerConfig.name} provider (available: ${providerConfig.isAvailable})`,
+              `[LOAD] Loading ${providerConfig.name} provider (id: ${providerConfig.id}, available: ${providerConfig.isAvailable})`,
             );
-            return createLyricsProvider(providerConfig);
+            const provider = createLyricsProvider(providerConfig);
+            debugLog(
+              `[LOAD] Created mock provider ${providerConfig.name}, isAvailable will return: ${providerConfig.isAvailable}`,
+            );
+            return provider;
           },
         })) || [];
 
@@ -314,6 +318,9 @@ To me`;
                   buildProviderConfigs();
 
                 debugLog("Replacing all providers via providerRegistryAPI");
+                debugLog(
+                  `Registry config: ${lyricsProviders.length} lyrics, ${artworkProviders.length} artwork, ${players.length} players`,
+                );
                 providerRegistryAPI.replaceAll({
                   players:
                     players.length > 0
@@ -335,6 +342,16 @@ To me`;
                         ],
                   lyricsProviders: lyricsProviders, // Respect empty array for testing no-lyrics scenario
                   artworkProviders: artworkProviders, // Respect empty array for testing no-artwork scenario
+                });
+
+                // Verify replacement succeeded
+                const verifyProviders =
+                  providerRegistryAPI.getAll.lyricsProviders();
+                debugLog(
+                  `After replaceAll: ${verifyProviders.length} lyrics providers registered`,
+                );
+                verifyProviders.forEach((p) => {
+                  debugLog(`  - ${p.name} (${p.id})`);
                 });
 
                 // Set up provider settings based on config

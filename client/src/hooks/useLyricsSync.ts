@@ -1,27 +1,27 @@
 import { useAtomValue, useSetAtom } from "jotai";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import {
   playerStateAtom,
   lyricsContentAtom,
   lyricsLoadingAtom,
+  currentLyricsProviderAtom,
 } from "@/atoms/playerAtoms";
 import { enabledLyricsProvidersAtom } from "@/atoms/appState";
 import { loadLyricsProvider } from "@/config/providers";
 import { normalizeLyricsToEnhanced } from "@/utils/lyricsNormalizer";
+import { POLLING_INTERVALS } from "@/constants/timing";
 
 /**
  * Hook that fetches lyrics using enabled providers sequentially with individual loading states
- * Uses explicit loading state management via lyricsLoadingAtom
- * Components should use lyricsContentAtom and lyricsLoadingAtom for state
+ * Uses explicit loading state management via lyricsLoadingAtom and currentLyricsProviderAtom
+ * Components should use lyricsContentAtom, lyricsLoadingAtom, and currentLyricsProviderAtom for state
  */
 export const useLyricsSync = () => {
   const playerState = useAtomValue(playerStateAtom);
   const enabledLyricsProviders = useAtomValue(enabledLyricsProvidersAtom);
   const setLyricsContent = useSetAtom(lyricsContentAtom);
   const setLyricsLoading = useSetAtom(lyricsLoadingAtom);
-
-  // Track current provider being tried for UI feedback
-  const [currentProvider, setCurrentProvider] = useState<string | null>(null);
+  const setCurrentLyricsProvider = useSetAtom(currentLyricsProviderAtom);
 
   // Use ref to avoid stale closures in useEffect
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -55,7 +55,7 @@ export const useLyricsSync = () => {
     if (enabledProviderIds.length === 0) {
       setLyricsContent("");
       setLyricsLoading(false);
-      setCurrentProvider(null);
+      setCurrentLyricsProvider(null);
       return;
     }
 
@@ -63,7 +63,7 @@ export const useLyricsSync = () => {
     if (!songIdentity.name || !songIdentity.artist) {
       setLyricsContent("");
       setLyricsLoading(false);
-      setCurrentProvider(null);
+      setCurrentLyricsProvider(null);
       return;
     }
 
@@ -84,7 +84,7 @@ export const useLyricsSync = () => {
         if (signal.aborted) return "";
 
         try {
-          setCurrentProvider(providerId);
+          setCurrentLyricsProvider(providerId);
           const provider = await loadLyricsProvider(providerId);
 
           // Check if provider is available
@@ -112,7 +112,9 @@ export const useLyricsSync = () => {
           while (await provider.isFetching()) {
             if (signal.aborted) return "";
             // Small delay to avoid tight polling loop
-            await new Promise((resolve) => setTimeout(resolve, 50));
+            await new Promise((resolve) =>
+              setTimeout(resolve, POLLING_INTERVALS.LYRICS_FETCH_POLL),
+            );
           }
 
           const lyrics = await lyricsPromise;
@@ -163,7 +165,7 @@ export const useLyricsSync = () => {
       } finally {
         if (!abortController.signal.aborted) {
           setLyricsLoading(false);
-          setCurrentProvider(null);
+          setCurrentLyricsProvider(null);
         }
       }
     };
@@ -184,7 +186,4 @@ export const useLyricsSync = () => {
       }
     };
   }, []);
-
-  // Return current provider for UI feedback
-  return { currentProvider };
 };

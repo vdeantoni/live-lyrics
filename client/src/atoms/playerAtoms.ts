@@ -2,8 +2,7 @@ import { atom } from "jotai";
 import type { Song, LyricsData, LineData, WordData } from "@/types";
 import { selectedPlayerAtom } from "@/atoms/appState";
 import { loadPlayer } from "@/config/providers";
-
-const SEEK_END_TIMEOUT_MS = 1000;
+import { UI_DELAYS } from "@/constants/timing";
 
 export const playerStateAtom = atom<Song>({
   name: "",
@@ -24,6 +23,7 @@ export const artworkUrlsAtom = atom<string[]>([]);
 
 // Loading state atoms for explicit state management
 export const lyricsLoadingAtom = atom<boolean>(false);
+export const currentLyricsProviderAtom = atom<string | null>(null);
 export const artworkLoadingAtom = atom<boolean>(false);
 
 export const playerUIStateAtom = atom({
@@ -87,27 +87,13 @@ export const playerControlAtom = atom(
                 ...prev,
                 isUserSeeking: false,
               })),
-            SEEK_END_TIMEOUT_MS,
+            UI_DELAYS.SEEK_END_TIMEOUT,
           );
           break;
       }
     } catch (error) {
-      // Rollback on error
-      switch (action.type) {
-        case "play":
-        case "pause":
-          set(playerStateAtom, {
-            ...currentState,
-            isPlaying: currentState.isPlaying,
-          });
-          break;
-        case "seek":
-          set(playerStateAtom, {
-            ...currentState,
-            currentTime: currentState.currentTime,
-          });
-          break;
-      }
+      // Rollback to previous state on error
+      set(playerStateAtom, currentState);
       console.error(`Failed to ${action.type}:`, error);
       throw error;
     }
@@ -131,34 +117,8 @@ export const syncFromSourceAtom = atom(
       const currentSelectedPlayer = get(selectedPlayerAtom);
       if (currentSelectedPlayer?.config.id !== playerId) return;
 
-      const currentState = get(playerStateAtom);
-
-      // Build update object with only changed fields for performance
-      const updates: Partial<typeof currentState> = {};
-
-      if (currentState.currentTime !== songData.currentTime) {
-        updates.currentTime = songData.currentTime;
-      }
-      if (currentState.duration !== songData.duration) {
-        updates.duration = songData.duration;
-      }
-      if (currentState.isPlaying !== songData.isPlaying) {
-        updates.isPlaying = songData.isPlaying;
-      }
-      if (currentState.name !== songData.name) {
-        updates.name = songData.name;
-      }
-      if (currentState.artist !== songData.artist) {
-        updates.artist = songData.artist;
-      }
-      if (currentState.album !== songData.album) {
-        updates.album = songData.album;
-      }
-
-      // Only update if there are actual changes
-      if (Object.keys(updates).length > 0) {
-        set(playerStateAtom, { ...currentState, ...updates });
-      }
+      // Update state - Jotai handles change detection internally
+      set(playerStateAtom, songData);
     } catch (error) {
       console.error("Failed to sync from source:", error);
     }

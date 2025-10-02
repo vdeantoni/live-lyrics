@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { syncFromSourceAtom } from "@/atoms/playerAtoms";
 import { selectedPlayerAtom } from "@/atoms/appState";
 import { loadPlayer } from "@/config/providers";
+import { POLLING_INTERVALS } from "@/constants/timing";
 
 /**
  * Hook that syncs player state with data from the current player
@@ -32,7 +33,7 @@ export const useSongSync = () => {
       }
     },
     enabled: !!playerId,
-    refetchInterval: 300, // Keep the frequent polling for real-time sync
+    refetchInterval: POLLING_INTERVALS.SONG_SYNC,
     staleTime: 0, // Always consider stale - refetch immediately
     gcTime: 0, // Don't cache in memory at all
   });
