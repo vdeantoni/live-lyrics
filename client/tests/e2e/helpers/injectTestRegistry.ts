@@ -84,29 +84,44 @@ const injectProviderRegistry = async (
      * This function must be defined inside the injected script
      */
     const getLyricsForFormat = (format: string): string => {
-      // Enhanced LRC with word-level timing
-      const enhancedLrc = `[00:00.00]<00:00.00>Test <00:00.30>line <00:00.50>one <00:00.80>with <00:01.20>words
-[00:02.00]<00:02.00>Test <00:02.30>line <00:02.50>two <00:02.90>here
-[00:04.00]<00:04.00>Test <00:04.40>line <00:04.60>three <00:04.80>now
-[00:06.00]<00:06.00>Test <00:06.40>line <00:06.90>four <00:07.20>today
-[00:08.00]<00:08.00>Test <00:08.40>line <00:08.70>five
-[00:10.00]<00:10.00>Test <00:10.30>line <00:10.50>six <00:10.70>more <00:10.90>words <00:11.30>here`;
+      // Enhanced LRC with word-level timing for Bohemian Rhapsody
+      const enhancedLrc = `[00:00.00]<00:00.00>Is <00:00.20>this <00:00.40>the <00:00.60>real <00:00.90>life?
+[00:06.00]<00:06.00>Is <00:06.20>this <00:06.40>just <00:06.70>fantasy?
+[00:12.00]<00:12.00>Caught <00:12.30>in <00:12.50>a <00:12.70>landslide
+[00:16.00]<00:16.00>No <00:16.30>escape <00:16.70>from <00:17.00>reality
+[00:22.00]<00:22.00>Open <00:22.30>your <00:22.60>eyes
+[00:26.00]<00:26.00>Look <00:26.30>up <00:26.50>to <00:26.70>the <00:27.00>skies <00:27.40>and <00:27.70>see
+[00:32.00]<00:32.00>I'm <00:32.30>just <00:32.60>a <00:32.80>poor <00:33.10>boy
+[00:36.00]<00:36.00>I <00:36.20>need <00:36.50>no <00:36.80>sympathy
+[00:42.00]<00:42.00>Because <00:42.40>I'm <00:42.70>easy <00:43.00>come, <00:43.40>easy <00:43.70>go
+[01:30.00]<01:30.00>Mama, <01:30.50>just <01:30.80>killed <01:31.20>a <01:31.40>man
+[02:30.00]<02:30.00>To <02:30.50>me`;
 
       // Normal LRC with line-level timing only
-      const normalLrc = `[00:00.00]Test line one with words
-[00:02.00]Test line two here
-[00:04.00]Test line three now
-[00:06.00]Test line four today
-[00:08.00]Test line five
-[00:10.00]Test line six more words here`;
+      const normalLrc = `[00:00.00]Is this the real life?
+[00:06.00]Is this just fantasy?
+[00:12.00]Caught in a landslide
+[00:16.00]No escape from reality
+[00:22.00]Open your eyes
+[00:26.00]Look up to the skies and see
+[00:32.00]I'm just a poor boy
+[00:36.00]I need no sympathy
+[00:42.00]Because I'm easy come, easy go
+[01:30.00]Mama, just killed a man
+[02:30.00]To me`;
 
       // Plain text with no timing
-      const plainText = `Test line one with words
-Test line two here
-Test line three now
-Test line four today
-Test line five
-Test line six more words here`;
+      const plainText = `Is this the real life?
+Is this just fantasy?
+Caught in a landslide
+No escape from reality
+Open your eyes
+Look up to the skies and see
+I'm just a poor boy
+I need no sympathy
+Because I'm easy come, easy go
+Mama, just killed a man
+To me`;
 
       switch (format) {
         case "enhanced":
@@ -318,55 +333,8 @@ Test line six more words here`;
                               }),
                           },
                         ],
-                  lyricsProviders:
-                    lyricsProviders.length > 0
-                      ? lyricsProviders
-                      : [
-                          {
-                            id: "lrclib",
-                            name: "Test LrcLib",
-                            description: "Test lyrics provider",
-                            load: async () =>
-                              createLyricsProvider({
-                                id: "lrclib",
-                                name: "Test LrcLib",
-                                description: "Test lyrics provider",
-                                isEnabled: true,
-                                isAvailable: true,
-                              }),
-                          },
-                        ],
-                  artworkProviders:
-                    artworkProviders.length > 0
-                      ? artworkProviders
-                      : [
-                          {
-                            id: "itunes",
-                            name: "Test iTunes",
-                            description: "Test artwork provider",
-                            load: async () =>
-                              createArtworkProvider({
-                                id: "itunes",
-                                name: "Test iTunes",
-                                description: "Test artwork provider",
-                                isEnabled: true,
-                                isAvailable: true,
-                              }),
-                          },
-                          {
-                            id: "unsplash",
-                            name: "Test Unsplash",
-                            description: "Test random images provider",
-                            load: async () =>
-                              createArtworkProvider({
-                                id: "unsplash",
-                                name: "Test Unsplash",
-                                description: "Test random images provider",
-                                isEnabled: true,
-                                isAvailable: true,
-                              }),
-                          },
-                        ],
+                  lyricsProviders: lyricsProviders, // Respect empty array for testing no-lyrics scenario
+                  artworkProviders: artworkProviders, // Respect empty array for testing no-artwork scenario
                 });
 
                 // Set up provider settings based on config
@@ -375,11 +343,14 @@ Test line six more words here`;
                     "Clearing persisted app state for clean test environment",
                   );
 
-                  // Clear the unified provider settings
-                  localStorage.removeItem("LIVE_LYRICS_APP_PROVIDER_SETTINGS");
+                  // Clear the new split provider settings atoms (current architecture)
+                  localStorage.removeItem("LIVE_LYRICS_PLAYER_SETTINGS");
+                  localStorage.removeItem("LIVE_LYRICS_LYRICS_SETTINGS");
+                  localStorage.removeItem("LIVE_LYRICS_ARTWORK_SETTINGS");
 
                   // Clear legacy settings
                   const legacySettingsKeys = [
+                    "LIVE_LYRICS_APP_PROVIDER_SETTINGS", // Old unified settings
                     "LIVE_LYRICS_PROVIDER_OVERRIDES",
                     "LIVE_LYRICS_SETTINGS",
                     "enabledLyricsProviders",
@@ -393,36 +364,85 @@ Test line six more words here`;
                     localStorage.removeItem(key);
                   });
 
-                  // Set custom settings if provided
+                  // Set provider settings in the new split atom format
+                  // Each provider type has its own localStorage key with Map<string, UserProviderOverride> structure
+                  // Note: Providers are enabled by default, we only need to set disabled=true or custom priority
                   if (
-                    config.lyricsProviders ||
-                    config.artworkProviders ||
-                    config.players
+                    config.lyricsProviders &&
+                    config.lyricsProviders.length > 0
                   ) {
-                    const settings = {
-                      enabledLyricsProviders:
-                        config.lyricsProviders
-                          ?.filter((p) => p.isEnabled)
-                          .map((p) => p.id) || [],
-                      enabledArtworkProviders:
-                        config.artworkProviders
-                          ?.filter((p) => p.isEnabled)
-                          .map((p) => p.id) || [],
-                      lyricsProviderOrder:
-                        config.lyricsProviders?.map((p) => p.id) || [],
-                      artworkProviderOrder:
-                        config.artworkProviders?.map((p) => p.id) || [],
-                    };
+                    const lyricsSettings: Record<
+                      string,
+                      { disabled?: boolean; priority?: number }
+                    > = {};
+                    config.lyricsProviders.forEach((provider, index) => {
+                      // Only store settings if provider is disabled or has custom priority
+                      if (!provider.isEnabled) {
+                        lyricsSettings[provider.id] = { disabled: true };
+                      } else if (index !== 0) {
+                        // Set priority for non-first providers (first provider gets default priority 1)
+                        lyricsSettings[provider.id] = { priority: index + 1 };
+                      }
+                    });
+                    if (Object.keys(lyricsSettings).length > 0) {
+                      localStorage.setItem(
+                        "LIVE_LYRICS_LYRICS_SETTINGS",
+                        JSON.stringify(lyricsSettings),
+                      );
+                      debugLog("Set lyrics provider settings", lyricsSettings);
+                    }
+                  }
 
-                    debugLog("Setting custom provider settings", settings);
-                    localStorage.setItem(
-                      "LIVE_LYRICS_APP_PROVIDER_SETTINGS",
-                      JSON.stringify(settings),
-                    );
+                  if (
+                    config.artworkProviders &&
+                    config.artworkProviders.length > 0
+                  ) {
+                    const artworkSettings: Record<
+                      string,
+                      { disabled?: boolean; priority?: number }
+                    > = {};
+                    config.artworkProviders.forEach((provider, index) => {
+                      if (!provider.isEnabled) {
+                        artworkSettings[provider.id] = { disabled: true };
+                      } else if (index !== 0) {
+                        artworkSettings[provider.id] = { priority: index + 1 };
+                      }
+                    });
+                    if (Object.keys(artworkSettings).length > 0) {
+                      localStorage.setItem(
+                        "LIVE_LYRICS_ARTWORK_SETTINGS",
+                        JSON.stringify(artworkSettings),
+                      );
+                      debugLog(
+                        "Set artwork provider settings",
+                        artworkSettings,
+                      );
+                    }
+                  }
+
+                  if (config.players && config.players.length > 0) {
+                    const playerSettings: Record<
+                      string,
+                      { disabled?: boolean; priority?: number }
+                    > = {};
+                    config.players.forEach((provider, index) => {
+                      if (!provider.isEnabled) {
+                        playerSettings[provider.id] = { disabled: true };
+                      } else if (index !== 0) {
+                        playerSettings[provider.id] = { priority: index + 1 };
+                      }
+                    });
+                    if (Object.keys(playerSettings).length > 0) {
+                      localStorage.setItem(
+                        "LIVE_LYRICS_PLAYER_SETTINGS",
+                        JSON.stringify(playerSettings),
+                      );
+                      debugLog("Set player provider settings", playerSettings);
+                    }
                   }
 
                   debugLog(
-                    "App state cleared - test providers will use natural availability",
+                    "App state cleared - providers use default enabled state unless explicitly configured",
                   );
                 } catch (settingsError) {
                   debugLog(

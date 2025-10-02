@@ -58,14 +58,28 @@ export class ITunesArtworkProvider implements ArtworkProvider {
 
   async isAvailable(): Promise<boolean> {
     try {
+      // Test availability with a lightweight search request
       const response = await fetch(
         "https://itunes.apple.com/search?term=test&limit=1",
         {
-          method: "HEAD",
+          method: "GET",
         },
       );
-      return response.ok;
-    } catch {
+
+      if (!response.ok) {
+        console.warn(
+          `[iTunes] Availability check returned ${response.status}: ${response.statusText}`,
+        );
+        return false;
+      }
+
+      console.log("[iTunes] Provider is available");
+      return true;
+    } catch (error) {
+      console.error(
+        "[iTunes] Availability check failed:",
+        error instanceof Error ? error.message : String(error),
+      );
       return false;
     }
   }

@@ -35,15 +35,11 @@ export const useArtworkSync = () => {
     Object.fromEntries(artworkSettings.entries()),
   );
 
-  console.log("[useArtworkSync] Cache key components:", {
-    artworkSettingsKey,
-    enabledProviderIds,
-    song: {
-      name: playerState.name,
-      artist: playerState.artist,
-      album: playerState.album,
-    },
-  });
+  const queryEnabled = !!(
+    playerState.name &&
+    playerState.artist &&
+    enabledProviderIds.length > 0
+  );
 
   // Use React Query to fetch artwork using priority-based fallback system
   const {
@@ -60,34 +56,21 @@ export const useArtworkSync = () => {
       playerState.album,
     ],
     queryFn: async (): Promise<string[]> => {
-      console.log(
-        `[useArtworkSync] Starting artwork fetch for "${playerState.name}" by "${playerState.artist}"`,
-      );
-      console.log(`[useArtworkSync] Enabled providers:`, enabledProviderIds);
-
       if (
         !playerState.name ||
         !playerState.artist ||
         enabledProviderIds.length === 0
       ) {
-        console.log(
-          "[useArtworkSync] Skipping fetch - missing song data or no providers",
-        );
         return [];
       }
 
       // Try each provider in priority order until one succeeds
       for (const providerId of enabledProviderIds) {
         try {
-          console.log(`[useArtworkSync] Trying provider "${providerId}"...`);
           const provider = await loadArtworkProvider(providerId);
 
           // Check if provider is available
           const isAvailable = await provider.isAvailable();
-          console.log(
-            `[useArtworkSync] Provider "${providerId}" available:`,
-            isAvailable,
-          );
           if (!isAvailable) {
             console.warn(
               `Artwork provider "${providerId}" is not available, trying next...`,
@@ -106,14 +89,7 @@ export const useArtworkSync = () => {
           }
 
           // Try to get artwork
-          console.log(
-            `[useArtworkSync] Calling getArtwork() on "${providerId}"...`,
-          );
           const artwork = await provider.getArtwork(playerState);
-          console.log(
-            `[useArtworkSync] Provider "${providerId}" returned:`,
-            artwork,
-          );
 
           if (artwork && artwork.length > 0) {
             console.log(
@@ -139,11 +115,7 @@ export const useArtworkSync = () => {
       );
       return [];
     },
-    enabled: !!(
-      playerState.name &&
-      playerState.artist &&
-      enabledProviderIds.length > 0
-    ),
+    enabled: queryEnabled,
     staleTime: 1000 * 60 * 60 * 24 * 365, // 1 year - artwork rarely changes
     gcTime: 1000 * 60 * 60 * 24 * 365, // 1 year - keep in cache for a year
   });
