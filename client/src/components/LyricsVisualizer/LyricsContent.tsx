@@ -63,9 +63,18 @@ const LyricsContent: React.FC = () => {
         if (line.type === "silence") {
           if (!isActive) return null;
 
-          // Calculate duration to next lyric line
+          // Calculate duration to next lyric line or end of song
           const nextLine = lyricsData.lines[index + 1];
-          const duration = nextLine ? nextLine.time - line.time : 20;
+          let duration: number;
+
+          if (nextLine) {
+            // Duration until next lyric line
+            duration = nextLine.time - line.time;
+          } else {
+            // Last silence block - use song duration from player state
+            const songDuration = playerState?.duration || 0;
+            duration = songDuration > 0 ? songDuration - line.time : 20;
+          }
 
           // Check if enough time has passed to show the indicator
           const currentTime = playerState?.currentTime || 0;
