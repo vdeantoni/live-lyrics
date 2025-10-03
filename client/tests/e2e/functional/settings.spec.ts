@@ -326,4 +326,129 @@ test.describe("Settings Functionality", () => {
       }
     });
   });
+
+  test.describe("Overlay Navigation Flow", () => {
+    test("should navigate from lyrics → settings → search → lyrics", async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width: 768, height: 1024 });
+
+      // Wait for app to load and lyrics to appear
+      await page.waitForSelector('[data-testid="lyrics-screen"]');
+      await page.waitForFunction(() => {
+        const lyricsContainer = document.querySelector(
+          '[data-testid="lyrics-container"]',
+        );
+        return (
+          lyricsContainer &&
+          !lyricsContainer.textContent?.includes("Loading lyrics")
+        );
+      });
+      await page.waitForSelector('[data-testid="lyrics-line"]');
+
+      // Verify we're on lyrics screen
+      await expect(page.locator('[data-testid="lyrics-screen"]')).toBeVisible();
+      await expect(
+        page.locator('[data-testid="settings-screen"]'),
+      ).not.toBeVisible();
+      await expect(
+        page.locator('[data-testid="search-screen"]'),
+      ).not.toBeVisible();
+
+      // STEP 1: Open settings using keyboard shortcut 'C'
+      await page.keyboard.press("c");
+      await expect(
+        page.locator('[data-testid="settings-screen"]'),
+      ).toBeVisible();
+      await expect(
+        page.getByRole("heading", { name: "Settings" }),
+      ).toBeVisible();
+
+      // Close button should be visible
+      await expect(
+        page.locator('[data-testid="close-overlay-button"]'),
+      ).toBeVisible();
+
+      // STEP 2: Open search using keyboard shortcut 'S'
+      await page.keyboard.press("s");
+
+      // Settings should close and search should open
+      await expect(page.locator('[data-testid="search-screen"]')).toBeVisible();
+      await expect(
+        page.locator('[data-testid="settings-screen"]'),
+      ).not.toBeVisible();
+      await expect(
+        page.getByRole("heading", { name: "Search Lyrics" }),
+      ).toBeVisible();
+
+      // STEP 3: Close search and verify we're back to lyrics
+      const closeButton = page.locator('[data-testid="close-overlay-button"]');
+      await closeButton.click();
+
+      await expect(page.locator('[data-testid="lyrics-screen"]')).toBeVisible();
+      await expect(
+        page.locator('[data-testid="search-screen"]'),
+      ).not.toBeVisible();
+      await expect(
+        page.locator('[data-testid="settings-screen"]'),
+      ).not.toBeVisible();
+    });
+
+    test("should navigate from lyrics → settings (icon) → search (icon) → lyrics", async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width: 768, height: 1024 });
+
+      // Wait for app to load and lyrics to appear
+      await page.waitForSelector('[data-testid="lyrics-screen"]');
+      await page.waitForFunction(() => {
+        const lyricsContainer = document.querySelector(
+          '[data-testid="lyrics-container"]',
+        );
+        return (
+          lyricsContainer &&
+          !lyricsContainer.textContent?.includes("Loading lyrics")
+        );
+      });
+      await page.waitForSelector('[data-testid="lyrics-line"]');
+
+      // Verify we're on lyrics screen
+      await expect(page.locator('[data-testid="lyrics-screen"]')).toBeVisible();
+
+      // STEP 1: Open settings using top-right icon
+      const settingsButton = page.locator('[data-testid="settings-button"]');
+      await expect(settingsButton).toBeVisible();
+      await settingsButton.click();
+
+      await expect(
+        page.locator('[data-testid="settings-screen"]'),
+      ).toBeVisible();
+      await expect(
+        page.getByRole("heading", { name: "Settings" }),
+      ).toBeVisible();
+
+      // STEP 2: Open search using search button in player controls
+      const searchButton = page.locator('button[aria-label="Search lyrics"]');
+      await expect(searchButton).toBeVisible();
+      await searchButton.click();
+
+      // Settings should close and search should open
+      await expect(page.locator('[data-testid="search-screen"]')).toBeVisible();
+      await expect(
+        page.locator('[data-testid="settings-screen"]'),
+      ).not.toBeVisible();
+      await expect(
+        page.getByRole("heading", { name: "Search Lyrics" }),
+      ).toBeVisible();
+
+      // STEP 3: Close search and verify we're back to lyrics
+      const closeButton = page.locator('[data-testid="close-overlay-button"]');
+      await closeButton.click();
+
+      await expect(page.locator('[data-testid="lyrics-screen"]')).toBeVisible();
+      await expect(
+        page.locator('[data-testid="search-screen"]'),
+      ).not.toBeVisible();
+    });
+  });
 });

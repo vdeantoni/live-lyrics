@@ -392,11 +392,29 @@ export const toggleProviderAtom = atom(
 // Simple settings state - not backward compatibility, just clean architecture
 export const settingsOpenAtom = atom(false);
 export const toggleSettingsAtom = atom(null, (get, set) => {
-  set(settingsOpenAtom, !get(settingsOpenAtom));
+  const isSettingsOpen = get(settingsOpenAtom);
+  const isSearchOpen = get(searchOpenAtom);
+
+  // Close search if open (mutual exclusivity)
+  if (isSearchOpen) {
+    set(searchOpenAtom, false);
+  }
+
+  // Toggle settings
+  set(settingsOpenAtom, !isSettingsOpen);
 });
 
 // 8. Search UI State
 export const searchOpenAtom = atom(false);
 export const toggleSearchAtom = atom(null, (get, set) => {
-  set(searchOpenAtom, !get(searchOpenAtom));
+  const isSearchOpen = get(searchOpenAtom);
+  const isSettingsOpen = get(settingsOpenAtom);
+
+  // Close settings if open (mutual exclusivity)
+  if (isSettingsOpen) {
+    set(settingsOpenAtom, false);
+  }
+
+  // Toggle search
+  set(searchOpenAtom, !isSearchOpen);
 });
