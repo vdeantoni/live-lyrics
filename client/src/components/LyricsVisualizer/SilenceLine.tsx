@@ -31,18 +31,20 @@ const SilenceLine: React.FC<SilenceLineProps> = ({
       key={`silence-${index}-${time}`}
       data-testid="silence-indicator-line"
       data-current={isActive ? "true" : "false"}
-      initial={{ opacity: 0, scale: 0.8 }}
+      initial={{ height: 0, opacity: 0, scale: 0.8 }}
       animate={{
+        height: shouldShow ? "auto" : 0,
         opacity: shouldShow ? 1 : 0,
         scale: shouldShow ? 1 : 0.8,
       }}
       transition={{
         duration: 0.4,
         ease: [0.25, 0.1, 0.25, 1], // iOS-style easing
+        height: { duration: 0.4 },
         opacity: { duration: 0.2 },
         scale: { duration: 0.3 },
       }}
-      className={`${
+      className={`overflow-hidden ${
         isActive
           ? "font-black [text-shadow:0_0_15px_#fff,0_0_30px_#fff,2px_2px_4px_rgba(0,0,0,0.8)]"
           : ""
