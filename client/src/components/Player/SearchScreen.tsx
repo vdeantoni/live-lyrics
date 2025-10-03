@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useAtomValue, useSetAtom } from "jotai";
 import { enabledLyricsProvidersAtom, toggleSearchAtom } from "@/atoms/appState";
 import { playerStateAtom } from "@/atoms/playerAtoms";
@@ -15,10 +15,19 @@ const SearchScreen = () => {
   >([]);
   const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const enabledProviders = useAtomValue(enabledLyricsProvidersAtom);
   const toggleSearch = useSetAtom(toggleSearchAtom);
   const setPlayerState = useSetAtom(playerStateAtom);
+
+  // Focus input after animation completes (300ms animation + small buffer)
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      inputRef.current?.focus();
+    }, 350);
+    return () => clearTimeout(timeoutId);
+  }, []);
 
   const performSearch = useCallback(
     async (searchQuery: string) => {
@@ -120,12 +129,12 @@ const SearchScreen = () => {
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-zinc-400" />
           <input
+            ref={inputRef}
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search for a song..."
             className="w-full rounded-lg border border-white/10 bg-zinc-800/50 py-3 pl-11 pr-10 text-white placeholder-zinc-500 outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20"
-            autoFocus
           />
           {query && (
             <Button
