@@ -5,8 +5,11 @@ import {
   activeLineAtom,
   activeWordAtom,
   playerControlAtom,
+  playerStateAtom,
 } from "@/atoms/playerAtoms";
 import SilenceIndicator from "./SilenceIndicator";
+import { LYRICS_SILENCE } from "@/constants/timing";
+import { AnimatePresence, motion } from "framer-motion";
 
 const LyricsContent: React.FC = () => {
   // Use atoms for lyrics state
@@ -14,6 +17,7 @@ const LyricsContent: React.FC = () => {
   const activeLine = useAtomValue(activeLineAtom);
   const activeWord = useAtomValue(activeWordAtom);
   const playerControl = useSetAtom(playerControlAtom);
+  const playerState = useAtomValue(playerStateAtom);
 
   // Click handler using playerControl atom
   const handleLineClick = useCallback(
@@ -26,7 +30,6 @@ const LyricsContent: React.FC = () => {
   );
 
   const contentRef = useRef<HTMLDivElement>(null);
-  const cursorRef = useRef<HTMLDivElement>(null);
   const [lines, setLines] = useState<React.ReactElement[]>([]);
   const lastScrollPosition = useRef<number>(0);
   const isScrollingFromSwitch = useRef<boolean>(false);
@@ -36,6 +39,13 @@ const LyricsContent: React.FC = () => {
       setLines([]);
       return;
     }
+
+    // Find first and last silence block indices
+    const silenceIndices = lyricsData.lines
+      .map((line, idx) => (line.type === "silence" ? idx : -1))
+      .filter((idx) => idx !== -1);
+    const firstSilenceIndex = silenceIndices[0];
+    const lastSilenceIndex = silenceIndices[silenceIndices.length - 1];
 
     const newLines = lyricsData.lines
       .map((line, index) => {
@@ -48,23 +58,47 @@ const LyricsContent: React.FC = () => {
             const nextLine = lyricsData.lines[index + 1];
             const duration = nextLine ? nextLine.time - line.time : 20; // Default to 20s if no next line
 
+            // Check if enough time has passed since line.time to show the indicator
+            // The silence line time is already set with INDICATOR_DELAY, but we need
+            // to check if current time has actually progressed past that point
+            const currentTime = playerState?.currentTime || 0;
+            const shouldShow =
+              currentTime >= line.time + LYRICS_SILENCE.INDICATOR_DELAY;
+
+            if (!shouldShow) {
+              return null;
+            }
+
+            // Determine if this is an edge block (first or last)
+            const isEdgeBlock =
+              index === firstSilenceIndex || index === lastSilenceIndex;
+
             return (
-              <div
-                key={`silence-${index}-${line.time}`}
-                data-testid="silence-indicator-line"
-                data-current={isActive ? "true" : "false"}
-                className={`my-3 transform py-2.5 transition-all duration-300 ${
-                  isActive
-                    ? "font-black opacity-100 [text-shadow:0_0_15px_#fff,0_0_30px_#fff,2px_2px_4px_rgba(0,0,0,0.8)]"
-                    : "opacity-50"
-                }`}
-              >
-                <SilenceIndicator
-                  isActive={isActive}
-                  startTime={line.time}
-                  duration={duration}
-                />
-              </div>
+              <AnimatePresence mode="wait">
+                {shouldShow && (
+                  <motion.div
+                    key={`silence-${index}-${line.time}`}
+                    data-testid="silence-indicator-line"
+                    data-current={isActive ? "true" : "false"}
+                    initial={{ scale: 0, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 0, opacity: 0 }}
+                    transition={{ duration: 0.3, ease: "easeOut" }}
+                    className={`my-3 transform py-2.5 transition-all duration-300 ${
+                      isActive
+                        ? "font-black opacity-100 [text-shadow:0_0_15px_#fff,0_0_30px_#fff,2px_2px_4px_rgba(0,0,0,0.8)]"
+                        : "opacity-50"
+                    }`}
+                  >
+                    <SilenceIndicator
+                      isActive={isActive}
+                      startTime={line.time}
+                      duration={duration}
+                      isEdgeBlock={isEdgeBlock}
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
             );
           } else {
             return null;
@@ -86,15 +120,35 @@ const LyricsContent: React.FC = () => {
             }`}
           >
             {line.words
-              ? line.words.map((word, wordIndex) => (
-                  <span
-                    key={`${wordIndex}-${word.text}`}
-                    onClick={() => handleLineClick(word.time)}
-                    className="cursor-pointer"
-                  >
-                    {word.text}{" "}
-                  </span>
-                ))
+              ? line.words
+                  .map((word, wordIndex) => {
+                    // Check if this word is active (handles multiple words with same timestamp)
+                    const isWordActive =
+                      isActive &&
+                      activeWord &&
+                      word.time === activeWord.time &&
+                      wordIndex >= (activeWord.index || 0);
+
+                    return (
+                      <span
+                        key={`${wordIndex}-${word.text}`}
+                        onClick={() => handleLineClick(word.time)}
+                        data-word-index={wordIndex}
+                        className={`cursor-pointer ${
+                          isWordActive
+                            ? "relative inline-block after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:rounded-md after:bg-current after:opacity-20 after:content-['']"
+                            : ""
+                        }`}
+                      >
+                        {word.text}
+                      </span>
+                    );
+                  })
+                  .reduce<React.ReactNode[]>((acc, element, idx) => {
+                    if (idx > 0) acc.push(" "); // Add space between words
+                    acc.push(element);
+                    return acc;
+                  }, [])
               : line.text}
           </div>
         );
@@ -102,7 +156,7 @@ const LyricsContent: React.FC = () => {
       .filter((element): element is React.ReactElement => element !== null);
 
     setLines(newLines);
-  }, [lyricsData, activeLine, handleLineClick]);
+  }, [lyricsData, activeLine, activeWord, playerState, handleLineClick]);
 
   // Save scroll position when scrolling manually or naturally
   useEffect(() => {
@@ -197,7 +251,7 @@ const LyricsContent: React.FC = () => {
               lineBottomInViewport > containerHeight
             ) {
               const idealScrollTop =
-                activeLineTop - containerHeight / 2 + activeLineHeight / 2 + 64;
+                activeLineTop - containerHeight / 2 + activeLineHeight / 2;
               const maxScrollTop = container.scrollHeight - containerHeight;
               const targetScrollTop = Math.max(
                 0,
@@ -372,45 +426,12 @@ const LyricsContent: React.FC = () => {
     return () => cancelAnimationFrame(frame);
   }, [lyricsData, activeLine]); // Depend on both for proper initial scroll
 
-  // Word-level cursor positioning (matching reference implementation)
-  useEffect(() => {
-    if (!activeWord || !activeLine || !contentRef.current || !cursorRef.current)
-      return;
-
-    // Hide cursor for silence indicator lines (they have no real words)
-    if (activeLine.type === "silence") {
-      const cursor = cursorRef.current;
-      cursor.style.display = "none";
-      return;
-    }
-
-    const activeLineElement = contentRef.current.children[
-      activeLine.index || 0
-    ] as HTMLElement;
-    if (!activeLineElement) return;
-
-    const wordElement = activeLineElement.children[
-      activeWord.index || 0
-    ] as HTMLElement;
-    if (!wordElement) return;
-
-    const cursor = cursorRef.current;
-    cursor.style.width = `${wordElement.offsetWidth}px`;
-    cursor.style.top = `${wordElement.offsetTop + wordElement.offsetHeight}px`;
-    cursor.style.left = `${wordElement.offsetLeft}px`;
-    cursor.style.display = "block";
-  }, [activeWord, activeLine]);
-
   return (
     <div
       data-testid="lyrics-container"
       ref={contentRef}
       className="h-full w-full overflow-auto scroll-smooth px-6 lg:px-8 xl:px-10 [&::-webkit-scrollbar]:hidden"
     >
-      <div
-        ref={cursorRef}
-        className="absolute h-1 w-1 rounded-md bg-current opacity-20 transition-all duration-300"
-      />
       {lines}
     </div>
   );
