@@ -128,6 +128,19 @@ export class LocalLyricsProvider implements LyricsProvider {
     return false;
   }
 
+  async search(): Promise<
+    Array<{
+      id: string;
+      trackName: string;
+      artistName: string;
+      albumName: string;
+      duration: number;
+    }>
+  > {
+    // Local provider doesn't support search - return empty array
+    return [];
+  }
+
   /**
    * Add lyrics to the simulated database
    */

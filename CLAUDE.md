@@ -139,9 +139,10 @@ Both client and server compile to `dist/` directories:
   - `Player.tsx`: Music playback controls with animated song name
   - `AnimatedSongName.tsx`: Framer Motion component for scrolling song titles
 - **Player/**: Main application screens and loading states
-  - `MainScreen.tsx`: Root screen component orchestrating loading/lyrics screen transitions
+  - `MainScreen.tsx`: Root screen component with overlay management and universal close button
   - `LoadingScreen.tsx`: Animated loading screen with floating music notes, rotating vinyl record, and soundwave bars
   - `LyricsScreen.tsx`: Main lyrics display screen
+  - `SearchScreen.tsx`: Lyrics search interface with debounced multi-provider search
 - **Settings/**: Comprehensive settings system with drag-and-drop provider management
   - `SettingsScreen.tsx`: Main settings panel with smooth slide animations
   - `PlayerSection.tsx`: Music player selection (Local/Remote)
@@ -159,12 +160,13 @@ Both client and server compile to `dist/` directories:
 - **← →**: Seek backward/forward (5 seconds)
 - **Shift + ← →**: Fast seek backward/forward (15 seconds)
 - **C**: Toggle settings screen
+- **S**: Toggle search screen
 
 **Settings Panel Animation**:
 - Smooth slide-from-bottom transition (300ms duration)
 - iOS-style easing curve `[0.25, 0.1, 0.25, 1]`
 - Lyrics screen remains static while settings overlay slides over
-- Gear button morphs to close button when settings open
+- Gear button morphs to close button when any overlay (search/settings) is open
 - Smart input field detection prevents keyboard shortcut conflicts
 
 **Provider Management**:

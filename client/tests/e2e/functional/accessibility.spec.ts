@@ -23,8 +23,15 @@ test.describe("Keyboard Navigation and Accessibility", () => {
     // Verify it's focused
     await expect(playButton).toBeFocused();
 
+    // Initially should show play icon
+    await expect(playButton.locator('[data-testid="play-icon"]')).toBeVisible();
+
     // Press Enter to activate
     await page.keyboard.press("Enter");
+
+    // Wait for state to sync (polling interval is 300ms)
+    // Wait for aria-label to change to indicate playing state
+    await expect(playButton).toHaveAttribute("aria-label", /pause/i);
 
     // Should show pause icon after Enter key
     await expect(
@@ -33,6 +40,9 @@ test.describe("Keyboard Navigation and Accessibility", () => {
 
     // Press Enter again to pause
     await page.keyboard.press("Enter");
+
+    // Wait for aria-label to change back to play state
+    await expect(playButton).toHaveAttribute("aria-label", /play/i);
 
     // Should show play icon after second Enter
     await expect(playButton.locator('[data-testid="play-icon"]')).toBeVisible();
@@ -202,14 +212,19 @@ test.describe("Keyboard Navigation and Accessibility", () => {
     // Check initial state has appropriate ARIA label
     const initialLabel = await playButton.getAttribute("aria-label");
     expect(initialLabel).toBeTruthy();
+    expect(initialLabel).toMatch(/play/i); // Should initially be "Play"
 
     // Click to change state
     await playButton.click();
 
-    // ARIA label should reflect new state
+    // Wait for state to sync (polling interval is 300ms)
+    // ARIA label should change to reflect new state
+    await expect(playButton).not.toHaveAttribute("aria-label", initialLabel!);
+
+    // Verify the new label is truthy and different
     const newLabel = await playButton.getAttribute("aria-label");
     expect(newLabel).toBeTruthy();
-    expect(newLabel).not.toBe(initialLabel);
+    expect(newLabel).toMatch(/pause/i); // Should now be "Pause"
   });
 
   test("should handle focus management properly", async ({ page }) => {
@@ -223,7 +238,7 @@ test.describe("Keyboard Navigation and Accessibility", () => {
     await page.waitForSelector('[data-testid="settings-screen"]');
 
     // When closing settings, focus should return to a logical place
-    const closeButton = page.locator('[data-testid="close-settings-button"]');
+    const closeButton = page.locator('[data-testid="close-overlay-button"]');
     await closeButton.click();
 
     // Should return to main screen

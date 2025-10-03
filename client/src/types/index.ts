@@ -60,6 +60,15 @@ export interface Player {
   seek(time: number): Promise<void>;
 }
 
+// Search result type for lyrics providers
+export interface SearchResult {
+  id: string;
+  trackName: string;
+  artistName: string;
+  albumName: string;
+  duration: number;
+}
+
 // Interface for lyrics providers
 export interface LyricsProvider {
   /** Get unique identifier for this provider */
@@ -70,6 +79,8 @@ export interface LyricsProvider {
   getDescription(): string;
   /** Get lyrics for a specific song */
   getLyrics(song: Song): Promise<string | null>;
+  /** Search for songs by query string */
+  search(query: string): Promise<SearchResult[]>;
   /** Check if this provider supports the given song */
   supportsLyrics(song: Song): Promise<boolean>;
   /** Check if this provider is currently available */

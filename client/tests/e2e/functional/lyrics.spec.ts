@@ -76,31 +76,19 @@ test.describe("Lyrics Display", () => {
 
       await page.waitForSelector('[data-testid="lyrics-line"]');
 
-      // Wait for playerControlAPI to be available
-      await page.waitForFunction(() => {
-        return !!(window as Window & { playerControlAPI?: unknown })
-          .playerControlAPI;
-      });
-
-      // Seek to a known timestamp in the middle section
-      // This should immediately trigger lyrics highlighting
-      await page.evaluate(async () => {
-        const seekTime = 90; // "Mama, just killed a man" at [01:30.00]
-
-        const playerControlAPI = (
-          window as Window & { playerControlAPI?: unknown }
-        ).playerControlAPI as any; // eslint-disable-line @typescript-eslint/no-explicit-any
-        if (playerControlAPI && playerControlAPI.seek) {
-          await playerControlAPI.seek(seekTime);
-        }
-      });
+      // Use keyboard to seek to 20s (4 presses * 5s = 20s)
+      for (let i = 0; i < 4; i++) {
+        await page.keyboard.press("ArrowRight");
+        // Wait for player state to update via React Query (300ms polling + buffer)
+        await page.waitForTimeout(400);
+      }
 
       // Wait for the player state to actually update in the UI
       await page.waitForFunction(() => {
         const timeDisplay = document.querySelector(
           '[data-testid="current-time"]',
         );
-        return timeDisplay && !timeDisplay.textContent?.includes("0:00");
+        return timeDisplay && timeDisplay.textContent?.includes("0:20");
       });
 
       // Wait for lyrics highlighting to update after seek
@@ -113,8 +101,8 @@ test.describe("Lyrics Display", () => {
       );
       await expect(currentLine).toBeVisible();
 
-      // Should highlight the line at the seeked timestamp
-      await expect(currentLine).toContainText("Mama");
+      // At 20s, "No escape from reality" should be active
+      await expect(currentLine).toContainText("No escape from reality");
     });
 
     test("should maintain lyrics visibility and scroll", async ({ page }) => {
@@ -129,13 +117,13 @@ test.describe("Lyrics Display", () => {
       );
       expect(containerHeight).toBeGreaterThan(0);
 
-      // Wait for playerControlAPI to be available
-      await page.waitForFunction(() => {
-        return !!(window as Window & { playerControlAPI?: unknown })
-          .playerControlAPI;
-      });
+      // Use keyboard to seek forward to activate lyrics sync
+      await page.keyboard.press("ArrowRight"); // Seek forward 5s
+      await page.waitForTimeout(400);
+      await page.keyboard.press("ArrowRight"); // Seek forward another 5s (total 10s)
+      await page.waitForTimeout(400);
 
-      // Wait for the player state to actually update in the UI
+      // Wait for time display to update
       await page.waitForFunction(() => {
         const timeDisplay = document.querySelector(
           '[data-testid="current-time"]',
@@ -178,31 +166,22 @@ test.describe("Lyrics Display", () => {
     }) => {
       await page.waitForSelector('[data-testid="lyrics-line"]');
 
-      // Wait for playerControlAPI to be available
-      await page.waitForFunction(() => {
-        return !!(window as Window & { playerControlAPI?: unknown })
-          .playerControlAPI;
-      });
+      // Use keyboard to seek to ~50s (10 presses * 5s = 50s) - after "To me" to trigger scroll
+      for (let i = 0; i < 10; i++) {
+        await page.keyboard.press("ArrowRight");
+        // Wait for player state to update via React Query (300ms polling + buffer)
+        await page.waitForTimeout(400);
+      }
 
-      // Seek to a known timestamp to test lyrics synchronization
-      const seekTime = 30;
-      await page.evaluate(async (seekTime) => {
-        const playerControlAPI = (
-          window as Window & { playerControlAPI?: unknown }
-        ).playerControlAPI as any; // eslint-disable-line @typescript-eslint/no-explicit-any
-        if (playerControlAPI && playerControlAPI.seek) {
-          await playerControlAPI.seek(seekTime);
-        }
-      }, seekTime);
-
-      // Wait for the player state to actually update in the UI
+      // Wait for time display to update
       await page.waitForFunction(() => {
         const timeDisplay = document.querySelector(
           '[data-testid="current-time"]',
         );
-        return timeDisplay && !timeDisplay.textContent?.includes("0:00");
+        return timeDisplay?.textContent?.includes("0:50");
       });
 
+      // Wait for current line to update
       await page.waitForSelector(
         '[data-testid="lyrics-line"][data-current="true"]',
       );
@@ -211,7 +190,9 @@ test.describe("Lyrics Display", () => {
         '[data-testid="lyrics-line"][data-current="true"]',
       );
       await expect(currentLine).toBeVisible();
-      await expect(currentLine).toContainText("Mama");
+
+      // At 50s, should show lyrics from the "Mama" section
+      await expect(currentLine).toContainText("Because I'm easy come, easy go");
     });
   });
 

@@ -8,6 +8,7 @@ import {
   playerUIStateAtom,
   playerControlAtom,
 } from "@/atoms/playerAtoms";
+import { toggleSearchAtom } from "@/atoms/appState";
 import AnimatedSongName from "../LyricsVisualizer/AnimatedSongName";
 
 const PlayerControls = () => {
@@ -18,6 +19,7 @@ const PlayerControls = () => {
   // Action atoms
   const playerControl = useSetAtom(playerControlAtom);
   const setPlayerUIState = useSetAtom(playerUIStateAtom);
+  const toggleSearch = useSetAtom(toggleSearchAtom);
 
   const handlePlayPause = () => {
     if (isPlaying) {
@@ -91,7 +93,7 @@ const PlayerControls = () => {
           variant="ghost"
           className="h-10 w-10 rounded-full p-2"
           aria-label="Search lyrics"
-          onClick={() => console.log("Search clicked")}
+          onClick={toggleSearch}
         >
           <Search />
         </Button>

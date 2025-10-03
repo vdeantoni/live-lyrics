@@ -394,3 +394,9 @@ export const settingsOpenAtom = atom(false);
 export const toggleSettingsAtom = atom(null, (get, set) => {
   set(settingsOpenAtom, !get(settingsOpenAtom));
 });
+
+// 8. Search UI State
+export const searchOpenAtom = atom(false);
+export const toggleSearchAtom = atom(null, (get, set) => {
+  set(searchOpenAtom, !get(searchOpenAtom));
+});
