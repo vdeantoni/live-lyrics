@@ -80,22 +80,29 @@ const LyricsContent: React.FC = () => {
                     key={`silence-${index}-${line.time}`}
                     data-testid="silence-indicator-line"
                     data-current={isActive ? "true" : "false"}
-                    initial={{ scale: 0, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    exit={{ scale: 0, opacity: 0 }}
-                    transition={{ duration: 0.3, ease: "easeOut" }}
-                    className={`my-3 transform py-2.5 transition-all duration-300 ${
+                    initial={{ height: 0, opacity: 0, scale: 0.8 }}
+                    animate={{ height: "auto", opacity: 1, scale: 1 }}
+                    exit={{ height: 0, opacity: 0, scale: 0.8 }}
+                    transition={{
+                      duration: 0.4,
+                      ease: [0.25, 0.1, 0.25, 1], // iOS-style easing
+                      opacity: { duration: 0.2 },
+                      scale: { duration: 0.3 },
+                    }}
+                    className={`overflow-hidden ${
                       isActive
-                        ? "font-black opacity-100 [text-shadow:0_0_15px_#fff,0_0_30px_#fff,2px_2px_4px_rgba(0,0,0,0.8)]"
-                        : "opacity-50"
+                        ? "font-black [text-shadow:0_0_15px_#fff,0_0_30px_#fff,2px_2px_4px_rgba(0,0,0,0.8)]"
+                        : ""
                     }`}
                   >
-                    <SilenceIndicator
-                      isActive={isActive}
-                      startTime={line.time}
-                      duration={duration}
-                      isEdgeBlock={isEdgeBlock}
-                    />
+                    <div className="my-3 transform py-2.5 transition-all duration-300">
+                      <SilenceIndicator
+                        isActive={isActive}
+                        startTime={line.time}
+                        duration={duration}
+                        isEdgeBlock={isEdgeBlock}
+                      />
+                    </div>
                   </motion.div>
                 )}
               </AnimatePresence>
