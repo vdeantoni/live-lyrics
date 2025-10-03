@@ -55,19 +55,27 @@ const MainScreen = () => {
                 : "Open settings"
           }
         >
-          <motion.div
-            key={isOverlayOpen ? "close" : "settings"}
-            initial={{ rotate: 0, scale: 0.8 }}
-            animate={{ rotate: 0, scale: 1 }}
-            exit={{ rotate: 90, scale: 0.8 }}
-            transition={{ duration: 0.2, ease: "easeInOut" }}
-          >
-            {isOverlayOpen ? (
-              <X className="h-5 w-5 text-white/90" />
-            ) : (
-              <Settings className="h-5 w-5 text-white/90" />
-            )}
-          </motion.div>
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.div
+              key={
+                isSearchOpen
+                  ? "close-search"
+                  : isSettingsOpen
+                    ? "close-settings"
+                    : "settings"
+              }
+              initial={{ rotate: 0, scale: 0.8, opacity: 0 }}
+              animate={{ rotate: 0, scale: 1, opacity: 1 }}
+              exit={{ rotate: 90, scale: 0.8, opacity: 0 }}
+              transition={{ duration: 0.2, ease: "easeInOut" }}
+            >
+              {isOverlayOpen ? (
+                <X className="h-5 w-5 text-white/90" />
+              ) : (
+                <Settings className="h-5 w-5 text-white/90" />
+              )}
+            </motion.div>
+          </AnimatePresence>
         </Button>
       </div>
 
@@ -101,10 +109,11 @@ const MainScreen = () => {
         )}
       </AnimatePresence>
 
-      {/* Search Screen - Slides from bottom */}
-      <AnimatePresence>
+      {/* Overlays - Single AnimatePresence with mode="wait" ensures one exits before next enters */}
+      <AnimatePresence mode="wait">
         {isSearchOpen && (
           <motion.div
+            key="search"
             className="absolute inset-0 z-20"
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
@@ -117,13 +126,10 @@ const MainScreen = () => {
             <SearchScreen />
           </motion.div>
         )}
-      </AnimatePresence>
-
-      {/* Settings Screen - Slides from bottom */}
-      <AnimatePresence>
         {isSettingsOpen && (
           <motion.div
-            className="absolute inset-0 z-30"
+            key="settings"
+            className="absolute inset-0 z-20"
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
