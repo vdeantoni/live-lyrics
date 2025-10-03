@@ -32,27 +32,27 @@ test.describe("Settings Functionality", () => {
       await expect(settingsButton).toBeVisible();
       await settingsButton.click();
 
-      // Should now show settings screen and hide settings button
+      // Wait for settings screen animation to complete
       await expect(
         page.locator('[data-testid="settings-screen"]'),
       ).toBeVisible();
-      await expect(
-        page.locator('[data-testid="settings-button"]'),
-      ).not.toBeVisible();
+
+      // Wait for settings button to be hidden (animation complete)
+      await expect(settingsButton).not.toBeVisible();
 
       // Click close button to close
       const closeButton = page.locator('[data-testid="close-overlay-button"]');
       await expect(closeButton).toBeVisible();
       await closeButton.click();
 
-      // Should be back to lyrics screen with settings button visible again
-      await expect(page.locator('[data-testid="lyrics-screen"]')).toBeVisible();
+      // Wait for settings screen to complete exit animation
       await expect(
         page.locator('[data-testid="settings-screen"]'),
       ).not.toBeVisible();
-      await expect(
-        page.locator('[data-testid="settings-button"]'),
-      ).toBeVisible();
+
+      // Should be back to lyrics screen with settings button visible again
+      await expect(page.locator('[data-testid="lyrics-screen"]')).toBeVisible();
+      await expect(settingsButton).toBeVisible();
     });
 
     test("should display settings content correctly", async ({ page }) => {
