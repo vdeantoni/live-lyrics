@@ -9,6 +9,8 @@ interface SilenceLineProps {
   isActive: boolean;
   shouldShow: boolean;
   isEdgeBlock: boolean;
+  isFirstBlock?: boolean;
+  isLastBlock?: boolean;
 }
 
 /**
@@ -21,6 +23,8 @@ const SilenceLine: React.FC<SilenceLineProps> = ({
   isActive,
   shouldShow,
   isEdgeBlock,
+  isFirstBlock = false,
+  isLastBlock = false,
 }) => {
   return (
     <AnimatePresence mode="wait">
@@ -44,7 +48,11 @@ const SilenceLine: React.FC<SilenceLineProps> = ({
               : ""
           }`}
         >
-          <div className="my-3 transform py-2.5 transition-all duration-300">
+          <div
+            className={`transform transition-all duration-300 ${
+              isFirstBlock ? "mt-2" : isLastBlock ? "mb-2" : "my-2"
+            }`}
+          >
             <SilenceIndicator
               isActive={isActive}
               startTime={time}

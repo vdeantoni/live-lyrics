@@ -86,6 +86,8 @@ const LyricsContent: React.FC = () => {
           // Determine if this is an edge block (first or last)
           const isEdgeBlock =
             index === firstSilenceIndex || index === lastSilenceIndex;
+          const isFirstBlock = index === firstSilenceIndex;
+          const isLastBlock = index === lastSilenceIndex;
 
           return (
             <SilenceLine
@@ -96,6 +98,8 @@ const LyricsContent: React.FC = () => {
               isActive={isActive}
               shouldShow={shouldShow}
               isEdgeBlock={isEdgeBlock}
+              isFirstBlock={isFirstBlock}
+              isLastBlock={isLastBlock}
             />
           );
         }

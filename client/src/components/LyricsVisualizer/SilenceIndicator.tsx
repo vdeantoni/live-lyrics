@@ -53,9 +53,9 @@ const SilenceIndicator: React.FC<SilenceIndicatorProps> = ({
   return (
     <div
       data-testid="silence-indicator"
-      className={`flex items-center justify-center transition-all duration-300 ${
+      className={`flex items-center justify-center p-3 transition-all duration-300 ${
         isActive
-          ? "opacity-100 [filter:drop-shadow(0_0_15px_#fff)_drop-shadow(0_0_30px_#fff)_drop-shadow(2px_2px_4px_rgba(0,0,0,0.8))]"
+          ? "opacity-100 [filter:drop-shadow(0_0_2px_#fff)_drop-shadow(0_0_10px_#fff)_drop-shadow(2px_2px_4px_rgba(0,0,0,0.8))]"
           : "opacity-30"
       }`}
     >
