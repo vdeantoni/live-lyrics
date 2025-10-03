@@ -245,4 +245,48 @@ export class LrclibLyricsProvider implements LyricsProvider {
   async isFetching(): Promise<boolean> {
     return this._isFetching;
   }
+
+  async search(query: string): Promise<
+    Array<{
+      id: string;
+      trackName: string;
+      artistName: string;
+      albumName: string;
+      duration: number;
+    }>
+  > {
+    if (!query.trim()) {
+      return [];
+    }
+
+    try {
+      const searchUrl = new URL(`${this.lrcLibUrl}/search`);
+      searchUrl.searchParams.set("q", query);
+
+      const response = await fetch(searchUrl.toString());
+
+      if (!response.ok) {
+        console.warn(`LrcLib search failed: ${response.status}`);
+        return [];
+      }
+
+      const tracks: LRCLibTrack[] = await response.json();
+
+      if (!Array.isArray(tracks)) {
+        return [];
+      }
+
+      // Map LrcLib tracks to SearchResult format
+      return tracks.map((track) => ({
+        id: track.id.toString(),
+        trackName: track.trackName,
+        artistName: track.artistName,
+        albumName: track.albumName,
+        duration: track.duration,
+      }));
+    } catch (error) {
+      console.error("Failed to search lyrics in LrcLib:", error);
+      return [];
+    }
+  }
 }

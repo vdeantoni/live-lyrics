@@ -109,7 +109,7 @@ describe("Player Components", () => {
     // Settings button can be either open or close state depending on initial state
     const settingsButton =
       screen.queryByTestId("settings-button") ||
-      screen.queryByTestId("close-settings-button");
+      screen.queryByTestId("close-overlay-button");
     expect(settingsButton).toBeInTheDocument();
   });
 

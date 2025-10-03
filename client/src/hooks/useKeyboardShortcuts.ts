@@ -1,6 +1,10 @@
 import { useEffect } from "react";
 import { useAtomValue, useSetAtom } from "jotai";
-import { selectedPlayerAtom, toggleSettingsAtom } from "@/atoms/appState";
+import {
+  selectedPlayerAtom,
+  toggleSettingsAtom,
+  toggleSearchAtom,
+} from "@/atoms/appState";
 import { lyricsDataAtom, playerStateAtom } from "@/atoms/playerAtoms";
 import { loadPlayer } from "@/config/providers";
 
@@ -12,10 +16,12 @@ import { loadPlayer } from "@/config/providers";
  * - Left/Right arrows: Seek backward/forward (5s, or 15s with Shift)
  * - Up/Down arrows: Navigate to previous/next lyrics line
  * - C: Toggle settings screen (blocked when Cmd/Ctrl/Alt are pressed to avoid conflicts with copy/paste)
+ * - S: Toggle search screen (blocked when Cmd/Ctrl/Alt are pressed)
  */
 export const useKeyboardShortcuts = () => {
   const selectedPlayer = useAtomValue(selectedPlayerAtom);
   const toggleSettings = useSetAtom(toggleSettingsAtom);
+  const toggleSearch = useSetAtom(toggleSearchAtom);
   const lyricsData = useAtomValue(lyricsDataAtom);
   const playerState = useAtomValue(playerStateAtom);
   const { currentTime, duration, isPlaying } = playerState;
@@ -82,6 +88,12 @@ export const useKeyboardShortcuts = () => {
           if (hasModifier) return; // Don't trigger if modifier keys are pressed (fixes Cmd+C issue)
           event.preventDefault();
           toggleSettings();
+          break;
+
+        case "s": // S - Toggle Search
+          if (hasModifier) return; // Don't trigger if modifier keys are pressed (fixes Cmd+S issue)
+          event.preventDefault();
+          toggleSearch();
           break;
 
         case "arrowleft": // Left Arrow - Seek backward (5s) or fast seek (15s with Shift)
@@ -160,5 +172,6 @@ export const useKeyboardShortcuts = () => {
     duration,
     isPlaying,
     toggleSettings,
+    toggleSearch,
   ]);
 };

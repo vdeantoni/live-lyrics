@@ -41,7 +41,7 @@ test.describe("Settings Functionality", () => {
       ).not.toBeVisible();
 
       // Click close button to close
-      const closeButton = page.locator('[data-testid="close-settings-button"]');
+      const closeButton = page.locator('[data-testid="close-overlay-button"]');
       await expect(closeButton).toBeVisible();
       await closeButton.click();
 
@@ -287,7 +287,7 @@ test.describe("Settings Functionality", () => {
       ).toBeVisible();
 
       // Close button should work
-      const closeButton = page.locator('[data-testid="close-settings-button"]');
+      const closeButton = page.locator('[data-testid="close-overlay-button"]');
       await closeButton.click();
 
       await expect(page.locator('[data-testid="lyrics-screen"]')).toBeVisible();
@@ -314,7 +314,7 @@ test.describe("Settings Functionality", () => {
           page.getByRole("heading", { name: "Settings" }),
         ).toBeVisible();
         const closeButton = page.locator(
-          '[data-testid="close-settings-button"]',
+          '[data-testid="close-overlay-button"]',
         );
         await expect(closeButton).toBeVisible();
 

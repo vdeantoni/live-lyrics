@@ -1,7 +1,22 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { screen, fireEvent } from "@testing-library/react";
+import { screen, fireEvent, waitFor } from "@testing-library/react";
 import { renderWithProviders } from "../helpers/testUtils";
 import MainScreen from "@/components/Player/MainScreen";
+import { useSetAtom } from "jotai";
+import { toggleSearchAtom } from "@/atoms/appState";
+
+// Test helper component that provides a button to toggle search
+const MainScreenWithSearchToggle = () => {
+  const toggleSearch = useSetAtom(toggleSearchAtom);
+  return (
+    <>
+      <button data-testid="test-search-toggle" onClick={toggleSearch}>
+        Toggle Search
+      </button>
+      <MainScreen />
+    </>
+  );
+};
 
 // Mock the child components
 vi.mock("@/components/Player/LyricsScreen", () => ({
@@ -10,6 +25,10 @@ vi.mock("@/components/Player/LyricsScreen", () => ({
 
 vi.mock("@/components/Player/SettingsScreen", () => ({
   default: () => <div data-testid="settings-screen">Settings Screen</div>,
+}));
+
+vi.mock("@/components/Player/SearchScreen", () => ({
+  default: () => <div data-testid="search-screen">Search Screen</div>,
 }));
 
 vi.mock("@/components/Player/LoadingScreen", () => ({
@@ -44,7 +63,7 @@ describe("MainScreen", () => {
     expect(settingsScreen).toBeInTheDocument();
     expect(screen.getByTestId("lyrics-screen")).toBeInTheDocument();
     expect(screen.queryByTestId("loading-screen")).not.toBeInTheDocument();
-    expect(screen.getByTestId("close-settings-button")).toBeInTheDocument();
+    expect(screen.getByTestId("close-overlay-button")).toBeInTheDocument();
   });
 
   it("handles settings button click", async () => {
@@ -67,5 +86,32 @@ describe("MainScreen", () => {
     await renderWithProviders(<MainScreen />);
 
     expect(screen.getByLabelText("Open settings")).toBeInTheDocument();
+  });
+
+  it("opens search screen and closes it with the close button", async () => {
+    await renderWithProviders(<MainScreenWithSearchToggle />);
+
+    // Initially search should be closed
+    expect(screen.queryByTestId("search-screen")).not.toBeInTheDocument();
+
+    // Click test button to open search
+    const toggleButton = screen.getByTestId("test-search-toggle");
+    fireEvent.click(toggleButton);
+
+    // Wait for search screen to appear
+    const searchScreen = await screen.findByTestId("search-screen");
+    expect(searchScreen).toBeInTheDocument();
+
+    // Close button should be visible with proper label
+    const closeButton = screen.getByTestId("close-overlay-button");
+    expect(closeButton).toHaveAttribute("aria-label", "Close search");
+
+    // Click the close button
+    fireEvent.click(closeButton);
+
+    // Search screen should disappear
+    await waitFor(() => {
+      expect(screen.queryByTestId("search-screen")).not.toBeInTheDocument();
+    });
   });
 });
