@@ -21,11 +21,11 @@ const SearchScreen = () => {
   const toggleSearch = useSetAtom(toggleSearchAtom);
   const setPlayerState = useSetAtom(playerStateAtom);
 
-  // Focus input after animation completes (300ms animation + small buffer)
+  // Focus input after animation completes (1 second delay)
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       inputRef.current?.focus();
-    }, 350);
+    }, 1000);
     return () => clearTimeout(timeoutId);
   }, []);
 
@@ -118,14 +118,16 @@ const SearchScreen = () => {
     >
       {/* Header */}
       <div className="border-b border-white/10 p-6">
-        <h2 className="text-2xl font-bold text-white">Search Lyrics</h2>
-        <p className="text-sm text-zinc-400">
-          Find songs across all lyrics providers
-        </p>
+        <div>
+          <h2 className="text-2xl font-bold text-white">Search Lyrics</h2>
+          <p className="text-sm text-zinc-400">
+            Find songs across all lyrics providers
+          </p>
+        </div>
       </div>
 
       {/* Search Input */}
-      <div className="border-b border-white/10 p-4">
+      <div className="border-b border-white/10 p-6">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-zinc-400" />
           <input
@@ -134,7 +136,7 @@ const SearchScreen = () => {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search for a song..."
-            className="w-full rounded-lg border border-white/10 bg-zinc-800/50 py-3 pl-11 pr-10 text-white placeholder-zinc-500 outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20"
+            className="focus:border-primary/50 focus:ring-primary/20 w-full rounded-lg border border-white/10 bg-zinc-800/50 py-3 pl-11 pr-10 text-white placeholder-zinc-500 outline-none focus:ring-2"
           />
           {query && (
             <Button
@@ -150,7 +152,7 @@ const SearchScreen = () => {
       </div>
 
       {/* Results */}
-      <div className="flex-1 overflow-y-auto p-4 pb-20">
+      <div className="flex-1 overflow-y-auto p-6 pb-20">
         {/* Loading State */}
         {isSearching && (
           <div className="flex items-center justify-center py-12">
@@ -182,12 +184,12 @@ const SearchScreen = () => {
 
         {/* Results List */}
         {!isSearching && results.length > 0 && (
-          <div className="space-y-2">
+          <div className="space-y-3">
             {results.map((result) => (
               <button
                 key={`${result.providerId}-${result.id}`}
                 onClick={() => handleResultClick(result)}
-                className="w-full rounded-lg border border-white/10 bg-zinc-800/50 p-4 text-left transition-all hover:scale-[1.02] hover:border-blue-500/50 hover:bg-zinc-800 active:scale-[0.98]"
+                className="w-full rounded-lg border border-white/10 bg-zinc-800/50 p-4 text-left transition-all hover:scale-[1.02] hover:border-white/20 hover:bg-zinc-800 active:scale-[0.98]"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">

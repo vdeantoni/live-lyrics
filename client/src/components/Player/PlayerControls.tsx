@@ -8,13 +8,15 @@ import {
   playerUIStateAtom,
   playerControlAtom,
 } from "@/atoms/playerAtoms";
-import { toggleSearchAtom } from "@/atoms/appState";
+import { toggleSearchAtom, searchOpenAtom } from "@/atoms/appState";
 import AnimatedSongName from "../LyricsVisualizer/AnimatedSongName";
+import { motion } from "framer-motion";
 
 const PlayerControls = () => {
   // Read unified atoms
   const playerState = useAtomValue(playerStateAtom);
   const { currentTime, duration, isPlaying, name, artist } = playerState;
+  const isSearchOpen = useAtomValue(searchOpenAtom);
 
   // Action atoms
   const playerControl = useSetAtom(playerControlAtom);
@@ -91,11 +93,25 @@ const PlayerControls = () => {
         <Button
           size="sm"
           variant="ghost"
-          className="h-10 w-10 rounded-full p-2"
+          className={`dark:hover:bg-accent/0 hover:text-primary h-10 w-10 transform rounded-full p-2 transition-colors ${
+            isSearchOpen ? "text-primary scale-125" : ""
+          }`}
           aria-label="Search lyrics"
           onClick={toggleSearch}
         >
-          <Search />
+          <motion.div
+            animate={{
+              scale: isSearchOpen ? [1, 1.2, 1] : 1,
+              rotate: isSearchOpen ? [0, 10, -10, 0] : 0,
+            }}
+            transition={{
+              duration: 0.5,
+              delay: 0.1,
+              ease: "easeInOut",
+            }}
+          >
+            <Search />
+          </motion.div>
         </Button>
 
         <div className="flex flex-1 items-center justify-center">
@@ -118,7 +134,7 @@ const PlayerControls = () => {
         <Button
           size="sm"
           variant="ghost"
-          className="h-10 w-10 rounded-full p-2"
+          className="dark:hover:bg-accent/0 hover:text-primary h-10 w-10 rounded-full p-2"
           aria-label="View playlists"
           onClick={() => console.log("Playlists clicked")}
         >
