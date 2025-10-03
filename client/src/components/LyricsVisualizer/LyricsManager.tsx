@@ -72,7 +72,23 @@ const LyricsManager = () => {
 
     // Set up load event handler to get lyrics data
     liricle.on("load", (data: LyricsData) => {
-      setLyricsData(data);
+      // Silence indicators are already in the LRC content from normalization
+      // Mark silence lines with metadata for UI detection
+      const linesWithMetadata = data.lines.map((line) => {
+        // Detect silence indicator by checking if text is just the musical note
+        if (line.text === "♪") {
+          return {
+            ...line,
+            type: "silence" as const,
+            metadata: {
+              silenceDuration: 0, // Duration will be calculated by UI if needed
+            },
+          };
+        }
+        return line;
+      });
+
+      setLyricsData({ ...data, lines: linesWithMetadata });
     });
 
     // Set up sync event handler
@@ -81,7 +97,7 @@ const LyricsManager = () => {
       setActiveWord(word);
     });
 
-    // Load the raw LRC content directly
+    // Load the raw LRC content directly (already has silence indicators)
     liricle.load({ text: lyricsContent });
 
     return () => {

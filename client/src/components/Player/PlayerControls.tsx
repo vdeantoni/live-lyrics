@@ -94,7 +94,7 @@ const PlayerControls = () => {
           size="sm"
           variant="ghost"
           className={`dark:hover:bg-accent/0 hover:text-primary h-10 w-10 transform rounded-full p-2 transition-colors ${
-            isSearchOpen ? "text-primary scale-125" : ""
+            isSearchOpen ? "text-primary" : ""
           }`}
           aria-label="Search lyrics"
           onClick={toggleSearch}
@@ -105,8 +105,7 @@ const PlayerControls = () => {
               rotate: isSearchOpen ? [0, 10, -10, 0] : 0,
             }}
             transition={{
-              duration: 0.5,
-              delay: 0.1,
+              duration: 0.3,
               ease: "easeInOut",
             }}
           >

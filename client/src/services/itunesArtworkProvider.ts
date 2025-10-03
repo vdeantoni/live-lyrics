@@ -15,7 +15,7 @@ interface iTunesSearchResult {
 export class ITunesArtworkProvider implements ArtworkProvider {
   private _isFetching: boolean = false;
 
-  async getArtwork(song: Song): Promise<string[]> {
+  async getArtwork(song: Song, signal?: AbortSignal): Promise<string[]> {
     if (!song.name || !song.artist) {
       return [];
     }
@@ -26,6 +26,7 @@ export class ITunesArtworkProvider implements ArtworkProvider {
         `https://itunes.apple.com/search?term=${encodeURIComponent(
           song.artist,
         )}+${encodeURIComponent(song.name)}&entity=song&limit=1`,
+        { signal },
       );
       const json: iTunesSearchResult = await response.json();
 

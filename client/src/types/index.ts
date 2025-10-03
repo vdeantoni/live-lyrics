@@ -20,6 +20,10 @@ export interface LineData {
   time: number;
   text: string;
   words?: WordData[] | null;
+  type?: "lyric" | "silence";
+  metadata?: {
+    silenceDuration?: number;
+  };
 }
 
 export interface LyricsData {
@@ -78,9 +82,9 @@ export interface LyricsProvider {
   /** Get description of this provider */
   getDescription(): string;
   /** Get lyrics for a specific song */
-  getLyrics(song: Song): Promise<string | null>;
+  getLyrics(song: Song, signal?: AbortSignal): Promise<string | null>;
   /** Search for songs by query string */
-  search(query: string): Promise<SearchResult[]>;
+  search(query: string, signal?: AbortSignal): Promise<SearchResult[]>;
   /** Check if this provider supports the given song */
   supportsLyrics(song: Song): Promise<boolean>;
   /** Check if this provider is currently available */
@@ -98,7 +102,7 @@ export interface ArtworkProvider {
   /** Get description of this provider */
   getDescription(): string;
   /** Get artwork URLs for a specific song */
-  getArtwork(song: Song): Promise<string[]>;
+  getArtwork(song: Song, signal?: AbortSignal): Promise<string[]>;
   /** Check if this provider is currently available */
   isAvailable(): Promise<boolean>;
   /** Check if this provider is currently fetching data */

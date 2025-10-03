@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
-import type { LineData } from "@/types";
 import { useAtomValue, useSetAtom } from "jotai";
 import {
   lyricsDataAtom,
@@ -7,6 +6,7 @@ import {
   activeWordAtom,
   playerControlAtom,
 } from "@/atoms/playerAtoms";
+import SilenceIndicator from "./SilenceIndicator";
 
 const LyricsContent: React.FC = () => {
   // Use atoms for lyrics state
@@ -17,9 +17,9 @@ const LyricsContent: React.FC = () => {
 
   // Click handler using playerControl atom
   const handleLineClick = useCallback(
-    (line: LineData) => {
-      if (line.time !== undefined) {
-        playerControl({ type: "seek", payload: line.time });
+    (time: number) => {
+      if (time !== undefined) {
+        playerControl({ type: "seek", payload: time });
       }
     },
     [playerControl],
@@ -37,34 +37,69 @@ const LyricsContent: React.FC = () => {
       return;
     }
 
-    const newLines = lyricsData.lines.map((line, index) => {
-      const isActive = activeLine?.index === index;
+    const newLines = lyricsData.lines
+      .map((line, index) => {
+        const isActive = activeLine?.index === index;
 
-      return (
-        <div
-          key={`${lyricsData.tags?.ti || "song"}-${index}-${line.text.slice(0, 10)}`} // More unique key
-          data-testid="lyrics-line"
-          data-current={isActive ? "true" : "false"}
-          data-line-index={index} // Add data attribute for easier detection
-          data-line-text={line.text.substring(0, 20)} // Add data attribute for text matching
-          className={`my-3 transform cursor-pointer py-2.5 text-center font-normal opacity-50 transition-all duration-300 ${
-            isActive
-              ? "font-black opacity-100 [letter-spacing:0.02em] [text-shadow:0_0_15px_#fff,0_0_30px_#fff,2px_2px_4px_rgba(0,0,0,0.8)]"
-              : ""
-          }`}
-          style={{
-            fontSize: "clamp(1.5rem, 3.5vw, 6rem)", // Same size for all lines
-          }}
-          onClick={() => handleLineClick({ ...line, index })}
-        >
-          {line.words
-            ? line.words.map((word, wordIndex) => (
-                <span key={`${wordIndex}-${word.text}`}>{word.text} </span>
-              ))
-            : line.text}
-        </div>
-      );
-    });
+        // Handle silence indicator lines
+        if (line.type === "silence") {
+          if (isActive) {
+            // Calculate duration to next lyric line
+            const nextLine = lyricsData.lines[index + 1];
+            const duration = nextLine ? nextLine.time - line.time : 20; // Default to 20s if no next line
+
+            return (
+              <div
+                key={`silence-${index}-${line.time}`}
+                data-testid="silence-indicator-line"
+                data-current={isActive ? "true" : "false"}
+                className={`my-3 transform py-2.5 transition-all duration-300 ${
+                  isActive
+                    ? "font-black opacity-100 [text-shadow:0_0_15px_#fff,0_0_30px_#fff,2px_2px_4px_rgba(0,0,0,0.8)]"
+                    : "opacity-50"
+                }`}
+              >
+                <SilenceIndicator
+                  isActive={isActive}
+                  startTime={line.time}
+                  duration={duration}
+                />
+              </div>
+            );
+          } else {
+            return null;
+          }
+        }
+
+        // Regular lyric lines
+        return (
+          <div
+            key={`${lyricsData.tags?.ti || "song"}-${index}-${line.text.slice(0, 10)}`} // More unique key
+            data-testid="lyrics-line"
+            data-current={isActive ? "true" : "false"}
+            data-line-index={index} // Add data attribute for easier detection
+            data-line-text={line.text.substring(0, 20)} // Add data attribute for text matching
+            className={`3xl:text-[clamp(1.5rem,5.5vw,7rem)] 4xl:text-[clamp(1.5rem,6vw,8em)] my-3 transform py-2.5 text-center text-[clamp(1.5rem,4.5vw,3rem)] font-normal opacity-50 transition-all duration-300 lg:text-[clamp(1.5rem,5vw,6rem)] ${
+              isActive
+                ? "font-black opacity-100 [letter-spacing:0.02em] [text-shadow:0_0_15px_#fff,0_0_30px_#fff,2px_2px_4px_rgba(0,0,0,0.8)]"
+                : ""
+            }`}
+          >
+            {line.words
+              ? line.words.map((word, wordIndex) => (
+                  <span
+                    key={`${wordIndex}-${word.text}`}
+                    onClick={() => handleLineClick(word.time)}
+                    className="cursor-pointer"
+                  >
+                    {word.text}{" "}
+                  </span>
+                ))
+              : line.text}
+          </div>
+        );
+      })
+      .filter((element): element is React.ReactElement => element !== null);
 
     setLines(newLines);
   }, [lyricsData, activeLine, handleLineClick]);
@@ -108,13 +143,13 @@ const LyricsContent: React.FC = () => {
 
           // Wait longer for React to fully update the DOM with active classes
           setTimeout(() => {
-            // Robust element detection - same as main scroll effect
+            // Robust element detection using data attribute
             let activeLineElement: HTMLElement | null = null;
 
-            // First try to find by class name
+            // Find by data-current attribute (works for both lyrics and silence indicators)
             for (let i = 0; i < container.children.length; i++) {
               const child = container.children[i] as HTMLElement;
-              if (child.className.includes("font-bold opacity-100 scale-110")) {
+              if (child.getAttribute("data-current") === "true") {
                 activeLineElement = child;
                 break;
               }
@@ -193,13 +228,13 @@ const LyricsContent: React.FC = () => {
 
     // Use requestAnimationFrame to ensure DOM has been updated with new classes
     const frame = requestAnimationFrame(() => {
-      // Find the active line element by looking for the one with active styling
+      // Find the active line element using data attribute
       let activeLineElement: HTMLElement | null = null;
 
-      // First try to find by class name
+      // Find by data-current attribute (works for both lyrics and silence indicators)
       for (let i = 0; i < container.children.length; i++) {
         const child = container.children[i] as HTMLElement;
-        if (child.className.includes("font-bold opacity-100 scale-110")) {
+        if (child.getAttribute("data-current") === "true") {
           activeLineElement = child;
           break;
         }
@@ -277,13 +312,13 @@ const LyricsContent: React.FC = () => {
       const container = contentRef.current;
       if (!container) return;
 
-      // Robust element detection - same as main scroll effect
+      // Robust element detection using data attribute
       let activeLineElement: HTMLElement | null = null;
 
-      // First try to find by class name
+      // Find by data-current attribute (works for both lyrics and silence indicators)
       for (let i = 0; i < container.children.length; i++) {
         const child = container.children[i] as HTMLElement;
-        if (child.className.includes("font-bold opacity-100 scale-110")) {
+        if (child.getAttribute("data-current") === "true") {
           activeLineElement = child;
           break;
         }
@@ -341,6 +376,13 @@ const LyricsContent: React.FC = () => {
   useEffect(() => {
     if (!activeWord || !activeLine || !contentRef.current || !cursorRef.current)
       return;
+
+    // Hide cursor for silence indicator lines (they have no real words)
+    if (activeLine.type === "silence") {
+      const cursor = cursorRef.current;
+      cursor.style.display = "none";
+      return;
+    }
 
     const activeLineElement = contentRef.current.children[
       activeLine.index || 0
