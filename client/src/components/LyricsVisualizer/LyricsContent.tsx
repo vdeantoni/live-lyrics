@@ -76,12 +76,10 @@ const LyricsContent: React.FC = () => {
             duration = songDuration > 0 ? songDuration - line.time : 20;
           }
 
-          // Check if enough time has passed to show the indicator
+          // Check if enough time has passed to show the indicator visually
           const currentTime = playerState?.currentTime || 0;
           const shouldShow =
             currentTime >= line.time + LYRICS_SILENCE.INDICATOR_DELAY;
-
-          if (!shouldShow) return null;
 
           // Determine if this is an edge block (first or last)
           const isEdgeBlock =
@@ -89,6 +87,7 @@ const LyricsContent: React.FC = () => {
           const isFirstBlock = index === firstSilenceIndex;
           const isLastBlock = index === lastSilenceIndex;
 
+          // Always render the element (for scroll calculations) but control visibility
           return (
             <SilenceLine
               key={`silence-${index}-${line.time}`}
