@@ -306,7 +306,10 @@ To me`;
           if (typeof window !== "undefined") {
             Promise.resolve().then(async () => {
               try {
-                const providerRegistryAPI = window["providerRegistryAPI"];
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const providerRegistryAPI = (window as any)[
+                  "providerRegistryAPI"
+                ];
                 if (!providerRegistryAPI) {
                   throw new Error("providerRegistryAPI is undefined");
                 }
@@ -350,7 +353,7 @@ To me`;
                 debugLog(
                   `After replaceAll: ${verifyProviders.length} lyrics providers registered`,
                 );
-                verifyProviders.forEach((p) => {
+                verifyProviders.forEach((p: { name: string; id: string }) => {
                   debugLog(`  - ${p.name} (${p.id})`);
                 });
 

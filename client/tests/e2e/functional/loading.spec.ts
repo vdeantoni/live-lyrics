@@ -12,9 +12,8 @@ test.describe("Loading Screen", () => {
     await page.addInitScript(() => {
       // Store the original setTimeout
       const originalSetTimeout = window.setTimeout;
-
-      // Override setTimeout to add delay to bootstrap process
-      window.setTimeout = (
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (window.setTimeout as any) = (
         callback: () => void,
         delay: number,
         ...args: unknown[]
@@ -83,7 +82,8 @@ test.describe("Loading Screen", () => {
     // Mock with moderate delay to catch the transition
     await page.addInitScript(() => {
       const originalSetTimeout = window.setTimeout;
-      window.setTimeout = (
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (window.setTimeout as any) = (
         callback: () => void,
         delay: number,
         ...args: unknown[]

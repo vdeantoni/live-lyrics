@@ -1,4 +1,4 @@
-import { test, Page } from "@playwright/test";
+import { test, type Page } from "@playwright/test";
 import { injectTestRegistry } from "../helpers/injectTestRegistry";
 
 /**

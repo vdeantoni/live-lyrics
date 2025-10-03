@@ -87,10 +87,9 @@ test.describe("Lyrics Display", () => {
       await page.evaluate(async () => {
         const seekTime = 90; // "Mama, just killed a man" at [01:30.00]
 
-        // Get the player control API and seek to the timestamp
         const playerControlAPI = (
           window as Window & { playerControlAPI?: unknown }
-        ).playerControlAPI;
+        ).playerControlAPI as any; // eslint-disable-line @typescript-eslint/no-explicit-any
         if (playerControlAPI && playerControlAPI.seek) {
           await playerControlAPI.seek(seekTime);
         }
@@ -134,17 +133,6 @@ test.describe("Lyrics Display", () => {
       await page.waitForFunction(() => {
         return !!(window as Window & { playerControlAPI?: unknown })
           .playerControlAPI;
-      });
-
-      // Seek to a known timestamp to test auto-scroll
-      await page.evaluate(async () => {
-        const seekTime = 90; // "Mama, just killed a man" at [01:30.00]
-        const playerControlAPI = (
-          window as Window & { playerControlAPI?: unknown }
-        ).playerControlAPI;
-        if (playerControlAPI && playerControlAPI.seek) {
-          await playerControlAPI.seek(seekTime);
-        }
       });
 
       // Wait for the player state to actually update in the UI
@@ -197,15 +185,15 @@ test.describe("Lyrics Display", () => {
       });
 
       // Seek to a known timestamp to test lyrics synchronization
-      await page.evaluate(async () => {
-        const seekTime = 90; // "Mama, just killed a man" at [01:30.00]
+      const seekTime = 30;
+      await page.evaluate(async (seekTime) => {
         const playerControlAPI = (
           window as Window & { playerControlAPI?: unknown }
-        ).playerControlAPI;
+        ).playerControlAPI as any; // eslint-disable-line @typescript-eslint/no-explicit-any
         if (playerControlAPI && playerControlAPI.seek) {
           await playerControlAPI.seek(seekTime);
         }
-      });
+      }, seekTime);
 
       // Wait for the player state to actually update in the UI
       await page.waitForFunction(() => {
