@@ -50,6 +50,7 @@ describe("LrclibLyricsProvider", () => {
       );
       expect(fetch).toHaveBeenCalledWith(
         "https://lrclib.net/api/search?track_name=Test+Song&artist_name=Test+Artist&album_name=Test+Album",
+        { signal: undefined },
       );
     });
 
@@ -210,6 +211,7 @@ describe("LrclibLyricsProvider", () => {
 
       expect(fetch).toHaveBeenCalledWith(
         "https://lrclib.net/api/search?track_name=Test+Song&artist_name=Test+Artist",
+        { signal: undefined },
       );
     });
   });

@@ -94,7 +94,11 @@ export class LocalLyricsProvider implements LyricsProvider {
     return `${name}-${artist}`;
   }
 
-  async getLyrics(song: Song): Promise<string | null> {
+  async getLyrics(
+    song: Song,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _signal?: AbortSignal,
+  ): Promise<string | null> {
     // Simulate network delay
     await new Promise((resolve) => setTimeout(resolve, 100));
 
@@ -128,7 +132,12 @@ export class LocalLyricsProvider implements LyricsProvider {
     return false;
   }
 
-  async search(): Promise<
+  async search(
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _query: string,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _signal?: AbortSignal,
+  ): Promise<
     Array<{
       id: string;
       trackName: string;

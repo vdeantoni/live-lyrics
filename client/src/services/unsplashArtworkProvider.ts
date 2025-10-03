@@ -41,6 +41,8 @@ export class UnsplashArtworkProvider implements ArtworkProvider {
   async getArtwork(
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     _song: Song,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _signal?: AbortSignal,
   ): Promise<string[]> {
     try {
       const imageSize = this.getOptimalImageSize();
