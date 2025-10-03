@@ -3,6 +3,11 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Custom breakpoint variants for ultra-wide screens */
+@custom-variant 3xl (@media (min-width: 1920px));
+@custom-variant 4xl (@media (min-width: 2560px));
+@custom-variant 5xl (@media (min-width: 3840px));
+
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);

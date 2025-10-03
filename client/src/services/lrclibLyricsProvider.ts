@@ -167,7 +167,7 @@ export class LrclibLyricsProvider implements LyricsProvider {
     return "plain text";
   }
 
-  async getLyrics(song: Song): Promise<string | null> {
+  async getLyrics(song: Song, signal?: AbortSignal): Promise<string | null> {
     if (!song.name || !song.artist) {
       return null;
     }
@@ -181,7 +181,7 @@ export class LrclibLyricsProvider implements LyricsProvider {
         searchUrl.searchParams.set("album_name", song.album);
       }
 
-      const response = await fetch(searchUrl.toString());
+      const response = await fetch(searchUrl.toString(), { signal });
 
       if (!response.ok) {
         console.warn(`LrcLib search failed: ${response.status}`);
@@ -246,7 +246,10 @@ export class LrclibLyricsProvider implements LyricsProvider {
     return this._isFetching;
   }
 
-  async search(query: string): Promise<
+  async search(
+    query: string,
+    signal?: AbortSignal,
+  ): Promise<
     Array<{
       id: string;
       trackName: string;
@@ -263,7 +266,7 @@ export class LrclibLyricsProvider implements LyricsProvider {
       const searchUrl = new URL(`${this.lrcLibUrl}/search`);
       searchUrl.searchParams.set("q", query);
 
-      const response = await fetch(searchUrl.toString());
+      const response = await fetch(searchUrl.toString(), { signal });
 
       if (!response.ok) {
         console.warn(`LrcLib search failed: ${response.status}`);

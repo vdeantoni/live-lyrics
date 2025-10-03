@@ -166,11 +166,11 @@ test.describe("Lyrics Display", () => {
     }) => {
       await page.waitForSelector('[data-testid="lyrics-line"]');
 
-      // Use keyboard to seek to ~50s (10 presses * 5s = 50s) - after "To me" to trigger scroll
-      for (let i = 0; i < 10; i++) {
+      // Use keyboard to seek to ~15s (10 presses * 5s = 15s) - after "No escape from reality" to trigger scroll
+      for (let i = 0; i < 5; i++) {
         await page.keyboard.press("ArrowRight");
         // Wait for player state to update via React Query (300ms polling + buffer)
-        await page.waitForTimeout(400);
+        await page.waitForTimeout(300);
       }
 
       // Wait for time display to update
@@ -178,7 +178,7 @@ test.describe("Lyrics Display", () => {
         const timeDisplay = document.querySelector(
           '[data-testid="current-time"]',
         );
-        return timeDisplay?.textContent?.includes("0:50");
+        return timeDisplay?.textContent?.includes("0:25");
       });
 
       // Wait for current line to update
@@ -191,8 +191,8 @@ test.describe("Lyrics Display", () => {
       );
       await expect(currentLine).toBeVisible();
 
-      // At 50s, should show lyrics from the "Mama" section
-      await expect(currentLine).toContainText("Because I'm easy come, easy go");
+      // At 25s, should show lyrics from the "Open your eyes" section
+      await expect(currentLine).toContainText("Open your eyes");
     });
   });
 

@@ -15,3 +15,10 @@ export const UI_DELAYS = {
   /** Timeout for seek operation completion (milliseconds) */
   SEEK_END_TIMEOUT: 1000,
 } as const;
+
+export const LYRICS_SILENCE = {
+  /** Minimum silence duration to trigger indicator (seconds) */
+  DETECTION_THRESHOLD: 20,
+  /** Time after last lyric line when silence indicator appears (seconds) */
+  INDICATOR_DELAY: 1,
+} as const;
