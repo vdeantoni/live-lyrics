@@ -48,7 +48,7 @@ export const useArtworkSync = () => {
     isFetching,
   } = useQuery({
     queryKey: [
-      "artwork",
+      "artwork", // Consistent prefix for all artwork queries
       artworkSettingsKey, // Invalidates when user changes artwork provider settings
       enabledProviderIds, // Keep for readability
       playerState.name,
