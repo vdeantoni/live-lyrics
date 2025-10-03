@@ -11,7 +11,7 @@
  */
 
 import type { LyricsProvider, ArtworkProvider, Player } from "@/types";
-import type { ProviderConfig } from "@/config/providers";
+import type { ProviderConfig } from "@/types/appState";
 import {
   TestLyricsProvider,
   TestArtworkProvider,

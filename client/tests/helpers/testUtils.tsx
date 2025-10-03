@@ -1,10 +1,11 @@
 import React from "react";
+import { expect } from "vitest";
 import { render, type RenderOptions, waitFor } from "@testing-library/react";
 import { Provider as JotaiProvider, useSetAtom } from "jotai";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { TestProvider } from "./TestProvider";
 import type { LyricsProvider, ArtworkProvider, Player } from "@/types";
-import type { ProviderConfig } from "@/config/providers";
+import type { ProviderConfig } from "@/types/appState";
 import { createTestProviderConfigs } from "./testRegistryFactory";
 import type { Atom } from "jotai";
 
@@ -132,7 +133,8 @@ export const renderWithAtomMocks = (
     atom,
     value,
   }) => {
-    const setAtom = useSetAtom(atom);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const setAtom = useSetAtom(atom as any);
     React.useEffect(() => {
       setAtom(value as never);
     }, [setAtom, value]);

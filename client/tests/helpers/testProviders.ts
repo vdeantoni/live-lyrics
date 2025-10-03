@@ -58,10 +58,13 @@ export const BOHEMIAN_RHAPSODY_LRC = BOHEMIAN_RHAPSODY_ENHANCED_LRC;
  * Test lyrics provider that only returns lyrics for Bohemian Rhapsody
  */
 export class TestLyricsProvider implements LyricsProvider {
-  constructor(
-    private id: string,
-    private name: string,
-  ) {}
+  private id: string;
+  private name: string;
+
+  constructor(id: string, name: string) {
+    this.id = id;
+    this.name = name;
+  }
 
   getId(): string {
     return this.id;
@@ -110,10 +113,13 @@ export class TestLyricsProvider implements LyricsProvider {
  * Test artwork provider that returns no artwork but is available
  */
 export class TestArtworkProvider implements ArtworkProvider {
-  constructor(
-    private id: string,
-    private name: string,
-  ) {}
+  private id: string;
+  private name: string;
+
+  constructor(id: string, name: string) {
+    this.id = id;
+    this.name = name;
+  }
 
   getId(): string {
     return this.id;
@@ -152,10 +158,13 @@ export class TestPlayer implements Player {
     startTime: 0,
   };
 
-  constructor(
-    private id: string,
-    private name: string,
-  ) {}
+  private id: string;
+  private name: string;
+
+  constructor(id: string, name: string) {
+    this.id = id;
+    this.name = name;
+  }
 
   getId(): string {
     return this.id;

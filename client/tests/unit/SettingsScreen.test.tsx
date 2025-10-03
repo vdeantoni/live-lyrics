@@ -28,7 +28,8 @@ describe("SettingsScreen", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(useQueryClient).mockReturnValue(mockQueryClient);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    vi.mocked(useQueryClient).mockReturnValue(mockQueryClient as any);
   });
 
   it("renders settings screen correctly", async () => {

@@ -6,7 +6,7 @@ import { coreAppStateAtom } from "@/atoms/appState";
 import { providerRegistryAPI } from "@/api/providerAPI";
 import { createJotaiTestProviders } from "./testUtils";
 import type { LyricsProvider, ArtworkProvider, Player } from "@/types";
-import type { ProviderConfig } from "@/config/providers";
+import type { ProviderConfig } from "@/types/appState";
 
 interface TestProviderProps {
   children: React.ReactNode;

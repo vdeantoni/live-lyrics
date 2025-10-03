@@ -7,86 +7,64 @@
   ],
   "tasks": {
     "build": {
-      "dependsOn": ["^build"],
+      "dependsOn": [],
       "inputs": [
         "src/**",
+        "tests/**",
         "public/**",
-        "index.html",
-        "package.json",
-        "tsconfig*.json",
-        "vite.config.*",
-        "tailwind.config.*",
-        "components.json"
+        "*.{json,ts,html}"
       ],
       "outputs": [
-        "dist/**",
-        "src/**/*.js",
-        "src/**/*.d.ts"
+        "dist/**"
       ],
       "outputLogs": "new-only"
     },
     "lint": {
-      "dependsOn": ["^build"],
+      "dependsOn": ["build"],
       "inputs": [
         "src/**",
-        "package.json",
-        "eslint.config.*",
-        ".eslintrc*",
-        "tsconfig*.json"
+        "tests/**",
+        "*.{json,ts,html}"
       ],
       "outputLogs": "new-only"
     },
     "lint:check": {
-      "dependsOn": ["^build"],
+      "dependsOn": ["build"],
       "inputs": [
         "src/**",
-        "package.json",
-        "eslint.config.*",
-        ".eslintrc*",
-        "tsconfig*.json"
+        "tests/**",
+        "*.{json,ts,html}"
       ],
       "outputLogs": "new-only"
     },
     "format": {
       "inputs": [
-        "src/**/*.{js,jsx,ts,tsx}",
-        "**/*.{json,css,md}",
-        "!node_modules/**",
-        "!dist/**",
+        "src/**",
+        "tests/**",
+        ".prettierignore",
         ".prettierrc",
-        "prettier.config.*",
-        "package.json"
+        "*.{json,ts,html,md}"
       ],
       "outputs": [],
       "outputLogs": "new-only"
     },
     "format:check": {
       "inputs": [
-        "src/**/*.{js,jsx,ts,tsx}",
-        "**/*.{json,css,md}",
-        "!node_modules/**",
-        "!dist/**",
+        "src/**",
+        "tests/**",
+        ".prettierignore",
         ".prettierrc",
-        "prettier.config.*",
-        "package.json"
+        "*.{json,ts,html,md}"
       ],
       "outputs": [],
       "outputLogs": "new-only"
     },
     "test": {
-      "dependsOn": ["^build"],
+      "dependsOn": ["build","format:check", "lint:check"],
       "inputs": [
-        "src/**/*.{ts,tsx}",
-        "test/**/*.{ts,tsx}",
-        "tests/**/*.{ts,tsx}",
-        "**/*.test.{ts,tsx}",
-        "**/*.spec.{ts,tsx}",
-        "package.json",
-        "tsconfig*.json",
-        "vite.config.*",
-        "vitest.config.*",
-        "playwright.config.*",
-        "lostpixel.config.*"
+        "src/**",
+        "tests/**",
+        "*.{json,ts,html}"
       ],
       "outputs": [
         "coverage/**"
