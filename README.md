@@ -15,9 +15,12 @@ A beautiful web application that displays synchronized lyrics for songs currentl
 - **Responsive Design**: Optimized layouts for both portrait (mobile) and landscape (desktop) orientations
 - **Animated Song Information**: Smooth scrolling song names and artist information
 - **Playback Controls**: Control your music directly from the web interface
+- **Lyrics Search**: Search for any song across all lyrics providers with debounced multi-provider search
+- **Keyboard Shortcuts**: Global shortcuts for playback control (Space, ←/→ seek) and navigation (C for settings, S for search)
 - **Multiple Provider Management**: Drag-and-drop provider reordering with priority-based fallback system
 - **Comprehensive Settings**: Full settings panel with player switching and provider configuration
 - **Multiple Lyrics Sources**: Integrates with external APIs for comprehensive lyrics coverage with intelligent provider selection and quality-based matching
+- **Silence Detection**: Animated timer and begin/end silence indicators for instrumental breaks
 
 ## 🛠 Tech Stack
 
@@ -135,15 +138,21 @@ live-lyrics/
 │   ├── src/
 │   │   ├── components/     # React components
 │   │   │   ├── LyricsVisualizer/  # Main lyrics display components
-│   │   │   ├── Player/     # Player controls and settings screen
+│   │   │   ├── Player/     # Player controls, search, and screen management
 │   │   │   ├── Settings/   # Modular settings components with drag-and-drop
 │   │   │   └── ui/         # Reusable UI components
+│   │   ├── atoms/          # Jotai state atoms (appState.ts, playerAtoms.ts)
+│   │   ├── hooks/          # React hooks (useKeyboardShortcuts, etc.)
+│   │   ├── config/         # Provider configurations and lazy loading
+│   │   └── types/          # TypeScript type definitions
 │   └── tests/              # Test suites (organized by type)
 │       ├── unit/           # Unit tests (Vitest)
 │       ├── integration/    # Integration tests (Vitest)
+│       ├── helpers/        # Test utilities (renderWithProviders, createTestRegistry)
 │       └── e2e/            # End-to-end tests (Playwright)
 │           ├── functional/ # Functional E2E tests
-│           └── visual/     # Visual regression tests
+│           ├── visual/     # Visual regression tests
+│           └── helpers/    # E2E test utilities
 ├── server/                 # Node.js backend API
 │   ├── src/
 │   │   └── index.ts        # Hono server with AppleScript integration
@@ -151,7 +160,9 @@ live-lyrics/
 │       ├── unit/           # Unit tests (Vitest)
 │       └── setup/          # Test configuration
 ├── lost-pixel/             # Visual regression test screenshots
-└── .github/workflows/      # CI/CD workflows
+└── .github/                # CI/CD configuration
+    ├── actions/            # Reusable composite actions
+    └── workflows/          # GitHub Actions workflows (CI, PR, VRT, cache cleanup)
 ```
 
 ## 🏗 Architecture
@@ -164,12 +175,14 @@ live-lyrics/
 
 ### Key Components
 - **LyricsVisualizer**: Main container orchestrating layout
-- **LyricsProvider**: Data fetching and state management
+- **LyricsManager**: Data fetching and state management (formerly LyricsProvider)
 - **LyricsDisplay**: Visual effects and background rendering
-- **LyricsContent**: Synchronized lyrics rendering
+- **LyricsContent**: Synchronized lyrics rendering with word-level highlighting
 - **Player**: Music controls with animated song information
+- **SearchScreen**: Multi-provider lyrics search with debounced input and result deduplication
 - **SettingsScreen**: Comprehensive settings panel with drag-and-drop provider management
 - **Settings Components**: Modular components for player, lyrics, and artwork provider configuration
+- **SilenceIndicator**: Animated silence detection with configurable timing thresholds
 
 ## 🔧 Development
 
