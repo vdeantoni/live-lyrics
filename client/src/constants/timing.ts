@@ -18,7 +18,7 @@ export const UI_DELAYS = {
 
 export const LYRICS_SILENCE = {
   /** Minimum silence duration to trigger indicator (seconds) */
-  DETECTION_THRESHOLD: 20,
+  DETECTION_THRESHOLD: 15,
   /** Time after last lyric line when silence indicator appears (seconds) */
-  INDICATOR_DELAY: 1,
+  INDICATOR_DELAY: 5,
 } as const;

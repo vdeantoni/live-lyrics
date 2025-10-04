@@ -133,9 +133,11 @@ export function insertSilenceIndicatorsIntoLrc(
   if (sortedTimes.length > 0) {
     const firstTime = sortedTimes[0];
     if (firstTime > DETECTION_THRESHOLD) {
-      const silenceTime = INDICATOR_DELAY;
-      const timestamp = formatLrcTimestamp(silenceTime);
-      newLines.push(`[${timestamp}]<${timestamp}>♪`);
+      const silenceStartTime = 0;
+      const startTimestamp = formatLrcTimestamp(silenceStartTime);
+
+      // Add silence marker
+      newLines.push(`[${startTimestamp}]<${startTimestamp}>♪`);
     }
   }
 
@@ -170,11 +172,10 @@ export function insertSilenceIndicatorsIntoLrc(
 
       if (gapDuration > DETECTION_THRESHOLD) {
         const silenceStartTime = currentTime + INDICATOR_DELAY;
-        const timestamp = formatLrcTimestamp(silenceStartTime);
+        const startTimestamp = formatLrcTimestamp(silenceStartTime);
 
-        // Create silence indicator line with word-level timing
-        // This ensures Liricle treats it as enhanced LRC and syncs properly
-        newLines.push(`[${timestamp}]<${timestamp}>♪`);
+        // Add silence marker
+        newLines.push(`[${startTimestamp}]<${startTimestamp}>♪`);
       }
     }
   }
@@ -185,9 +186,11 @@ export function insertSilenceIndicatorsIntoLrc(
     const gapAtEnd = duration - lastTime;
 
     if (gapAtEnd > DETECTION_THRESHOLD) {
-      const silenceTime = lastTime + INDICATOR_DELAY;
-      const timestamp = formatLrcTimestamp(silenceTime);
-      newLines.push(`[${timestamp}]<${timestamp}>♪`);
+      const silenceStartTime = lastTime + INDICATOR_DELAY;
+      const startTimestamp = formatLrcTimestamp(silenceStartTime);
+
+      // Add start marker only (no end marker since song ends)
+      newLines.push(`[${startTimestamp}]<${startTimestamp}>♪`);
     }
   }
 

@@ -32,7 +32,8 @@ const PlayerControls = () => {
   };
 
   const handleSliderChange = ([time]: number[]) => {
-    playerControl({ type: "seek", payload: time });
+    // Update UI immediately but don't seek yet (wait for pointer up)
+    setPlayerUIState((prev) => ({ ...prev, pendingSeekTime: time }));
   };
 
   const handleSliderPointerDown = () => {
@@ -40,7 +41,13 @@ const PlayerControls = () => {
   };
 
   const handleSliderPointerUp = () => {
-    setPlayerUIState((prev) => ({ ...prev, isDragging: false }));
+    setPlayerUIState((prev) => {
+      // Seek to the final time when pointer is released
+      if (prev.pendingSeekTime !== undefined) {
+        playerControl({ type: "seek", payload: prev.pendingSeekTime });
+      }
+      return { ...prev, isDragging: false, pendingSeekTime: undefined };
+    });
   };
 
   return (

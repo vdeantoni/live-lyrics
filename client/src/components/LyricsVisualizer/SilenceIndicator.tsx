@@ -106,7 +106,7 @@ const SilenceIndicator: React.FC<SilenceIndicatorProps> = ({
               strokeLinecap="round"
             />
           </svg>
-          {displayTime >= 5 && (
+          {displayTime >= 6 && (
             <>
               {/* Music icon in center - responsive sizing */}
               <div className="absolute inset-0 flex items-center justify-center">
@@ -122,7 +122,7 @@ const SilenceIndicator: React.FC<SilenceIndicatorProps> = ({
           )}
 
           {/* Timer display - responsive sizing */}
-          {isActive && displayTime < 5 && (
+          {isActive && displayTime < 6 && (
             <motion.div
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
