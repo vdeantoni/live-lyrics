@@ -303,12 +303,22 @@ test.describe("Settings Functionality", () => {
       for (const viewport of viewports) {
         await page.setViewportSize(viewport);
 
+        // Ensure settings are closed before starting (in case previous iteration left them open)
+        const settingsScreen = page.locator('[data-testid="settings-screen"]');
+        if (await settingsScreen.isVisible()) {
+          const existingCloseButton = page.locator(
+            '[data-testid="close-overlay-button"]',
+          );
+          await existingCloseButton.click();
+          await expect(settingsScreen).not.toBeVisible();
+        }
+
         // Wait for settings button to be visible before clicking
         const settingsButton = page.locator('[data-testid="settings-button"]');
-        await settingsButton.waitFor({ state: "visible" });
+        await expect(settingsButton).toBeVisible();
         await settingsButton.click();
 
-        await page.waitForSelector('[data-testid="settings-screen"]');
+        await expect(settingsScreen).toBeVisible();
 
         // Settings should be responsive
         await expect(
@@ -322,13 +332,14 @@ test.describe("Settings Functionality", () => {
         // Close settings
         await closeButton.click();
 
-        // Wait for settings to fully close and settings button to reappear
-        await page.waitForSelector('[data-testid="settings-screen"]', {
-          state: "hidden",
-        });
+        // Wait for settings to fully close (animation complete)
+        await expect(settingsScreen).not.toBeVisible();
+
+        // Verify main screen and settings button are back
         await expect(
           page.locator('[data-testid="lyrics-screen"]'),
         ).toBeVisible();
+        await expect(settingsButton).toBeVisible();
       }
     });
   });

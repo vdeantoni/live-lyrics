@@ -11,20 +11,20 @@ interface SilenceIndicatorProps {
   startTime: number;
   /** Duration of the silence period in seconds */
   duration: number;
-  /** Whether this is the first or last silence block (no bounce animation) */
-  isEdgeBlock?: boolean;
+  /** Type of silence block: first (fade in), middle (animated), last (fade out) */
+  blockType?: "first" | "middle" | "last";
 }
 
 /**
  * Animated indicator for instrumental breaks / moments of silence
  * Shows a pulsing musical note icon with a circular progress timer
- * Edge blocks (first/last) don't have bounce animation
+ * First block fades in, middle blocks animate, last block fades out
  */
 const SilenceIndicator: React.FC<SilenceIndicatorProps> = ({
   isActive = false,
   startTime,
   duration,
-  isEdgeBlock = false,
+  blockType = "middle",
 }) => {
   const playerState = useAtomValue(playerStateAtom);
   const [progress, setProgress] = useState(0);
@@ -50,25 +50,83 @@ const SilenceIndicator: React.FC<SilenceIndicatorProps> = ({
     (playerState?.currentTime ? playerState.currentTime - startTime : 0);
   const displayTime = Math.max(Math.ceil(remainingTime), 0);
 
+  // Easing function for smooth fade in/out (ease-in-out cubic)
+  const easeInOutCubic = (t: number): number => {
+    return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+  };
+
+  // Calculate opacity based on block type and progress
+  const fadeOpacity = isActive
+    ? blockType === "first"
+      ? (() => {
+          // First block: fade in over duration, then fade out over last 1s
+          const elapsed = (progress / 100) * duration;
+          const FADE_OUT_DURATION = 1; // 1 second
+
+          if (elapsed > duration - FADE_OUT_DURATION) {
+            // Fade out during last second
+            const t = (duration - elapsed) / FADE_OUT_DURATION;
+            return Math.min(progress / 100, 1) * easeInOutCubic(t);
+          } else {
+            // Normal fade in
+            return Math.min(progress / 100, 1);
+          }
+        })()
+      : blockType === "last"
+        ? (() => {
+            // Last block: fade in over first 1s, then fade out over remaining duration
+            const elapsed = (progress / 100) * duration;
+            const FADE_IN_DURATION = 1; // 1 second
+
+            if (elapsed < FADE_IN_DURATION) {
+              // Fade in during first second
+              const t = elapsed / FADE_IN_DURATION;
+              return easeInOutCubic(t) * Math.max(1 - progress / 100, 0);
+            } else {
+              // Normal fade out
+              return Math.max(1 - progress / 100, 0);
+            }
+          })()
+        : (() => {
+            // Middle blocks: fade in over 1s, full opacity, fade out over 1s
+            const elapsed = (progress / 100) * duration;
+            const FADE_DURATION = 1; // 1 second
+
+            if (elapsed < FADE_DURATION) {
+              // Fade in during first second
+              const t = elapsed / FADE_DURATION;
+              return easeInOutCubic(t);
+            } else if (elapsed > duration - FADE_DURATION) {
+              // Fade out during last second
+              const t = (duration - elapsed) / FADE_DURATION;
+              return easeInOutCubic(t);
+            } else {
+              // Full opacity in between
+              return 1;
+            }
+          })()
+    : 0.3;
+
   return (
     <div
       data-testid="silence-indicator"
       className={`flex items-center justify-center p-3 transition-all duration-300 ${
         isActive
-          ? "opacity-100 [filter:drop-shadow(0_0_2px_#fff)_drop-shadow(0_0_10px_#fff)_drop-shadow(2px_2px_4px_rgba(0,0,0,0.8))]"
-          : "opacity-30"
+          ? "[filter:drop-shadow(0_0_2px_#fff)_drop-shadow(0_0_10px_#fff)_drop-shadow(2px_2px_4px_rgba(0,0,0,0.8))]"
+          : ""
       }`}
+      style={{ opacity: fadeOpacity }}
     >
       <motion.div
         animate={
-          isEdgeBlock
+          blockType === "middle"
             ? {
-                // No bounce for edge blocks, just fade
+                // Normal bounce animation for middle blocks
+                scale: isActive ? [1, 1.3, 1] : [1, 1.2, 1],
                 opacity: isActive ? [0.9, 1, 0.9] : [0.5, 0.7, 0.5],
               }
             : {
-                // Normal bounce animation for middle blocks
-                scale: isActive ? [1, 1.3, 1] : [1, 1.2, 1],
+                // No bounce for first/last blocks, just subtle fade
                 opacity: isActive ? [0.9, 1, 0.9] : [0.5, 0.7, 0.5],
               }
         }
@@ -101,7 +159,11 @@ const SilenceIndicator: React.FC<SilenceIndicatorProps> = ({
               strokeWidth="2"
               fill="none"
               strokeDasharray={`${2 * Math.PI * 20}`}
-              strokeDashoffset={`${2 * Math.PI * 20 * (1 - progress / 100)}`}
+              strokeDashoffset={
+                blockType === "last"
+                  ? `${2 * Math.PI * 20 * (progress / 100)}` // Starts at 0 (full), increases to circumference (empty)
+                  : `${2 * Math.PI * 20 * (1 - progress / 100)}` // Starts at circumference (empty), decreases to 0 (full)
+              }
               className={`transition-all duration-300 ${isActive ? "text-white/90" : "text-white/40"}`}
               strokeLinecap="round"
             />

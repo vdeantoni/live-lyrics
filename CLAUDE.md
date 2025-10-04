@@ -138,7 +138,7 @@ Both client and server compile to `dist/` directories:
   - `LyricsContent.tsx`: Actual lyrics rendering with synchronization and word-level highlighting
   - `Player.tsx`: Music playback controls with animated song name
   - `AnimatedSongName.tsx`: Framer Motion component for scrolling song titles
-  - `SilenceIndicator.tsx`: Animated silence detection with configurable timing thresholds
+  - `SilenceIndicator.tsx`: Animated silence detection with cubic easing fade effects (first block fades in/out, middle blocks 1s fade in/out, last block 1s fade in then out)
   - `NoLyricsFound.tsx`: Empty state component for missing lyrics
 - **Player/**: Main application screens and loading states
   - `MainScreen.tsx`: Root screen component with overlay management and universal close button

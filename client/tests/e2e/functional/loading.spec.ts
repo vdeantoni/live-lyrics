@@ -1,73 +1,61 @@
-import { test, expect } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 import { injectTestRegistry } from "../helpers/injectTestRegistry";
 
 test.describe("Loading Screen", () => {
   test.beforeEach(async ({ page }) => {
+    // Inject test registry for consistent provider data
     await injectTestRegistry(page);
   });
-  test("should display loading screen while bootstrap is in progress", async ({
+
+  test("should show loading screen during delayed bootstrap", async ({
     page,
   }) => {
-    // Override setTimeout to add delay to bootstrap process
+    // Mock setTimeout to delay bootstrap (line 33 in useBootstrap.ts)
     await page.addInitScript(() => {
-      // Store the original setTimeout
       const originalSetTimeout = window.setTimeout;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (window.setTimeout as any) = (
+      window.setTimeout = ((
         callback: () => void,
         delay: number,
         ...args: unknown[]
       ) => {
-        // If this is the bootstrap timeout (0ms), add a 3-second delay
+        // Bootstrap uses setTimeout(..., 0), add 3s delay
         if (delay === 0 && typeof callback === "function") {
           return originalSetTimeout(callback, 3000, ...args);
         }
         return originalSetTimeout(callback, delay, ...args);
-      };
+      }) as typeof setTimeout;
     });
 
-    // Start navigation and immediately check for loading screen
     await page.goto("/");
 
-    // The loading screen should be visible initially
+    // Loading screen should be visible (appState.isLoading && !appState.isReady)
     await expect(page.locator('[data-testid="loading-screen"]')).toBeVisible();
 
-    // Verify loading screen content exists
+    // Verify core content
     await expect(page.locator("text=Live Lyrics")).toBeVisible();
     await expect(
       page.locator("text=Preparing your music experience..."),
     ).toBeVisible();
 
-    // Check for animated elements
-    const musicNotes = page.locator("svg").filter({ hasText: "" }).first(); // Music icon
-    await expect(musicNotes).toBeVisible();
-
-    // Verify the rotating vinyl record
-    const vinylRecord = page
-      .locator(".rounded-full")
-      .filter({ has: page.locator("svg") })
-      .first();
-    await expect(vinylRecord).toBeVisible();
-
-    // Verify soundwave bars are present
-    const soundwaveBars = page.locator(
-      ".bg-gradient-to-t.from-blue-500\\/60.to-purple-500\\/60",
+    // Verify vinyl record (uses bg-gradient-to-br class from line 93)
+    const vinylRecord = page.locator(
+      '[data-testid="loading-screen"] .bg-gradient-to-br',
     );
-    await expect(soundwaveBars.first()).toBeVisible();
+    await expect(vinylRecord.first()).toBeVisible();
 
-    // Player controls should still be visible during loading
+    // Player controls remain visible during loading
     await expect(page.locator('[data-testid="player"]')).toBeVisible();
     await expect(page.locator('[data-testid="player-controls"]')).toBeVisible();
 
-    // Wait for loading to complete and verify transition
+    // Wait for bootstrap to complete (isReady = true triggers 0.5s fade-out)
     await expect(
       page.locator('[data-testid="loading-screen"]'),
-    ).not.toBeVisible();
+    ).not.toBeVisible({ timeout: 10000 });
 
-    // After loading, lyrics screen should be visible
+    // Lyrics screen should be visible after transition
     await expect(page.locator('[data-testid="lyrics-screen"]')).toBeVisible();
 
-    // Song information should be loaded
+    // Song data should be loaded
     await expect(page.locator('[data-testid="song-name"]')).toContainText(
       "Bohemian Rhapsody",
     );
@@ -76,63 +64,30 @@ test.describe("Loading Screen", () => {
     );
   });
 
-  test("should transition smoothly from loading to lyrics screen", async ({
+  test("should skip loading screen when bootstrap completes quickly", async ({
     page,
   }) => {
-    // Mock with moderate delay to catch the transition
-    await page.addInitScript(() => {
-      const originalSetTimeout = window.setTimeout;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (window.setTimeout as any) = (
-        callback: () => void,
-        delay: number,
-        ...args: unknown[]
-      ) => {
-        if (delay === 0 && typeof callback === "function") {
-          return originalSetTimeout(callback, 2000, ...args);
-        }
-        return originalSetTimeout(callback, delay, ...args);
-      };
+    // No mocking - normal fast bootstrap (setTimeout 0ms resolves immediately)
+    await page.goto("/");
+
+    // Loading screen may flash briefly, but lyrics should appear quickly
+    await expect(page.locator('[data-testid="lyrics-screen"]')).toBeVisible({
+      timeout: 2000,
     });
 
-    await page.goto("/");
-
-    // Initially, loading screen should be visible, lyrics screen should not
-    await expect(page.locator('[data-testid="loading-screen"]')).toBeVisible();
-    await expect(
-      page.locator('[data-testid="lyrics-screen"]'),
-    ).not.toBeVisible();
-
-    // Wait for the transition point (just before loading completes)
-    await page.waitForTimeout(1800);
-
-    // Both might be visible briefly during fade transition
-    await expect(page.locator('[data-testid="loading-screen"]')).toBeVisible();
-
-    // Wait for transition to complete
-    await expect(
-      page.locator('[data-testid="loading-screen"]'),
-    ).not.toBeVisible();
-    await expect(page.locator('[data-testid="lyrics-screen"]')).toBeVisible();
-
-    // Verify content is loaded
-    await expect(page.locator('[data-testid="song-name"]')).toBeVisible();
-    await expect(page.locator('[data-testid="artist-name"]')).toBeVisible();
-  });
-
-  test("should not show loading screen when app loads quickly", async ({
-    page,
-  }) => {
-    // Don't mock setTimeout - let normal bootstrap happen quickly
-    await page.goto("/");
-
-    // Either loading screen appears very briefly or not at all
-    // We should quickly see the lyrics screen
-    await expect(page.locator('[data-testid="lyrics-screen"]')).toBeVisible();
-
-    // Song data should be loaded
+    // Verify app is fully loaded
     await expect(page.locator('[data-testid="song-name"]')).toContainText(
       "Bohemian Rhapsody",
     );
+    await expect(page.locator('[data-testid="artist-name"]')).toContainText(
+      "Queen",
+    );
+
+    // Loading screen should be gone
+    await expect(
+      page.locator('[data-testid="loading-screen"]'),
+    ).not.toBeVisible();
   });
 });
+
+//

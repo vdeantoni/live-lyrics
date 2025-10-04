@@ -19,10 +19,12 @@ const SilenceLine: React.FC<SilenceLineProps> = ({
   time,
   duration,
   isActive,
-  isEdgeBlock,
   isFirstBlock = false,
   isLastBlock = false,
 }) => {
+  // Determine block type based on position
+  const blockType = isFirstBlock ? "first" : isLastBlock ? "last" : "middle";
+
   return (
     <div
       data-testid="silence-indicator-line"
@@ -56,7 +58,7 @@ const SilenceLine: React.FC<SilenceLineProps> = ({
           isActive={isActive}
           startTime={time}
           duration={duration}
-          isEdgeBlock={isEdgeBlock}
+          blockType={blockType}
         />
       </motion.div>
     </div>

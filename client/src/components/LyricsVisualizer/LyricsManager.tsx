@@ -75,8 +75,9 @@ const LyricsManager = () => {
       // Silence indicators are already in the LRC content from normalization
       // Mark silence lines with metadata for UI detection
       const linesWithMetadata = data.lines.map((line) => {
-        // Detect silence markers by checking text
-        if (line.text === "♪") {
+        // Detect silence markers by checking text (trim to handle whitespace)
+        const trimmedText = line.text.trim();
+        if (trimmedText === "♪") {
           return {
             ...line,
             type: "silence" as const,
