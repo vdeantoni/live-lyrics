@@ -39,23 +39,15 @@ test.describe("Playlist Navigation", () => {
     // Initially should be at 0:00
     await expect(currentTimeDisplay).toHaveText("0:00");
 
-    // Seek to middle of song
-    const sliderBox = await progressSlider.boundingBox();
-    if (sliderBox) {
-      const middleClick = {
-        x: sliderBox.x + sliderBox.width * 0.5,
-        y: sliderBox.y + sliderBox.height / 2,
-      };
+    // Click slider to seek (force click to bypass actionability checks)
+    await progressSlider.click({ force: true });
 
-      await page.mouse.click(middleClick.x, middleClick.y);
+    // Wait for time to actually change (more reliable than fixed timeout)
+    await expect(currentTimeDisplay).not.toHaveText("0:00", { timeout: 2000 });
 
-      // Wait for seek to complete
-      await page.waitForTimeout(500);
-
-      // Time should have changed from 0:00
-      const currentTime = await currentTimeDisplay.textContent();
-      expect(currentTime).not.toBe("0:00");
-    }
+    // Verify time has changed
+    const currentTime = await currentTimeDisplay.textContent();
+    expect(currentTime).not.toBe("0:00");
   });
 
   test("should maintain playback state during seeking", async ({ page }) => {

@@ -426,8 +426,13 @@ test.describe("Playlists Functionality", () => {
       ).not.toBeVisible();
       await expect(page.locator('[data-testid="search-screen"]')).toBeVisible();
 
-      // Close search and verify song was added
-      await page.keyboard.press("s");
+      // Close search using button instead of keyboard (Firefox focus fix)
+      const closeSearchButton = page.locator(
+        '[data-testid="close-overlay-button"]',
+      );
+      await closeSearchButton.click();
+
+      // Open playlists
       await page.keyboard.press("p");
       // Expand playlist using test ID
       await page
