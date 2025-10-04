@@ -58,12 +58,17 @@ test.describe("Keyboard Navigation and Accessibility", () => {
     );
     const currentTimeDisplay = page.locator('[data-testid="current-time"]');
 
-    // Ensure the player is paused and time is at the start.
+    // Ensure the player is paused and time is at the start
     await expect(currentTimeDisplay).toHaveText("0:00");
 
+    // Focus the slider before keyboard input
+    await progressSlider.focus();
+    await expect(progressSlider).toBeFocused();
+
+    // Press ArrowRight to seek forward
     await progressSlider.press("ArrowRight");
 
-    // Assert that the time display has changed, confirming seeking works when paused.
+    // Wait for the time display to update (allows for React re-render)
     await expect(currentTimeDisplay).not.toHaveText("0:00");
   });
 
@@ -230,21 +235,36 @@ test.describe("Keyboard Navigation and Accessibility", () => {
   test("should handle focus management properly", async ({ page }) => {
     await page.setViewportSize({ width: 768, height: 1024 });
 
+    // Ensure settings are closed at start (defensive check for test isolation)
+    const settingsScreen = page.locator('[data-testid="settings-screen"]');
+    if (await settingsScreen.isVisible()) {
+      const existingCloseButton = page.locator(
+        '[data-testid="close-overlay-button"]',
+      );
+      await existingCloseButton.click();
+      await expect(settingsScreen).not.toBeVisible();
+    }
+
     // Open settings
     const settingsButton = page.locator('[data-testid="settings-button"]');
+    await expect(settingsButton).toBeVisible();
     await settingsButton.click();
 
-    // Focus should move to settings screen
-    await page.waitForSelector('[data-testid="settings-screen"]');
+    // Wait for settings to open
+    await expect(settingsScreen).toBeVisible();
 
     // When closing settings, focus should return to a logical place
     const closeButton = page.locator('[data-testid="close-overlay-button"]');
+    await expect(closeButton).toBeVisible();
     await closeButton.click();
+
+    // Wait for settings to fully close (animation complete)
+    await expect(settingsScreen).not.toBeVisible();
 
     // Should return to main screen
     await expect(page.locator('[data-testid="lyrics-screen"]')).toBeVisible();
 
-    // Settings button should be available again for focus
+    // Settings button should be available again after overlay fully closes
     await expect(settingsButton).toBeVisible();
   });
 });
