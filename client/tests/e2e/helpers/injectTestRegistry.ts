@@ -149,6 +149,55 @@ To me`;
       getDescription: () => providerConfig.description,
       isAvailable: () => Promise.resolve(providerConfig.isAvailable),
       isFetching: () => Promise.resolve(false),
+      search: async (query: string) => {
+        if (!providerConfig.isAvailable) return [];
+        debugLog(`${providerConfig.name} search for: "${query}"`);
+
+        // Mock search results based on query
+        const searchResults: Array<{
+          id: string;
+          trackName: string;
+          artistName: string;
+          albumName: string;
+          duration: number;
+        }> = [];
+
+        // Return different mock songs based on search query
+        if (query.toLowerCase().includes("hotel")) {
+          searchResults.push({
+            id: "mock-hotel-california",
+            trackName: "Hotel California",
+            artistName: "Eagles",
+            albumName: "Hotel California",
+            duration: 391,
+          });
+        }
+
+        if (query.toLowerCase().includes("imagine")) {
+          searchResults.push({
+            id: "mock-imagine",
+            trackName: "Imagine",
+            artistName: "John Lennon",
+            albumName: "Imagine",
+            duration: 183,
+          });
+        }
+
+        if (query.toLowerCase().includes("stairway")) {
+          searchResults.push({
+            id: "mock-stairway",
+            trackName: "Stairway to Heaven",
+            artistName: "Led Zeppelin",
+            albumName: "Led Zeppelin IV",
+            duration: 482,
+          });
+        }
+
+        debugLog(
+          `${providerConfig.name} found ${searchResults.length} results`,
+        );
+        return searchResults;
+      },
       supportsLyrics: async (song: {
         name: string;
         artist: string;

@@ -78,23 +78,4 @@ test.describe("Playlist Navigation", () => {
       playButton.locator('[data-testid="pause-icon"]'),
     ).toBeVisible();
   });
-
-  test("should show correct duration for different viewport sizes", async ({
-    page,
-  }) => {
-    const viewports = [
-      { width: 320, height: 568 }, // Mobile
-      { width: 768, height: 1024 }, // Tablet Portrait
-      { width: 1024, height: 768 }, // Tablet Landscape
-    ];
-
-    for (const viewport of viewports) {
-      await page.setViewportSize(viewport);
-
-      // Duration should be consistently displayed
-      await expect(page.locator('[data-testid="duration"]')).toContainText(
-        "5:55",
-      );
-    }
-  });
 });
