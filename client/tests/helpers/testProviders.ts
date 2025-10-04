@@ -5,7 +5,7 @@
  * predictable data for both unit and E2E tests.
  */
 
-import type { Player, LyricsProvider, ArtworkProvider } from "@/types";
+import type { Player, LyricsProvider, ArtworkProvider, Song } from "@/types";
 
 /**
  * Mock lyrics data for Bohemian Rhapsody - centralized for all tests
@@ -266,6 +266,32 @@ export class TestPlayer implements Player {
     // If playing, update startTime to maintain continuity
     if (this.state.isPlaying) {
       this.state.startTime = Date.now() - this.state.currentTime * 1000;
+    }
+  }
+
+  async next(): Promise<void> {
+    // Test implementation: just reset to beginning
+    this.state.currentTime = 0;
+    this.state.startTime = Date.now();
+  }
+
+  async previous(): Promise<void> {
+    // Test implementation: just reset to beginning
+    this.state.currentTime = 0;
+    this.state.startTime = Date.now();
+  }
+
+  async playSong(): Promise<void> {
+    // Test implementation: just reset to beginning and start playing
+    this.state.currentTime = 0;
+    this.state.isPlaying = true;
+    this.state.startTime = Date.now();
+  }
+
+  async playQueue(songs: Song[]): Promise<void> {
+    // Test implementation: play the first song
+    if (songs.length > 0) {
+      await this.playSong();
     }
   }
 

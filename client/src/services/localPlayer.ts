@@ -60,6 +60,7 @@ export class LocalPlayer implements Player {
   ];
 
   private currentSongIndex: number = 0;
+  private queue: Song[] = []; // Queue for playQueue functionality
 
   constructor() {
     // Return existing instance if it exists (singleton pattern)
@@ -122,6 +123,38 @@ export class LocalPlayer implements Player {
   }
 
   private nextSong(): void {
+    // Check if there's a queue to play from
+    if (this.queue.length > 0) {
+      // Find current song index in queue
+      const currentQueueIndex = this.queue.findIndex(
+        (s) =>
+          s.name === this.playlist[this.currentSongIndex].name &&
+          s.artist === this.playlist[this.currentSongIndex].artist,
+      );
+
+      if (
+        currentQueueIndex !== -1 &&
+        currentQueueIndex < this.queue.length - 1
+      ) {
+        // Play next song in queue
+        const nextQueueSong = this.queue[currentQueueIndex + 1];
+        const nextIndex = this.playlist.findIndex(
+          (s) =>
+            s.name === nextQueueSong.name && s.artist === nextQueueSong.artist,
+        );
+        if (nextIndex !== -1) {
+          this.currentSongIndex = nextIndex;
+          this.currentTime = 0;
+          this.duration = this.playlist[this.currentSongIndex].duration;
+          return;
+        }
+      } else {
+        // End of queue, clear it
+        this.queue = [];
+      }
+    }
+
+    // Default behavior: loop through playlist
     this.currentSongIndex = (this.currentSongIndex + 1) % this.playlist.length;
     this.currentTime = 0;
     this.duration = this.playlist[this.currentSongIndex].duration;
@@ -154,6 +187,82 @@ export class LocalPlayer implements Player {
   async seek(time: number): Promise<void> {
     this.currentTime = Math.max(0, Math.min(time, this.duration));
     this.lastUpdateTime = Date.now();
+  }
+
+  async next(): Promise<void> {
+    this.nextSong();
+    // Reset playback position and keep playing state
+    this.lastUpdateTime = Date.now();
+  }
+
+  async previous(): Promise<void> {
+    // If more than 3 seconds into the song, restart current song
+    if (this.currentTime > 3) {
+      this.currentTime = 0;
+      this.lastUpdateTime = Date.now();
+      return;
+    }
+
+    // Otherwise, go to previous song
+    this.currentSongIndex =
+      (this.currentSongIndex - 1 + this.playlist.length) % this.playlist.length;
+    this.currentTime = 0;
+    this.duration = this.playlist[this.currentSongIndex].duration;
+    this.lastUpdateTime = Date.now();
+  }
+
+  async playSong(song: {
+    name: string;
+    artist: string;
+    album: string;
+    duration?: number;
+  }): Promise<void> {
+    // Find the song in the playlist
+    const songIndex = this.playlist.findIndex(
+      (s) => s.name === song.name && s.artist === song.artist,
+    );
+
+    if (songIndex !== -1) {
+      // Song exists in playlist, switch to it
+      // Clear queue so next song comes from playlist position
+      this.currentSongIndex = songIndex;
+      this.currentTime = 0;
+      this.duration = this.playlist[songIndex].duration;
+      this.queue = []; // Ensure next song is from playlist, not queue
+    } else {
+      // Song doesn't exist in playlist, add it temporarily and play
+      const newSong: Song = {
+        name: song.name,
+        artist: song.artist,
+        album: song.album,
+        duration: song.duration || 180,
+        currentTime: 0,
+        isPlaying: false,
+      };
+      this.playlist.push(newSong);
+      this.currentSongIndex = this.playlist.length - 1;
+      this.currentTime = 0;
+      this.duration = newSong.duration;
+
+      // Clear queue when playing a song not in current context
+      this.queue = [];
+    }
+
+    // Start playing
+    this.isPlaying = true;
+    this.hasEverBeenPlayed = true;
+    this.lastUpdateTime = Date.now();
+  }
+
+  async playQueue(songs: Song[]): Promise<void> {
+    if (songs.length === 0) return;
+
+    // Set queue
+    this.queue = [...songs];
+
+    // Play first song in queue
+    const firstSong = songs[0];
+    await this.playSong(firstSong);
   }
 
   async isAvailable(): Promise<boolean> {

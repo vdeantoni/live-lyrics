@@ -62,6 +62,19 @@ export interface Player {
   pause(): Promise<void>;
   /** Seek to a specific time position */
   seek(time: number): Promise<void>;
+  /** Skip to next song */
+  next(): Promise<void>;
+  /** Go to previous song */
+  previous(): Promise<void>;
+  /** Play a specific song */
+  playSong(song: {
+    name: string;
+    artist: string;
+    album: string;
+    duration?: number;
+  }): Promise<void>;
+  /** Play a queue of songs (optional) */
+  playQueue?(songs: Song[]): Promise<void>;
 }
 
 // Search result type for lyrics providers
@@ -107,4 +120,23 @@ export interface ArtworkProvider {
   isAvailable(): Promise<boolean>;
   /** Check if this provider is currently fetching data */
   isFetching(): Promise<boolean>;
+}
+
+// Playlist types
+export interface PlaylistSong {
+  id: string; // unique within playlist
+  name: string;
+  artist: string;
+  album: string;
+  duration: number;
+  order: number;
+}
+
+export interface Playlist {
+  id: string;
+  name: string;
+  description?: string;
+  songs: PlaylistSong[];
+  createdAt: number;
+  updatedAt: number;
 }

@@ -53,7 +53,7 @@ function App() {
         }}
       >
         <AppContent />
-        <ReactQueryDevtools initialIsOpen={false} />
+        <ReactQueryDevtools initialIsOpen={false} buttonPosition="top-left" />
       </PersistQueryClientProvider>
     </JotaiProvider>
   );
