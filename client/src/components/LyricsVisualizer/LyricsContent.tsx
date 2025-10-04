@@ -122,12 +122,11 @@ const LyricsContent: React.FC = () => {
       return;
     }
 
-    // Find first and last silence block indices
+    // Find first silence block index
     const silenceIndices = lyricsData.lines
       .map((line, idx) => (line.type === "silence" ? idx : -1))
       .filter((idx) => idx !== -1);
     const firstSilenceIndex = silenceIndices[0];
-    const lastSilenceIndex = silenceIndices[silenceIndices.length - 1];
 
     const newLines = lyricsData.lines
       .map((line: LineData, index: number) => {
@@ -148,11 +147,13 @@ const LyricsContent: React.FC = () => {
             duration = songDuration > 0 ? songDuration - line.time : 20;
           }
 
-          // Determine if this is an edge block (first or last)
-          const isEdgeBlock =
-            index === firstSilenceIndex || index === lastSilenceIndex;
+          // Determine block type based on actual position in song
+          // - First: First silence in the array
+          // - Last: Silence with no lyrics after it (truly at end of song)
+          // - Middle: Everything else
           const isFirstBlock = index === firstSilenceIndex;
-          const isLastBlock = index === lastSilenceIndex;
+          const isLastBlock = !nextLine; // True last block has no line after it
+          const isEdgeBlock = isFirstBlock || isLastBlock;
 
           // Always render the element (for scroll calculations) but control visibility
           return (
