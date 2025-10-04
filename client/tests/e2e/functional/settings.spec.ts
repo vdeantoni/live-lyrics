@@ -303,8 +303,9 @@ test.describe("Settings Functionality", () => {
       for (const viewport of viewports) {
         await page.setViewportSize(viewport);
 
-        // Open settings
+        // Wait for settings button to be visible before clicking
         const settingsButton = page.locator('[data-testid="settings-button"]');
+        await settingsButton.waitFor({ state: "visible" });
         await settingsButton.click();
 
         await page.waitForSelector('[data-testid="settings-screen"]');
@@ -320,6 +321,11 @@ test.describe("Settings Functionality", () => {
 
         // Close settings
         await closeButton.click();
+
+        // Wait for settings to fully close and settings button to reappear
+        await page.waitForSelector('[data-testid="settings-screen"]', {
+          state: "hidden",
+        });
         await expect(
           page.locator('[data-testid="lyrics-screen"]'),
         ).toBeVisible();
