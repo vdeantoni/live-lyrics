@@ -69,55 +69,59 @@ describe("lyricsNormalizer", () => {
 
   describe("normalizeLyricsToEnhanced", () => {
     describe("Enhanced LRC pass-through", () => {
-      it("should pass through Enhanced LRC unchanged", () => {
-        const lyrics = "[00:12.00]<00:12.00>Hello <00:12.50>world";
+      it("should pass through Enhanced LRC with silence indicators added", () => {
+        const lyrics = "[00:00.00]<00:00.00>Hello <00:00.50>world";
+        // No silence indicators since no gaps > 10s
         expect(normalizeLyricsToEnhanced(lyrics)).toBe(lyrics);
       });
 
-      it("should pass through multi-timestamp Enhanced LRC unchanged", () => {
-        const lyrics = "[00:12.00]Hello[00:15.00]world";
+      it("should pass through multi-timestamp Enhanced LRC with silence indicators", () => {
+        const lyrics = "[00:00.00]Hello[00:03.00]world";
+        // No silence indicators since gap is only 3s (< 10s threshold)
         expect(normalizeLyricsToEnhanced(lyrics)).toBe(lyrics);
       });
     });
 
     describe("Normal LRC normalization", () => {
       it("should add word-level timing to normal LRC", () => {
-        const lyrics = "[00:12.00]Hello world test";
+        const lyrics = "[00:00.00]Hello world test";
         const expected =
-          "[00:12.00]<00:12.00>Hello <00:12.00>world <00:12.00>test";
+          "[00:00.00]<00:00.00>Hello <00:00.00>world <00:00.00>test";
         expect(normalizeLyricsToEnhanced(lyrics)).toBe(expected);
       });
 
       it("should handle multiple lines", () => {
-        const lyrics = "[00:12.00]Hello world\n[00:15.00]Next line";
+        const lyrics = "[00:00.00]Hello world\n[00:03.00]Next line";
+        // No silence indicators since gap is only 3s
         const expected =
-          "[00:12.00]<00:12.00>Hello <00:12.00>world\n[00:15.00]<00:15.00>Next <00:15.00>line";
+          "[00:00.00]<00:00.00>Hello <00:00.00>world\n[00:03.00]<00:03.00>Next <00:03.00>line";
         expect(normalizeLyricsToEnhanced(lyrics)).toBe(expected);
       });
 
       it("should preserve metadata lines", () => {
-        const lyrics = "[ar:Artist]\n[ti:Title]\n[00:12.00]Hello world";
+        const lyrics = "[ar:Artist]\n[ti:Title]\n[00:00.00]Hello world";
         const expected =
-          "[ar:Artist]\n[ti:Title]\n[00:12.00]<00:12.00>Hello <00:12.00>world";
+          "[ar:Artist]\n[ti:Title]\n[00:00.00]<00:00.00>Hello <00:00.00>world";
         expect(normalizeLyricsToEnhanced(lyrics)).toBe(expected);
       });
 
       it("should preserve empty lines", () => {
-        const lyrics = "[00:12.00]Hello\n\n[00:15.00]World";
+        const lyrics = "[00:00.00]Hello\n\n[00:03.00]World";
+        // No silence indicators since gap is only 3s
         const expected =
-          "[00:12.00]<00:12.00>Hello\n\n[00:15.00]<00:15.00>World";
+          "[00:00.00]<00:00.00>Hello\n\n[00:03.00]<00:03.00>World";
         expect(normalizeLyricsToEnhanced(lyrics)).toBe(expected);
       });
 
       it("should handle lines with only timestamps", () => {
-        const lyrics = "[00:12.00]\n[00:15.00]Hello";
-        const expected = "[00:12.00]\n[00:15.00]<00:15.00>Hello";
+        const lyrics = "[00:00.00]\n[00:03.00]Hello";
+        const expected = "[00:00.00]\n[00:03.00]<00:03.00>Hello";
         expect(normalizeLyricsToEnhanced(lyrics)).toBe(expected);
       });
 
       it("should handle multiple spaces between words", () => {
-        const lyrics = "[00:12.00]Hello    world";
-        const expected = "[00:12.00]<00:12.00>Hello <00:12.00>world";
+        const lyrics = "[00:00.00]Hello    world";
+        const expected = "[00:00.00]<00:00.00>Hello <00:00.00>world";
         expect(normalizeLyricsToEnhanced(lyrics)).toBe(expected);
       });
 

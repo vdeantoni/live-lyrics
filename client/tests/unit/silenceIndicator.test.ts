@@ -26,9 +26,9 @@ describe("Silence Indicator Detection", () => {
       const result = insertSilenceIndicatorsIntoLrc(lrcContent);
       const lines = result.split("\n").filter((l) => l.trim());
 
-      expect(lines).toHaveLength(3); // 2 original + 1 silence
-      expect(result).toContain("♪");
-      expect(result).toContain("[00:01.00]"); // 0 + INDICATOR_DELAY(1)
+      expect(lines).toHaveLength(3); // 2 original + 1 silence marker
+      expect(result).toContain("♪"); // Silence marker
+      expect(result).toContain("[00:05.00]"); // 0 + INDICATOR_DELAY(5)
     });
 
     it("should insert multiple silence indicators for multiple gaps", () => {
@@ -38,9 +38,10 @@ describe("Silence Indicator Detection", () => {
 [00:55.00]Line 4`;
 
       const result = insertSilenceIndicatorsIntoLrc(lrcContent);
-      const silenceCount = (result.match(/♪/g) || []).length;
+      // Count silence markers (each gap gets one ♪)
+      const silenceMarkers = (result.match(/♪/g) || []).length;
 
-      expect(silenceCount).toBe(2);
+      expect(silenceMarkers).toBe(2); // 2 gaps = 2 markers
     });
 
     it("should handle Bohemian Rhapsody instrumental break", () => {
@@ -53,11 +54,11 @@ describe("Silence Indicator Detection", () => {
 
       // Should detect the ~29.5s gap between "see" and "Mama"
       expect(result).toContain("♪");
-      expect(result).toContain("[00:16.50]"); // 15.5 + INDICATOR_DELAY(1)
+      expect(result).toContain("[00:20.50]"); // 15.5 + INDICATOR_DELAY(5)
 
       // Verify the silence indicator is positioned correctly
       const lines = result.split("\n");
-      const silenceLineIndex = lines.findIndex((l) => l.includes("♪"));
+      const silenceLineIndex = lines.findIndex((l) => l.includes(">♪"));
 
       expect(silenceLineIndex).toBeGreaterThan(0);
       expect(silenceLineIndex).toBeLessThan(lines.length - 1);
@@ -94,9 +95,9 @@ describe("Silence Indicator Detection", () => {
 
       const result = insertSilenceIndicatorsIntoLrc(lrcContent);
 
-      // Should have silence indicator at 1 second (0 + INDICATOR_DELAY)
-      expect(result).toContain("[00:01.00]");
-      expect(result).toContain("<00:01.00>♪");
+      // Should have silence indicator at 5 seconds (0 + INDICATOR_DELAY)
+      expect(result).toContain("[00:05.00]");
+      expect(result).toContain("<00:05.00>♪");
     });
 
     it("should handle single line lyrics", () => {
@@ -114,22 +115,22 @@ describe("Silence Indicator Detection", () => {
       const result = insertSilenceIndicatorsIntoLrc(enhancedLrc);
 
       expect(result).toContain("♪");
-      expect(result).toContain("<00:01.00>♪");
+      expect(result).toContain("<00:05.00>♪"); // 0 + INDICATOR_DELAY(5)
     });
 
     it("should not insert silence at exactly threshold duration", () => {
       const lrcContent = `[00:00.00]Line 1
-[00:20.00]Line 2`;
+[00:15.00]Line 2`;
 
       const result = insertSilenceIndicatorsIntoLrc(lrcContent);
 
-      // Gap is exactly 20s, should not insert (must be GREATER than threshold)
+      // Gap is exactly 15s, should not insert (must be GREATER than threshold)
       expect(result.includes("♪")).toBe(false);
     });
 
     it("should insert for gap just above threshold", () => {
       const lrcContent = `[00:00.00]Line 1
-[00:20.10]Line 2`;
+[00:15.10]Line 2`;
 
       const result = insertSilenceIndicatorsIntoLrc(lrcContent);
 
@@ -143,7 +144,7 @@ describe("Silence Indicator Detection", () => {
       const result = insertSilenceIndicatorsIntoLrc(lrcContent);
 
       expect(result).toContain("♪");
-      expect(result).toContain("[01:01.00]"); // 60 + 1 = 61s = 1:01
+      expect(result).toContain("[01:05.00]"); // 60 + 5 = 65s = 1:05
     });
   });
 

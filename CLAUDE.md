@@ -133,16 +133,19 @@ Both client and server compile to `dist/` directories:
 
 - **LyricsVisualizer/**: Main lyrics display component hierarchy
   - `LyricsVisualizer.tsx`: Root container with layout orchestration
-  - `LyricsProvider.tsx`: Data fetching, state management, and lyrics processing
+  - `LyricsManager.tsx`: Data fetching, state management, and lyrics processing (formerly LyricsProvider)
   - `LyricsDisplay.tsx`: Visual effects wrapper and background rendering
-  - `LyricsContent.tsx`: Actual lyrics rendering with synchronization
+  - `LyricsContent.tsx`: Actual lyrics rendering with synchronization and word-level highlighting
   - `Player.tsx`: Music playback controls with animated song name
   - `AnimatedSongName.tsx`: Framer Motion component for scrolling song titles
+  - `SilenceIndicator.tsx`: Animated silence detection with configurable timing thresholds
+  - `NoLyricsFound.tsx`: Empty state component for missing lyrics
 - **Player/**: Main application screens and loading states
   - `MainScreen.tsx`: Root screen component with overlay management and universal close button
   - `LoadingScreen.tsx`: Animated loading screen with floating music notes, rotating vinyl record, and soundwave bars
   - `LyricsScreen.tsx`: Main lyrics display screen
-  - `SearchScreen.tsx`: Lyrics search interface with debounced multi-provider search
+  - `SearchScreen.tsx`: Lyrics search interface with debounced multi-provider search, result deduplication, and song selection
+  - `PlayerControls.tsx`: Playback controls with progress slider, play/pause button, and quick action buttons
 - **Settings/**: Comprehensive settings system with drag-and-drop provider management
   - `SettingsScreen.tsx`: Main settings panel with smooth slide animations
   - `PlayerSection.tsx`: Music player selection (Local/Remote)
@@ -165,9 +168,19 @@ Both client and server compile to `dist/` directories:
 **Settings Panel Animation**:
 - Smooth slide-from-bottom transition (300ms duration)
 - iOS-style easing curve `[0.25, 0.1, 0.25, 1]`
-- Lyrics screen remains static while settings overlay slides over
+- Lyrics screen remains static while overlays slide over
 - Gear button morphs to close button when any overlay (search/settings) is open
 - Smart input field detection prevents keyboard shortcut conflicts
+- Mutual exclusivity between search and settings screens
+
+**Search Screen**:
+- Debounced search input (300ms delay) to minimize API calls
+- Multi-provider search across all enabled lyrics providers
+- Result deduplication by track ID
+- Provider badge on each result showing source
+- Click result to load song into player
+- Smooth slide-in/out animations matching settings screen
+- Auto-focus input after animation completes (350ms delay)
 
 **Provider Management**:
 - Drag-and-drop reordering using @dnd-kit with closestCenter collision detection
@@ -192,10 +205,10 @@ Both client and server compile to `dist/` directories:
 The app uses a centralized, well-organized Jotai atom system divided into two main files:
 
 **`appState.ts`** - Application-wide state:
-- **Core atoms**: `coreAppStateAtom` (bootstrap state), `appProvidersAtom` (provider registry), `settingsOpenAtom` (UI state)
+- **Core atoms**: `coreAppStateAtom` (bootstrap state), `appProvidersAtom` (provider registry), `settingsOpenAtom`, `searchOpenAtom` (UI state)
 - **Settings atoms**: `appProviderSettingsAtom` with custom localStorage serialization for Map types (split into separate atoms per provider type to prevent cross-contamination)
-- **Computed atoms**: `effectiveLyricsProvidersAtom`, `effectiveArtworkProvidersAtom`, `effectivePlayersAtom`, `selectedPlayerAtom` (combine configs with user overrides)
-- **Write-only action atoms**: `updateProviderSettingAtom`, `toggleProviderAtom`, `resetProviderSettingsAtom`, etc.
+- **Computed atoms**: `effectiveLyricsProvidersAtom`, `effectiveArtworkProvidersAtom`, `effectivePlayersAtom`, `selectedPlayerAtom`, `enabledLyricsProvidersAtom` (combine configs with user overrides)
+- **Write-only action atoms**: `updateProviderSettingAtom`, `toggleProviderAtom`, `toggleSettingsAtom`, `toggleSearchAtom`, `resetProviderSettingsAtom`, etc.
 - **Helper factory**: `createProviderSettingsAtom()` eliminates duplicate localStorage serialization code
 
 **`playerAtoms.ts`** - Music player state:
@@ -215,6 +228,8 @@ The app uses a centralized, well-organized Jotai atom system divided into two ma
 - `POLLING_INTERVALS.LYRICS_FETCH_POLL` (50ms)
 - `UI_DELAYS.NO_LYRICS_DISPLAY` (500ms)
 - `UI_DELAYS.SEEK_END_TIMEOUT` (1000ms)
+- `LYRICS_SILENCE.DETECTION_THRESHOLD` (15s) - Minimum gap to trigger silence indicator
+- `LYRICS_SILENCE.INDICATOR_DELAY` (5s) - Delay after lyric before showing indicator
 
 ### Lyrics Normalization System
 

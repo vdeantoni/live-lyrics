@@ -29,6 +29,7 @@ export const artworkLoadingAtom = atom<boolean>(false);
 export const playerUIStateAtom = atom({
   isDragging: false,
   isUserSeeking: false,
+  pendingSeekTime: undefined as number | undefined,
 });
 
 const getPlayer = async (playerId: string) => {
@@ -43,7 +44,6 @@ export const playerControlAtom = atom(
     action: { type: "play" | "pause" | "seek"; payload?: number },
   ) => {
     const currentState = get(playerStateAtom);
-    const currentUIState = get(playerUIStateAtom);
     const selectedPlayer = get(selectedPlayerAtom);
     const playerId = selectedPlayer?.config.id;
 
@@ -76,7 +76,8 @@ export const playerControlAtom = atom(
             ...currentState,
             currentTime: action.payload,
           });
-          set(playerUIStateAtom, { ...currentUIState, isUserSeeking: true });
+          // Use updater function to preserve current UI state (e.g., isDragging)
+          set(playerUIStateAtom, (prev) => ({ ...prev, isUserSeeking: true }));
 
           await player.seek(action.payload);
 

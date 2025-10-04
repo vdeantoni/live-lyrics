@@ -5,17 +5,32 @@ import {
   activeLineAtom,
   activeWordAtom,
   playerControlAtom,
+  playerStateAtom,
 } from "@/atoms/playerAtoms";
-import SilenceIndicator from "./SilenceIndicator";
+import LyricsLine from "./LyricsLine";
+import SilenceLine from "./SilenceLine";
+import {
+  findActiveLineElement,
+  calculateCenteredScrollPosition,
+} from "@/utils/scrollUtils";
+import type { LineData } from "@/types";
 
 const LyricsContent: React.FC = () => {
-  // Use atoms for lyrics state
+  // Atom subscriptions
   const lyricsData = useAtomValue(lyricsDataAtom);
   const activeLine = useAtomValue(activeLineAtom);
   const activeWord = useAtomValue(activeWordAtom);
   const playerControl = useSetAtom(playerControlAtom);
+  const playerState = useAtomValue(playerStateAtom);
 
-  // Click handler using playerControl atom
+  // Refs and state
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [lines, setLines] = useState<React.ReactElement[]>([]);
+  const lastScrollPosition = useRef<number>(0);
+  const isScrollingFromSwitch = useRef<boolean>(false);
+  const previousActiveLineRef = useRef<LineData | null>(null);
+
+  // Click handler
   const handleLineClick = useCallback(
     (time: number) => {
       if (time !== undefined) {
@@ -25,86 +40,154 @@ const LyricsContent: React.FC = () => {
     [playerControl],
   );
 
-  const contentRef = useRef<HTMLDivElement>(null);
-  const cursorRef = useRef<HTMLDivElement>(null);
-  const [lines, setLines] = useState<React.ReactElement[]>([]);
-  const lastScrollPosition = useRef<number>(0);
-  const isScrollingFromSwitch = useRef<boolean>(false);
+  // Scroll function that takes an optional target line
+  const performScroll = useCallback(
+    (targetLine?: LineData | null) => {
+      if (!contentRef.current || !lyricsData) return;
 
+      // Use provided target or fall back to current active line
+      const currentActiveLine = targetLine || previousActiveLineRef.current;
+      if (!currentActiveLine) return;
+
+      const container = contentRef.current;
+
+      requestAnimationFrame(() => {
+        const activeLineElement = findActiveLineElement(
+          container,
+          currentActiveLine,
+        );
+        if (!activeLineElement) return;
+
+        const isSilenceIndicator = currentActiveLine.type === "silence";
+        const isLastElement =
+          activeLineElement === container.lastElementChild ||
+          activeLineElement ===
+            container.children[container.children.length - 1];
+
+        // For last silence block, scroll to bottom
+        if (isSilenceIndicator && isLastElement) {
+          container.scrollTo({
+            top: container.scrollHeight - container.clientHeight,
+            behavior: "smooth",
+          });
+          return;
+        }
+
+        // For non-last silence blocks, scroll to the NEXT lyric line
+        if (isSilenceIndicator && !isLastElement) {
+          const currentIndex = currentActiveLine.index ?? 0;
+          const nextLyricLine = lyricsData.lines
+            .slice(currentIndex + 1)
+            .find((line) => line.type !== "silence");
+
+          if (nextLyricLine) {
+            const nextLineElement = findActiveLineElement(
+              container,
+              nextLyricLine,
+            );
+            if (nextLineElement) {
+              const targetScrollTop = calculateCenteredScrollPosition(
+                container,
+                nextLineElement,
+                64,
+              );
+              container.scrollTo({
+                top: targetScrollTop,
+                behavior: "smooth",
+              });
+              return;
+            }
+          }
+        }
+
+        // For regular lines or fallback
+        const targetScrollTop = calculateCenteredScrollPosition(
+          container,
+          activeLineElement,
+          64,
+        );
+        container.scrollTo({
+          top: targetScrollTop,
+          behavior: "smooth",
+        });
+      });
+    },
+    [lyricsData],
+  );
+
+  // Render lines (lyrics and silence indicators)
   useEffect(() => {
     if (!lyricsData) {
       setLines([]);
       return;
     }
 
+    // Find first and last silence block indices
+    const silenceIndices = lyricsData.lines
+      .map((line, idx) => (line.type === "silence" ? idx : -1))
+      .filter((idx) => idx !== -1);
+    const firstSilenceIndex = silenceIndices[0];
+    const lastSilenceIndex = silenceIndices[silenceIndices.length - 1];
+
     const newLines = lyricsData.lines
-      .map((line, index) => {
+      .map((line: LineData, index: number) => {
         const isActive = activeLine?.index === index;
 
-        // Handle silence indicator lines
+        // Silence indicator lines
         if (line.type === "silence") {
-          if (isActive) {
-            // Calculate duration to next lyric line
-            const nextLine = lyricsData.lines[index + 1];
-            const duration = nextLine ? nextLine.time - line.time : 20; // Default to 20s if no next line
+          // Calculate duration to next lyric line or end of song
+          const nextLine = lyricsData.lines[index + 1];
+          let duration: number;
 
-            return (
-              <div
-                key={`silence-${index}-${line.time}`}
-                data-testid="silence-indicator-line"
-                data-current={isActive ? "true" : "false"}
-                className={`my-3 transform py-2.5 transition-all duration-300 ${
-                  isActive
-                    ? "font-black opacity-100 [text-shadow:0_0_15px_#fff,0_0_30px_#fff,2px_2px_4px_rgba(0,0,0,0.8)]"
-                    : "opacity-50"
-                }`}
-              >
-                <SilenceIndicator
-                  isActive={isActive}
-                  startTime={line.time}
-                  duration={duration}
-                />
-              </div>
-            );
+          if (nextLine) {
+            // Duration until next lyric line
+            duration = nextLine.time - line.time;
           } else {
-            return null;
+            // Last silence block - use song duration from player state
+            const songDuration = playerState?.duration || 0;
+            duration = songDuration > 0 ? songDuration - line.time : 20;
           }
+
+          // Determine if this is an edge block (first or last)
+          const isEdgeBlock =
+            index === firstSilenceIndex || index === lastSilenceIndex;
+          const isFirstBlock = index === firstSilenceIndex;
+          const isLastBlock = index === lastSilenceIndex;
+
+          // Always render the element (for scroll calculations) but control visibility
+          return (
+            <SilenceLine
+              key={`silence-${index}-${line.time}`}
+              index={index}
+              time={line.time}
+              duration={duration}
+              isActive={isActive}
+              isEdgeBlock={isEdgeBlock}
+              isFirstBlock={isFirstBlock}
+              isLastBlock={isLastBlock}
+            />
+          );
         }
 
         // Regular lyric lines
         return (
-          <div
-            key={`${lyricsData.tags?.ti || "song"}-${index}-${line.text.slice(0, 10)}`} // More unique key
-            data-testid="lyrics-line"
-            data-current={isActive ? "true" : "false"}
-            data-line-index={index} // Add data attribute for easier detection
-            data-line-text={line.text.substring(0, 20)} // Add data attribute for text matching
-            className={`3xl:text-[clamp(1.5rem,5.5vw,7rem)] 4xl:text-[clamp(1.5rem,6vw,8em)] my-3 transform py-2.5 text-center text-[clamp(1.5rem,4.5vw,3rem)] font-normal opacity-50 transition-all duration-300 lg:text-[clamp(1.5rem,5vw,6rem)] ${
-              isActive
-                ? "font-black opacity-100 [letter-spacing:0.02em] [text-shadow:0_0_15px_#fff,0_0_30px_#fff,2px_2px_4px_rgba(0,0,0,0.8)]"
-                : ""
-            }`}
-          >
-            {line.words
-              ? line.words.map((word, wordIndex) => (
-                  <span
-                    key={`${wordIndex}-${word.text}`}
-                    onClick={() => handleLineClick(word.time)}
-                    className="cursor-pointer"
-                  >
-                    {word.text}{" "}
-                  </span>
-                ))
-              : line.text}
-          </div>
+          <LyricsLine
+            key={`${lyricsData.tags?.ti || "song"}-${index}-${line.text.slice(0, 10)}`}
+            line={line}
+            index={index}
+            isActive={isActive}
+            activeWord={activeWord}
+            songTitle={lyricsData.tags?.ti || "song"}
+            onWordClick={handleLineClick}
+          />
         );
       })
       .filter((element): element is React.ReactElement => element !== null);
 
     setLines(newLines);
-  }, [lyricsData, activeLine, handleLineClick]);
+  }, [lyricsData, activeLine, activeWord, playerState, handleLineClick]);
 
-  // Save scroll position when scrolling manually or naturally
+  // Save scroll position when scrolling manually
   useEffect(() => {
     const container = contentRef.current;
     if (!container) return;
@@ -119,298 +202,69 @@ const LyricsContent: React.FC = () => {
     return () => container.removeEventListener("scroll", handleScroll);
   }, [lyricsData]);
 
-  // Restore scroll position when lyrics data loads (immediate)
+  // Restore scroll position when lyrics data loads
   useEffect(() => {
     if (!lyricsData || !contentRef.current) return;
 
     const container = contentRef.current;
 
-    // Restore previous scroll position immediately without any delay
+    // Restore previous scroll position only if we have one saved
     if (lastScrollPosition.current > 0) {
-      // Use requestAnimationFrame to ensure DOM is ready
       requestAnimationFrame(() => {
         container.scrollTop = lastScrollPosition.current;
-
-        // After restoring position, check if active line is visible
-        // Use a second requestAnimationFrame to ensure scroll is complete
-        requestAnimationFrame(() => {
-          // Only check for active line if there actually is one (not at time 0)
-          if (
-            !activeLine ||
-            (activeLine.index === undefined && activeLine.time === undefined)
-          )
-            return;
-
-          // Wait longer for React to fully update the DOM with active classes
-          setTimeout(() => {
-            // Robust element detection using data attribute
-            let activeLineElement: HTMLElement | null = null;
-
-            // Find by data-current attribute (works for both lyrics and silence indicators)
-            for (let i = 0; i < container.children.length; i++) {
-              const child = container.children[i] as HTMLElement;
-              if (child.getAttribute("data-current") === "true") {
-                activeLineElement = child;
-                break;
-              }
-            }
-
-            // Fallback: try to find by index if activeLine has an index
-            if (!activeLineElement && activeLine.index !== undefined) {
-              const potentialElement = container.children[
-                activeLine.index
-              ] as HTMLElement;
-              if (potentialElement) {
-                activeLineElement = potentialElement;
-              }
-            }
-
-            // Last resort: find by searching through all elements for matching text
-            if (!activeLineElement) {
-              for (let i = 0; i < container.children.length; i++) {
-                const child = container.children[i] as HTMLElement;
-                if (
-                  child.textContent?.includes(activeLine.text.substring(0, 20))
-                ) {
-                  activeLineElement = child;
-                  break;
-                }
-              }
-            }
-
-            if (!activeLineElement) {
-              return;
-            }
-
-            // Check if the active line is visible
-            const containerHeight = container.clientHeight;
-            const containerScrollTop = container.scrollTop;
-            const activeLineTop = activeLineElement.offsetTop;
-            const activeLineHeight = activeLineElement.offsetHeight;
-
-            const lineTopInViewport = activeLineTop - containerScrollTop;
-            const lineBottomInViewport = lineTopInViewport + activeLineHeight;
-
-            // If active line is not visible, scroll to it
-            if (
-              lineTopInViewport < 0 ||
-              lineBottomInViewport > containerHeight
-            ) {
-              const idealScrollTop =
-                activeLineTop - containerHeight / 2 + activeLineHeight / 2 + 64;
-              const maxScrollTop = container.scrollHeight - containerHeight;
-              const targetScrollTop = Math.max(
-                0,
-                Math.min(idealScrollTop, maxScrollTop),
-              );
-
-              container.scrollTo({
-                top: targetScrollTop,
-                behavior: "instant",
-              });
-
-              // Update the stored position
-              lastScrollPosition.current = targetScrollTop;
-            }
-          }, 200); // Increased delay to ensure React has updated
-        });
       });
     }
-  }, [lyricsData, activeLine]);
+  }, [lyricsData]); // Only depend on lyricsData, not activeLine
 
-  // Auto-scroll to active line with proper centering (Refactored)
+  // Auto-scroll to active line
   useEffect(() => {
-    // 1. Guard Clauses: Ensure all required elements and data are present.
-    if (!activeLine || !contentRef.current) {
+    if (!activeLine || !contentRef.current || !lyricsData) return;
+
+    previousActiveLineRef.current = activeLine;
+
+    // Only scroll for regular lyric lines
+    if (!activeLine.text?.includes("♪")) {
+      performScroll(activeLine);
+      console.log("Scroll:", activeLine);
+    }
+  }, [activeLine, lyricsData, performScroll]);
+
+  // Handle initial scroll for new songs
+  useEffect(() => {
+    if (
+      !lyricsData ||
+      !activeLine ||
+      !contentRef.current ||
+      lastScrollPosition.current > 0
+    )
+      return;
+
+    // Skip silence indicators on initial load - just scroll to regular lines
+    if (activeLine.type === "silence") {
       return;
     }
+
+    // For regular lines, scroll immediately using scrollIntoView
     const container = contentRef.current;
-
-    // Use requestAnimationFrame to ensure DOM has been updated with new classes
     const frame = requestAnimationFrame(() => {
-      // Find the active line element using data attribute
-      let activeLineElement: HTMLElement | null = null;
-
-      // Find by data-current attribute (works for both lyrics and silence indicators)
-      for (let i = 0; i < container.children.length; i++) {
-        const child = container.children[i] as HTMLElement;
-        if (child.getAttribute("data-current") === "true") {
-          activeLineElement = child;
-          break;
-        }
-      }
-
-      // Fallback: try to find by index if activeLine has an index
-      if (!activeLineElement && activeLine.index !== undefined) {
-        const potentialElement = container.children[
-          activeLine.index
-        ] as HTMLElement;
-        if (potentialElement) {
-          activeLineElement = potentialElement;
-        }
-      }
-
-      // Last resort: find by searching through all elements for matching text
-      if (!activeLineElement) {
-        for (let i = 0; i < container.children.length; i++) {
-          const child = container.children[i] as HTMLElement;
-          if (child.textContent?.includes(activeLine.text.substring(0, 20))) {
-            activeLineElement = child;
-            break;
-          }
-        }
-      }
-
-      if (!activeLineElement) {
-        return;
-      }
-
-      // 2. DOM Measurements
-      const containerHeight = container.clientHeight;
-      const activeLineTop = activeLineElement.offsetTop;
-      const activeLineHeight = activeLineElement.offsetHeight;
-
-      // 3. Calculate the ideal scroll position to center the line
-      // Formula: Position the top of the container at the line's top,
-      // then move it up by half the container's height,
-      // then move it down by half the line's height.
-      // 64 accounts for padding and margin
-      const idealScrollTop =
-        activeLineTop - containerHeight / 2 + activeLineHeight / 2 + 64;
-
-      // 4. Clamp the scroll position to valid bounds
-      // We can't scroll above 0 or past the maximum scrollable position.
-      const maxScrollTop = container.scrollHeight - containerHeight;
-      const targetScrollTop = Math.max(
-        0,
-        Math.min(idealScrollTop, maxScrollTop),
-      );
-
-      // 5. Scroll to the calculated position
-      container.scrollTo({
-        top: targetScrollTop,
-        behavior: "smooth",
-      });
-    });
-
-    return () => cancelAnimationFrame(frame);
-  }, [activeLine]);
-
-  // Handle initial scroll when lyrics data loads with an already-active line (only for new songs)
-  useEffect(() => {
-    if (!lyricsData || !activeLine || !contentRef.current) {
-      return;
-    }
-
-    // Only handle initial scroll if we don't have a saved position (completely new song)
-    if (lastScrollPosition.current > 0) {
-      return;
-    }
-
-    // Use requestAnimationFrame for better synchronization with rendering
-    const frame = requestAnimationFrame(() => {
-      const container = contentRef.current;
-      if (!container) return;
-
-      // Robust element detection using data attribute
-      let activeLineElement: HTMLElement | null = null;
-
-      // Find by data-current attribute (works for both lyrics and silence indicators)
-      for (let i = 0; i < container.children.length; i++) {
-        const child = container.children[i] as HTMLElement;
-        if (child.getAttribute("data-current") === "true") {
-          activeLineElement = child;
-          break;
-        }
-      }
-
-      // Fallback: try to find by index if activeLine has an index
-      if (!activeLineElement && activeLine.index !== undefined) {
-        const potentialElement = container.children[
-          activeLine.index
-        ] as HTMLElement;
-        if (potentialElement) {
-          activeLineElement = potentialElement;
-        }
-      }
-
-      // Last resort: find by searching through all elements for matching text
-      if (!activeLineElement) {
-        for (let i = 0; i < container.children.length; i++) {
-          const child = container.children[i] as HTMLElement;
-          if (child.textContent?.includes(activeLine.text.substring(0, 20))) {
-            activeLineElement = child;
-            break;
-          }
-        }
-      }
-
+      const activeLineElement = findActiveLineElement(container, activeLine);
       if (!activeLineElement) return;
 
-      // Calculate and scroll to active line
-      const containerHeight = container.clientHeight;
-      const activeLineTop = activeLineElement.offsetTop;
-      const activeLineHeight = activeLineElement.offsetHeight;
-
-      const idealScrollTop =
-        activeLineTop - containerHeight / 2 + activeLineHeight / 2 + 64;
-      const maxScrollTop = container.scrollHeight - containerHeight;
-      const targetScrollTop = Math.max(
-        0,
-        Math.min(idealScrollTop, maxScrollTop),
-      );
-
-      container.scrollTo({
-        top: targetScrollTop,
-        behavior: "instant",
+      activeLineElement.scrollIntoView({
+        behavior: "auto", // Instant for initial load
+        block: "center",
       });
-
-      // Update the stored position
-      lastScrollPosition.current = targetScrollTop;
     });
 
     return () => cancelAnimationFrame(frame);
-  }, [lyricsData, activeLine]); // Depend on both for proper initial scroll
-
-  // Word-level cursor positioning (matching reference implementation)
-  useEffect(() => {
-    if (!activeWord || !activeLine || !contentRef.current || !cursorRef.current)
-      return;
-
-    // Hide cursor for silence indicator lines (they have no real words)
-    if (activeLine.type === "silence") {
-      const cursor = cursorRef.current;
-      cursor.style.display = "none";
-      return;
-    }
-
-    const activeLineElement = contentRef.current.children[
-      activeLine.index || 0
-    ] as HTMLElement;
-    if (!activeLineElement) return;
-
-    const wordElement = activeLineElement.children[
-      activeWord.index || 0
-    ] as HTMLElement;
-    if (!wordElement) return;
-
-    const cursor = cursorRef.current;
-    cursor.style.width = `${wordElement.offsetWidth}px`;
-    cursor.style.top = `${wordElement.offsetTop + wordElement.offsetHeight}px`;
-    cursor.style.left = `${wordElement.offsetLeft}px`;
-    cursor.style.display = "block";
-  }, [activeWord, activeLine]);
+  }, [lyricsData, activeLine]);
 
   return (
     <div
       data-testid="lyrics-container"
       ref={contentRef}
-      className="h-full w-full overflow-auto scroll-smooth px-6 lg:px-8 xl:px-10 [&::-webkit-scrollbar]:hidden"
+      className="h-full w-full overflow-auto px-6 lg:px-8 xl:px-10 [&::-webkit-scrollbar]:hidden"
     >
-      <div
-        ref={cursorRef}
-        className="absolute h-1 w-1 rounded-md bg-current opacity-20 transition-all duration-300"
-      />
       {lines}
     </div>
   );
