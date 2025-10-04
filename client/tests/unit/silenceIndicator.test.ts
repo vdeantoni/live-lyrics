@@ -146,6 +146,33 @@ describe("Silence Indicator Detection", () => {
       expect(result).toContain("♪");
       expect(result).toContain("[01:05.00]"); // 60 + 5 = 65s = 1:05
     });
+
+    it("should not create duplicate silence markers at end when last lyric has gap before it", () => {
+      // Scenario: Big gap before last lyric AND song ends after last lyric
+      // Should only create ONE silence marker (for the gap before last lyric)
+      // NOT two markers (one before, one after last lyric)
+      const lrcContent = `[00:00.00]First line
+[00:05.00]Second line
+[06:51.45]Last line`;
+
+      const songDuration = 431.92; // 7:11.92 - song ends well after last lyric
+
+      const result = insertSilenceIndicatorsIntoLrc(lrcContent, songDuration);
+      const silenceMarkers = (result.match(/♪/g) || []).length;
+
+      // Should have only 1 silence marker (for the gap before "Last line")
+      // NOT 2 markers (which would be before and after "Last line")
+      expect(silenceMarkers).toBe(1);
+
+      // Verify the silence marker is placed after "Second line" (not after "Last line")
+      const lines = result.split("\n");
+      const silenceLineIndex = lines.findIndex((l) => l.includes("♪"));
+      const secondLineIndex = lines.findIndex((l) => l.includes("Second line"));
+      const lastLineIndex = lines.findIndex((l) => l.includes("Last line"));
+
+      expect(silenceLineIndex).toBeGreaterThan(secondLineIndex);
+      expect(silenceLineIndex).toBeLessThan(lastLineIndex);
+    });
   });
 
   describe("Integration with normalizeLyricsToEnhanced", () => {

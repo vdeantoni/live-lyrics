@@ -147,7 +147,7 @@ const SilenceIndicator: React.FC<SilenceIndicatorProps> = ({
         >
           {/* Background circle */}
           <svg
-            className={`transform ${blockType === "last" ? "rotate-90" : "-rotate-90"}`}
+            className="-rotate-90 transform"
             style={{ width: "100%", height: "100%" }}
             viewBox="0 0 48 48"
           >
@@ -161,8 +161,8 @@ const SilenceIndicator: React.FC<SilenceIndicatorProps> = ({
               strokeDasharray={`${2 * Math.PI * 20}`}
               strokeDashoffset={
                 blockType === "last"
-                  ? `${2 * Math.PI * 20 * (progress / 100)}` // Counter-clockwise: empties as progress increases
-                  : `${2 * Math.PI * 20 * (1 - progress / 100)}` // Clockwise: fills as progress increases
+                  ? `${2 * Math.PI * 20 * (progress / 100)}` // Starts at 0 (full), increases to circumference (empty)
+                  : `${2 * Math.PI * 20 * (1 - progress / 100)}` // Starts at circumference (empty), decreases to 0 (full)
               }
               className={`transition-all duration-300 ${isActive ? "text-white/90" : "text-white/40"}`}
               strokeLinecap="round"

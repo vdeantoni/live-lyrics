@@ -181,11 +181,22 @@ export function insertSilenceIndicatorsIntoLrc(
   }
 
   // Check if we need silence indicator at the end
+  // Only add if we haven't already added one in the loop above
   if (sortedTimes.length > 0 && duration !== undefined && duration > 0) {
     const lastTime = sortedTimes[sortedTimes.length - 1];
+    const secondLastTime =
+      sortedTimes.length > 1 ? sortedTimes[sortedTimes.length - 2] : undefined;
     const gapAtEnd = duration - lastTime;
 
-    if (gapAtEnd > DETECTION_THRESHOLD) {
+    // Check if we already added a silence marker for the gap before the last lyric
+    const alreadyHasSilenceBeforeEnd =
+      secondLastTime !== undefined &&
+      lastTime - secondLastTime > DETECTION_THRESHOLD;
+
+    // Only add end silence if:
+    // 1. There's a significant gap at the end, AND
+    // 2. We didn't already add a silence marker right before the last lyric
+    if (gapAtEnd > DETECTION_THRESHOLD && !alreadyHasSilenceBeforeEnd) {
       const silenceStartTime = lastTime + INDICATOR_DELAY;
       const startTimestamp = formatLrcTimestamp(silenceStartTime);
 
