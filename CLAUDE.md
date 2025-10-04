@@ -228,6 +228,8 @@ The app uses a centralized, well-organized Jotai atom system divided into two ma
 - `POLLING_INTERVALS.LYRICS_FETCH_POLL` (50ms)
 - `UI_DELAYS.NO_LYRICS_DISPLAY` (500ms)
 - `UI_DELAYS.SEEK_END_TIMEOUT` (1000ms)
+- `LYRICS_SILENCE.DETECTION_THRESHOLD` (15s) - Minimum gap to trigger silence indicator
+- `LYRICS_SILENCE.INDICATOR_DELAY` (5s) - Delay after lyric before showing indicator
 
 ### Lyrics Normalization System
 
