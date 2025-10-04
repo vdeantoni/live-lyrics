@@ -47,7 +47,13 @@ export function calculateCenteredScrollPosition(
 ): number {
   const containerHeight = container.clientHeight;
   const elementTop = element.offsetTop;
-  const elementHeight = element.offsetHeight;
+  let elementHeight = element.offsetHeight;
+
+  // For silence indicators that are animating, use approximate height
+  if (elementHeight === 0 && element.getAttribute("data-current") === "true") {
+    // Silence indicator approximate height: 96px (6rem) + margins
+    elementHeight = 120;
+  }
 
   // Center the element with optional offset
   const idealScrollTop =
