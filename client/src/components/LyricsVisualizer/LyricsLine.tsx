@@ -36,7 +36,7 @@ const LyricsLine: React.FC<LyricsLineProps> = ({
       data-current={isActive ? "true" : "false"}
       data-line-index={index}
       data-line-text={line.text.substring(0, 20)}
-      className={`3xl:text-[clamp(1.5rem,5.5vw,7rem)] 4xl:text-[clamp(1.5rem,6vw,8em)] my-3 py-2.5 text-center text-[clamp(1.5rem,4.5vw,3rem)] font-normal opacity-50 transition-all duration-300 lg:text-[clamp(1.5rem,5vw,6rem)] ${
+      className={`3xl:text-[clamp(1.5rem,5.5vw,7rem)] 4xl:text-[clamp(1.5rem,6vw,8em)] my-3 py-2.5 text-center text-[clamp(1.5rem,5vw,4rem)] font-normal opacity-50 transition-all duration-300 lg:text-[clamp(1.5rem,5vw,6rem)] ${
         isActive
           ? "scale-105 font-black opacity-100 [text-shadow:0_0_15px_#fff,0_0_30px_#fff,2px_2px_4px_rgba(0,0,0,0.8)]"
           : ""

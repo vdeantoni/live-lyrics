@@ -17,10 +17,12 @@
   "license": "ISC",
   "dependencies": {
     "@hono/node-server": "^1.15.0",
-    "hono": "^4.8.4"
+    "hono": "^4.8.4",
+    "ws": "^8.18.3"
   },
   "devDependencies": {
     "@types/node": "^24.0.13",
+    "@types/ws": "^8.18.1",
     "@vitest/coverage-v8": "^3.2.4",
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",

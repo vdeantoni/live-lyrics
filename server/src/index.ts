@@ -1,8 +1,10 @@
 import { Hono } from "hono";
-import { serve } from "@hono/node-server";
+import { createServer } from "http";
+import { WebSocketServer } from "ws";
 import { execFile } from "child_process";
 import { cors } from "hono/cors";
 import type { SongResponse, ErrorResponse } from "./types";
+import { setupWebSocket } from "./websocket";
 
 const app = new Hono();
 
@@ -32,7 +34,6 @@ export function getSongInfo(): Promise<SongResponse | ErrorResponse> {
       }
 
       const output = stdout.trim();
-      console.log(output);
 
       if (output === "No song playing") {
         resolve({ error: "No song playing" });
@@ -69,12 +70,10 @@ app.get("/music", async (c) => {
 
 app.post("/music", async (c) => {
   const body = await c.req.json();
-  console.log("[Server] Received music control request:", body);
   const commands: string[] = [];
 
   // Handle new action-based format
   if (body.action) {
-    console.log(`[Server] Processing action: ${body.action}`);
     switch (body.action) {
       case "play":
         commands.push("play");
@@ -91,7 +90,6 @@ app.post("/music", async (c) => {
   }
   // Handle old format for backward compatibility
   else {
-    console.log("[Server] Processing legacy format");
     const { playing, currentTime } = body;
 
     if (playing === true) {
@@ -106,9 +104,6 @@ app.post("/music", async (c) => {
   }
 
   if (commands.length > 0) {
-    console.log(
-      `[Server] Executing AppleScript commands: ${commands.join(", ")}`,
-    );
     const scriptLines = [
       'tell application "Music"',
       ...commands.map((cmd) => `    ${cmd}`),
@@ -122,14 +117,8 @@ app.post("/music", async (c) => {
         console.error(
           `[Server] Error executing AppleScript: ${error || stderr}`,
         );
-      } else {
-        console.log(
-          `[Server] Music app command executed successfully: ${commands.join(", ")}`,
-        );
       }
     });
-  } else {
-    console.log("[Server] No commands to execute");
   }
 
   return c.json({ message: "Music app command received" });
@@ -139,8 +128,74 @@ export { app };
 
 // Only start server if this file is run directly
 if (require.main === module) {
-  serve({
-    fetch: app.fetch,
-    port: 4000,
+  const PORT = 4000;
+
+  // Create HTTP server
+  const httpServer = createServer();
+
+  // Create WebSocket server
+  const wss = new WebSocketServer({ noServer: true });
+
+  // Attach Hono app to HTTP server for regular HTTP requests
+  httpServer.on("request", async (req, res) => {
+    const request = new Request(`http://localhost:${PORT}${req.url}`, {
+      method: req.method,
+      headers: req.headers as Record<string, string>,
+      body:
+        req.method !== "GET" && req.method !== "HEAD"
+          ? await new Promise<string>((resolve) => {
+              let body = "";
+              req.on("data", (chunk) => {
+                body += chunk;
+              });
+              req.on("end", () => resolve(body));
+            })
+          : undefined,
+    });
+
+    const response = await app.fetch(request);
+
+    res.statusCode = response.status;
+    response.headers.forEach((value, key) => {
+      res.setHeader(key, value);
+    });
+
+    if (response.body) {
+      const reader = response.body.getReader();
+      const pump = async () => {
+        const { done, value } = await reader.read();
+        if (done) {
+          res.end();
+          return;
+        }
+        res.write(value);
+        await pump();
+      };
+      await pump();
+    } else {
+      res.end();
+    }
+  });
+
+  // Handle WebSocket upgrade requests
+  httpServer.on("upgrade", (request, socket, head) => {
+    const { pathname } = new URL(request.url || "", `ws://localhost:${PORT}`);
+
+    if (pathname === "/ws") {
+      wss.handleUpgrade(request, socket, head, (ws) => {
+        wss.emit("connection", ws, request);
+      });
+    } else {
+      socket.destroy();
+    }
+  });
+
+  // Setup WebSocket handlers
+  setupWebSocket(wss);
+
+  // Start server
+  httpServer.listen(PORT, () => {
+    console.log(`Server running on http://localhost:${PORT}`);
+    console.log(`WebSocket server running on ws://localhost:${PORT}/ws`);
   });
 }

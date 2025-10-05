@@ -1,14 +1,68 @@
 import type { Song, PlayerSettings } from "@/types";
 import type { Player } from "@/types";
+import { JsonRpcWebSocketClient } from "./jsonRpcWebSocket";
 
 /**
- * Remote player - communicates with Apple Music via local server
+ * Remote player - communicates with server via WebSocket + JSON-RPC 2.0
+ * Replaces the old HTTP polling approach with real-time updates
  */
 export class RemotePlayer implements Player {
-  private baseUrl: string;
+  private wsUrl: string;
+  private rpcClient: JsonRpcWebSocketClient | null = null;
+  private currentSong: Song = {
+    name: "",
+    artist: "",
+    album: "",
+    currentTime: 0,
+    duration: 0,
+    isPlaying: false,
+  };
+  private songUpdateListeners: Array<(song: Song) => void> = [];
+  private connectionStateListeners: Array<(connected: boolean) => void> = [];
+  private isInitialized = false;
 
-  constructor(baseUrl: string = "http://127.0.0.1:4000") {
-    this.baseUrl = baseUrl;
+  constructor(wsUrl: string = "ws://127.0.0.1:4000/ws") {
+    this.wsUrl = wsUrl;
+  }
+
+  /**
+   * Initialize WebSocket connection
+   */
+  private async initialize(): Promise<void> {
+    if (this.isInitialized) return;
+
+    this.rpcClient = new JsonRpcWebSocketClient(this.wsUrl);
+
+    // Register notification handler for song updates
+    this.rpcClient.onNotification((method, params) => {
+      if (method === "song.update") {
+        this.currentSong = params as Song;
+        this.notifySongUpdateListeners(params as Song);
+      }
+    });
+
+    // Register connection state handler
+    this.rpcClient.setConnectionChangeCallback((connected) => {
+      this.notifyConnectionStateListeners(connected);
+    });
+
+    // Connect to server
+    try {
+      await this.rpcClient.connect();
+      this.isInitialized = true;
+    } catch (error) {
+      console.error("[RemotePlayer] Failed to initialize:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Ensure client is initialized before operations
+   */
+  private async ensureInitialized(): Promise<void> {
+    if (!this.isInitialized) {
+      await this.initialize();
+    }
   }
 
   getId(): string {
@@ -24,89 +78,36 @@ export class RemotePlayer implements Player {
   }
 
   async getSong(): Promise<Song> {
-    const response = await fetch(`${this.baseUrl}/music`);
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch song: ${response.status}`);
-    }
-
-    const json = await response.json();
-
-    return {
-      name: json.name || "Unknown Track",
-      artist: json.artist || "Unknown Artist",
-      album: json.album || "Unknown Album",
-      duration: json.duration || 0,
-      currentTime: parseFloat(json.currentTime || 0),
-      isPlaying: json.isPlaying || false,
-    };
+    await this.ensureInitialized();
+    return this.currentSong;
   }
 
   async play(): Promise<void> {
-    const response = await fetch(`${this.baseUrl}/music`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "play" }),
-    });
-
-    if (!response.ok) {
-      console.error("[RemotePlayer] Failed to play:", response.status);
-      throw new Error(`Failed to play: ${response.status}`);
-    }
+    await this.ensureInitialized();
+    this.rpcClient?.notify("player.play");
   }
 
   async pause(): Promise<void> {
-    const response = await fetch(`${this.baseUrl}/music`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "pause" }),
-    });
-
-    if (!response.ok) {
-      console.error("[RemotePlayer] Failed to pause:", response.status);
-      throw new Error(`Failed to pause: ${response.status}`);
-    }
+    await this.ensureInitialized();
+    this.rpcClient?.notify("player.pause");
   }
 
   async seek(time: number): Promise<void> {
-    const response = await fetch(`${this.baseUrl}/music`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "seek", time }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to seek: ${response.status}`);
-    }
+    await this.ensureInitialized();
+    this.rpcClient?.notify("player.seek", { time });
   }
 
   async next(): Promise<void> {
-    const response = await fetch(`${this.baseUrl}/music`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "next" }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to skip to next track: ${response.status}`);
-    }
+    await this.ensureInitialized();
+    this.rpcClient?.notify("player.next");
   }
 
   async previous(): Promise<void> {
-    const response = await fetch(`${this.baseUrl}/music`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "previous" }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to go to previous track: ${response.status}`);
-    }
+    await this.ensureInitialized();
+    this.rpcClient?.notify("player.previous");
   }
 
   async playSong(): Promise<void> {
-    // Remote player doesn't support direct song selection
-    // This would require integration with Apple Music's search/play API
     console.warn(
       "[RemotePlayer] playSong() not supported - Remote player can only control currently playing track",
     );
@@ -115,7 +116,6 @@ export class RemotePlayer implements Player {
     );
   }
 
-  // New queue-based methods (not implemented for remote player)
   async add(): Promise<void> {
     throw new Error("Remote player does not support queue management");
   }
@@ -150,12 +150,108 @@ export class RemotePlayer implements Player {
 
   async isAvailable(): Promise<boolean> {
     try {
-      const response = await fetch(`${this.baseUrl}/music`, {
-        method: "GET",
+      // Simple check: try to connect to WebSocket
+      return new Promise((resolve) => {
+        const ws = new WebSocket(this.wsUrl);
+
+        const timeout = setTimeout(() => {
+          ws.close();
+          resolve(false);
+        }, 3000);
+
+        ws.onopen = () => {
+          clearTimeout(timeout);
+          ws.close();
+          resolve(true);
+        };
+
+        ws.onerror = () => {
+          clearTimeout(timeout);
+          resolve(false);
+        };
       });
-      return response.ok;
     } catch {
       return false;
+    }
+  }
+
+  /**
+   * Subscribe to song updates from WebSocket
+   */
+  onSongUpdate(listener: (song: Song) => void): () => void {
+    this.songUpdateListeners.push(listener);
+
+    // Initialize connection if not already done
+    if (!this.isInitialized && !this.rpcClient) {
+      this.ensureInitialized().catch((error) => {
+        console.error(
+          "[RemotePlayer] Failed to initialize during onSongUpdate:",
+          error,
+        );
+      });
+    }
+
+    // Return unsubscribe function
+    return () => {
+      const index = this.songUpdateListeners.indexOf(listener);
+      if (index > -1) {
+        this.songUpdateListeners.splice(index, 1);
+      }
+    };
+  }
+
+  /**
+   * Subscribe to connection state changes
+   */
+  onConnectionStateChange(listener: (connected: boolean) => void): () => void {
+    this.connectionStateListeners.push(listener);
+
+    // Return unsubscribe function
+    return () => {
+      const index = this.connectionStateListeners.indexOf(listener);
+      if (index > -1) {
+        this.connectionStateListeners.splice(index, 1);
+      }
+    };
+  }
+
+  /**
+   * Notify all song update listeners
+   */
+  private notifySongUpdateListeners(song: Song): void {
+    this.songUpdateListeners.forEach((listener) => {
+      try {
+        listener(song);
+      } catch (error) {
+        console.error("[RemotePlayer] Error in song update listener:", error);
+      }
+    });
+  }
+
+  /**
+   * Notify all connection state listeners
+   */
+  private notifyConnectionStateListeners(connected: boolean): void {
+    this.connectionStateListeners.forEach((listener) => {
+      try {
+        listener(connected);
+      } catch (error) {
+        console.error(
+          "[RemotePlayer] Error in connection state listener:",
+          error,
+        );
+      }
+    });
+  }
+
+  /**
+   * Disconnect from WebSocket server
+   */
+  disconnect(): void {
+    if (this.rpcClient) {
+      this.rpcClient.disconnect();
+      this.rpcClient = null;
+      this.isInitialized = false;
     }
   }
 }
