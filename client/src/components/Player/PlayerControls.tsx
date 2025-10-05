@@ -62,7 +62,7 @@ const PlayerControls = () => {
   return (
     <div
       data-testid="player-controls"
-      className="flex w-full flex-col gap-4 landscape:flex-row"
+      className="flex w-full flex-col gap-2 landscape:flex-row"
     >
       <div className="flex max-h-20 min-h-14 flex-col landscape:max-w-[30%]">
         <AnimatedSongName

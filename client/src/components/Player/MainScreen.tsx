@@ -132,7 +132,7 @@ const MainScreen = () => {
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={{
-              duration: 0.3,
+              duration: 0.2,
               ease: [0.25, 0.1, 0.25, 1],
             }}
           >
@@ -147,7 +147,7 @@ const MainScreen = () => {
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={{
-              duration: 0.3,
+              duration: 0.2,
               ease: [0.25, 0.1, 0.25, 1],
             }}
           >
@@ -162,7 +162,7 @@ const MainScreen = () => {
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={{
-              duration: 0.3,
+              duration: 0.2,
               ease: [0.25, 0.1, 0.25, 1],
             }}
           >
