@@ -41,9 +41,23 @@ describe("SettingsScreen", () => {
 
   it("displays player section", async () => {
     await renderWithProviders(<SettingsScreen />);
+
+    // Verify section header
     expect(screen.getByText("Remote Player")).toBeInTheDocument();
+
+    // Verify the actual remote player config is rendered (not the fallback)
     expect(screen.getByText("Server")).toBeInTheDocument();
-    expect(screen.getByText("Remote player")).toBeInTheDocument();
+    expect(screen.getByText("Remote Player")).toBeInTheDocument();
+
+    // Verify the toggle is enabled (not disabled like in fallback)
+    const remotePlayerToggle = screen.getByTestId("remote-player-toggle");
+    expect(remotePlayerToggle).not.toBeDisabled();
+
+    // Verify it shows a success icon (CheckCircle), not a loading spinner
+    const statusIcon = screen.getByTestId("remote-player-status");
+    expect(statusIcon.querySelector("svg")).toHaveClass(
+      "lucide-circle-check-big",
+    );
   });
 
   it("handles player toggle", async () => {
@@ -51,12 +65,17 @@ describe("SettingsScreen", () => {
 
     const remotePlayerToggle = screen.getByTestId("remote-player-toggle");
 
+    // Initially should be unchecked (local player is default)
+    expect(remotePlayerToggle).toHaveAttribute("aria-checked", "false");
+    expect(remotePlayerToggle).not.toBeDisabled();
+
+    // Click to enable remote player
     await act(async () => {
       fireEvent.click(remotePlayerToggle);
     });
 
-    // The player should be toggled
-    expect(remotePlayerToggle).toBeInTheDocument();
+    // Should now be checked
+    expect(remotePlayerToggle).toHaveAttribute("aria-checked", "true");
   });
 
   it("displays provider sections", async () => {

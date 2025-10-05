@@ -66,7 +66,7 @@ const LyricsScreen = () => {
       {currentArtworkUrl && (
         <div
           data-testid="lyrics-background"
-          className="absolute inset-0 scale-110 bg-cover bg-center blur-sm brightness-75 contrast-125 grayscale transition-all duration-1000 ease-in-out"
+          className="absolute inset-0 scale-110 bg-cover bg-center blur-sm brightness-75 contrast-125 transition-all duration-1000 ease-in-out"
           style={{
             backgroundImage: `url(${currentArtworkUrl})`,
           }}
