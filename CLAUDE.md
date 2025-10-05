@@ -145,6 +145,10 @@ Both client and server compile to `dist/` directories:
   - `LoadingScreen.tsx`: Animated loading screen with floating music notes, rotating vinyl record, and soundwave bars
   - `LyricsScreen.tsx`: Main lyrics display screen
   - `SearchScreen.tsx`: Lyrics search interface with debounced multi-provider search, result deduplication, and song selection
+  - `PlaylistsScreen.tsx`: Responsive playlists/queue/history screen with conditional rendering (3 layouts: mobile tabs, tablet 2-column, desktop 3-column) using `useMediaQuery` for optimal DOM performance
+  - `PlaylistsColumn.tsx`: Playlist management UI with expand/collapse, play all, and delete functionality
+  - `QueueColumn.tsx`: Player queue display with song list
+  - `HistoryColumn.tsx`: Playback history display
   - `PlayerControls.tsx`: Playback controls with progress slider, play/pause button, and quick action buttons
 - **Settings/**: Comprehensive settings system with drag-and-drop provider management
   - `SettingsScreen.tsx`: Main settings panel with smooth slide animations
@@ -164,6 +168,8 @@ Both client and server compile to `dist/` directories:
 - **Shift + ← →**: Fast seek backward/forward (15 seconds)
 - **C**: Toggle settings screen
 - **S**: Toggle search screen
+- **P**: Toggle playlists screen
+- **A**: Open add-to-playlist dialog
 
 **Settings Panel Animation**:
 - Smooth slide-from-bottom transition (300ms duration)
