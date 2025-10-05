@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { formatTime, cn } from "@/lib/utils";
+import { formatTime, cn, isSongEqual } from "@/lib/utils";
+import type { Song } from "@/types";
 
 describe("Utils", () => {
   describe("formatTime", () => {
@@ -51,6 +52,82 @@ describe("Utils", () => {
       expect(cn()).toBe("");
       expect(cn("")).toBe("");
       expect(cn(null, undefined, "")).toBe("");
+    });
+  });
+
+  describe("isSongEqual", () => {
+    const song1: Song = {
+      name: "Bohemian Rhapsody",
+      artist: "Queen",
+      album: "A Night at the Opera",
+      duration: 355,
+      currentTime: 0,
+      isPlaying: false,
+    };
+
+    it("returns true when all fields match", () => {
+      const song2: Song = {
+        name: "Bohemian Rhapsody",
+        artist: "Queen",
+        album: "A Night at the Opera",
+        duration: 999, // Different duration shouldn't matter
+        currentTime: 100,
+        isPlaying: true,
+      };
+      expect(isSongEqual(song1, song2)).toBe(true);
+    });
+
+    it("returns false when name differs", () => {
+      const song2: Song = {
+        ...song1,
+        name: "Another One Bites the Dust",
+      };
+      expect(isSongEqual(song1, song2)).toBe(false);
+    });
+
+    it("returns false when artist differs", () => {
+      const song2: Song = {
+        ...song1,
+        artist: "Led Zeppelin",
+      };
+      expect(isSongEqual(song1, song2)).toBe(false);
+    });
+
+    it("returns false when album differs", () => {
+      const song2: Song = {
+        ...song1,
+        album: "Greatest Hits",
+      };
+      expect(isSongEqual(song1, song2)).toBe(false);
+    });
+
+    it("handles empty strings", () => {
+      const song2: Song = {
+        name: "",
+        artist: "",
+        album: "",
+        duration: 0,
+        currentTime: 0,
+        isPlaying: false,
+      };
+      const song3: Song = { ...song2 };
+      expect(isSongEqual(song2, song3)).toBe(true);
+    });
+
+    it("is case sensitive", () => {
+      const song2: Song = {
+        ...song1,
+        name: "bohemian rhapsody", // lowercase
+      };
+      expect(isSongEqual(song1, song2)).toBe(false);
+    });
+
+    it("handles whitespace differences", () => {
+      const song2: Song = {
+        ...song1,
+        name: "Bohemian Rhapsody ", // trailing space
+      };
+      expect(isSongEqual(song1, song2)).toBe(false);
     });
   });
 });

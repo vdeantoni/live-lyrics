@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
 import CreatePlaylistDialog from "./CreatePlaylistDialog";
+import { isSongEqual } from "@/lib/utils";
 
 const AddToPlaylistDialog = () => {
   const isOpen = useAtomValue(addToPlaylistDialogOpenAtom);
@@ -35,10 +36,7 @@ const AddToPlaylistDialog = () => {
   const isSongInPlaylist = (playlistId: string): boolean => {
     const playlist = playlists.find((p) => p.id === playlistId);
     if (!playlist) return false;
-    return playlist.songs.some(
-      (song) =>
-        song.name === selectedSong.name && song.artist === selectedSong.artist,
-    );
+    return playlist.songs.some((song) => isSongEqual(song, selectedSong));
   };
 
   return (

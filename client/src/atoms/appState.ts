@@ -11,6 +11,7 @@ import type {
 import type { Playlist, PlaylistSong, Song } from "@/types";
 import { BUILTIN_PROVIDER_CONFIGS } from "@/config/providers";
 import { DEFAULT_PLAYLISTS } from "@/config/playlists";
+import { isSongEqual } from "@/lib/utils";
 
 /**
  * Unified AppState Atoms
@@ -517,10 +518,8 @@ export const addSongToPlaylistAtom = atom(
       playlistsAtom,
       playlists.map((playlist) => {
         if (playlist.id === playlistId) {
-          // Check for duplicates based on name + artist
-          const isDuplicate = playlist.songs.some(
-            (s) => s.name === song.name && s.artist === song.artist,
-          );
+          // Check for duplicates based on name + artist + album
+          const isDuplicate = playlist.songs.some((s) => isSongEqual(s, song));
           if (isDuplicate) {
             return playlist;
           }
