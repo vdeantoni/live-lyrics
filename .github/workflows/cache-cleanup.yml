@@ -23,7 +23,7 @@ jobs:
             const { owner, repo } = context.repo;
 
             // Get all caches
-            const caches = await github.rest.actions.getActionsCaches({
+            const caches = await github.rest.actions.getActionsCacheList({
               owner,
               repo,
               per_page: 100
