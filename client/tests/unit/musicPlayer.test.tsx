@@ -27,6 +27,28 @@ vi.mock("@/hooks/useArtworkSync", () => ({
   useArtworkSync: vi.fn(),
 }));
 
+vi.mock("@/hooks/usePlayerQueue", () => ({
+  usePlayerQueue: vi.fn(() => ({
+    queue: [],
+    isLoading: false,
+    error: null,
+    removeAt: vi.fn(),
+    reorder: vi.fn(),
+    clear: vi.fn(),
+    addSongs: vi.fn(),
+  })),
+}));
+
+vi.mock("@/hooks/usePlayerHistory", () => ({
+  usePlayerHistory: vi.fn(() => ({
+    history: [],
+    isLoading: false,
+    error: null,
+    clear: vi.fn(),
+    replay: vi.fn(),
+  })),
+}));
+
 // Mock keyboard shortcuts hook
 vi.mock("@/hooks/useKeyboardShortcuts", () => ({
   useKeyboardShortcuts: vi.fn(),

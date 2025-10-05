@@ -42,9 +42,7 @@ test.describe("Playlists Functionality", () => {
       await expect(
         page.locator('[data-testid="playlists-screen"]'),
       ).toBeVisible();
-      await expect(
-        page.getByRole("heading", { name: "Playlists" }),
-      ).toBeVisible();
+      await expect(page.getByTestId("playlists-screen-title")).toBeVisible();
 
       // Click close button to close
       const closeButton = page.locator('[data-testid="close-overlay-button"]');
@@ -72,9 +70,7 @@ test.describe("Playlists Functionality", () => {
       await expect(
         page.locator('[data-testid="playlists-screen"]'),
       ).toBeVisible();
-      await expect(
-        page.getByRole("heading", { name: "Playlists" }),
-      ).toBeVisible();
+      await expect(page.getByTestId("playlists-screen-title")).toBeVisible();
 
       // Press P again to close
       await page.keyboard.press("p");
@@ -232,6 +228,9 @@ test.describe("Playlists Functionality", () => {
 
       // Verify song was added - open playlists and expand
       await page.keyboard.press("p");
+      await expect(
+        page.locator('[data-testid="playlists-screen"]'),
+      ).toBeVisible();
       // Expand playlist using test ID
       await page
         .locator('[data-testid^="playlist-header-"]')
@@ -278,6 +277,9 @@ test.describe("Playlists Functionality", () => {
 
       // Verify playlist was created with song - open playlists
       await page.keyboard.press("p");
+      await expect(
+        page.locator('[data-testid="playlists-screen"]'),
+      ).toBeVisible();
       // Expand playlist using test ID
       await page
         .locator('[data-testid^="playlist-header-"]')
@@ -382,8 +384,11 @@ test.describe("Playlists Functionality", () => {
       );
       await closeSearchButton.click();
 
-      // Open playlists
+      // Open playlists and check playlist
       await page.keyboard.press("p");
+      await expect(
+        page.locator('[data-testid="playlists-screen"]'),
+      ).toBeVisible();
       // Expand playlist using test ID
       await page
         .locator('[data-testid^="playlist-header-"]')
@@ -447,6 +452,12 @@ test.describe("Playlists Functionality", () => {
       // Close search and check playlist
       await page.keyboard.press("s");
       await page.keyboard.press("p");
+
+      // Wait for playlists screen to be visible
+      await expect(
+        page.locator('[data-testid="playlists-screen"]'),
+      ).toBeVisible();
+
       // Expand playlist using test ID
       await page
         .locator('[data-testid^="playlist-header-"]')
@@ -484,6 +495,9 @@ test.describe("Playlists Functionality", () => {
 
       // Open playlists and verify song is there but not visible (collapsed)
       await page.keyboard.press("p");
+      await expect(
+        page.locator('[data-testid="playlists-screen"]'),
+      ).toBeVisible();
       const playlistCard = page
         .locator('[data-testid^="playlist-card-"]')
         .filter({ hasText: "Expandable" });
@@ -572,6 +586,9 @@ test.describe("Playlists Functionality", () => {
 
       // Open playlists and expand using test ID
       await page.keyboard.press("p");
+      await expect(
+        page.locator('[data-testid="playlists-screen"]'),
+      ).toBeVisible();
       await page
         .locator('[data-testid^="playlist-header-"]')
         .filter({ hasText: "Removable" })
@@ -605,9 +622,7 @@ test.describe("Playlists Functionality", () => {
       await page.keyboard.press("p");
 
       // Playlists screen should be visible and functional
-      await expect(
-        page.getByRole("heading", { name: "Playlists" }),
-      ).toBeVisible();
+      await expect(page.getByTestId("playlists-screen-title")).toBeVisible();
 
       // Should show default playlist in landscape
       await expect(page.getByText("Classic Hits")).toBeVisible();
@@ -667,6 +682,11 @@ test.describe("Playlists Functionality", () => {
       const closeButton = page.locator('[data-testid="close-overlay-button"]');
       await closeButton.click();
 
+      // Wait for playlists screen to fully close (state update + animation)
+      await expect(
+        page.locator('[data-testid="playlists-screen"]'),
+      ).not.toBeVisible();
+
       // Should not be highlighted anymore
       await expect(playlistsButton).not.toHaveClass(/(?<!:)text-primary\b/);
     });
@@ -689,6 +709,9 @@ test.describe("Playlists Functionality", () => {
 
       // Open playlists
       await page.keyboard.press("p");
+      await expect(
+        page.locator('[data-testid="playlists-screen"]'),
+      ).toBeVisible();
 
       // Should see default playlist
       await expect(page.getByText("Classic Hits")).toBeVisible();
@@ -712,6 +735,9 @@ test.describe("Playlists Functionality", () => {
 
       // Open playlists
       await page.keyboard.press("p");
+      await expect(
+        page.locator('[data-testid="playlists-screen"]'),
+      ).toBeVisible();
 
       // Expand Classic Hits
       await page
@@ -746,6 +772,9 @@ test.describe("Playlists Functionality", () => {
 
       // Open playlists
       await page.keyboard.press("p");
+      await expect(
+        page.locator('[data-testid="playlists-screen"]'),
+      ).toBeVisible();
 
       // Classic Hits should be visible
       await expect(page.getByText("Classic Hits")).toBeVisible();
@@ -784,6 +813,9 @@ test.describe("Playlists Functionality", () => {
 
       // Open playlists and remove a song from Classic Hits
       await page.keyboard.press("p");
+      await expect(
+        page.locator('[data-testid="playlists-screen"]'),
+      ).toBeVisible();
       await page
         .locator('[data-testid^="playlist-header-"]')
         .filter({ hasText: "Classic Hits" })
@@ -802,6 +834,9 @@ test.describe("Playlists Functionality", () => {
 
       // Open playlists again
       await page.keyboard.press("p");
+      await expect(
+        page.locator('[data-testid="playlists-screen"]'),
+      ).toBeVisible();
       await page
         .locator('[data-testid^="playlist-header-"]')
         .filter({ hasText: "Classic Hits" })

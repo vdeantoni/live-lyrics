@@ -80,6 +80,7 @@ const MainScreen = () => {
               animate={{ rotate: 0, scale: 1, opacity: 1 }}
               exit={{ rotate: 90, scale: 0.8, opacity: 0 }}
               transition={{ duration: 0.2, ease: "easeInOut" }}
+              style={{ pointerEvents: "none" }}
             >
               {isOverlayOpen ? (
                 <X className="h-5 w-5 text-white/90" />

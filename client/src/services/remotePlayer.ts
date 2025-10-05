@@ -140,6 +140,14 @@ export class RemotePlayer implements Player {
     throw new Error("Remote player does not support settings");
   }
 
+  async setQueue(): Promise<void> {
+    throw new Error("Remote player does not support queue management");
+  }
+
+  async clearHistory(): Promise<void> {
+    throw new Error("Remote player does not support history tracking");
+  }
+
   async isAvailable(): Promise<boolean> {
     try {
       const response = await fetch(`${this.baseUrl}/music`, {
