@@ -392,6 +392,14 @@ export class TestPlayer implements Player {
     this.settings = { ...this.settings, ...settings };
   }
 
+  async setQueue(songs: Song[]): Promise<void> {
+    this.queue = [...songs];
+  }
+
+  async clearHistory(): Promise<void> {
+    this.history = [];
+  }
+
   private shiftQueueToCurrentSong(): void {
     // Move current to history
     if (this.currentSong) {
