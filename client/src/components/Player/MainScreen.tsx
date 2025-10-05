@@ -3,8 +3,10 @@ import {
   coreAppStateAtom,
   settingsOpenAtom,
   searchOpenAtom,
+  playlistsOpenAtom,
   toggleSettingsAtom,
   toggleSearchAtom,
+  togglePlaylistsAtom,
 } from "@/atoms/appState";
 import { Settings, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -12,22 +14,28 @@ import { motion, AnimatePresence } from "framer-motion";
 import LyricsScreen from "./LyricsScreen";
 import SettingsScreen from "./SettingsScreen";
 import SearchScreen from "./SearchScreen";
+import PlaylistsScreen from "./PlaylistsScreen";
 import LoadingScreen from "./LoadingScreen";
+import AddToPlaylistDialog from "../Playlists/AddToPlaylistDialog";
 
 const MainScreen = () => {
   const isSettingsOpen = useAtomValue(settingsOpenAtom);
   const isSearchOpen = useAtomValue(searchOpenAtom);
+  const isPlaylistsOpen = useAtomValue(playlistsOpenAtom);
   const appState = useAtomValue(coreAppStateAtom);
   const toggleSettings = useSetAtom(toggleSettingsAtom);
   const toggleSearch = useSetAtom(toggleSearchAtom);
+  const togglePlaylists = useSetAtom(togglePlaylistsAtom);
 
   // Determine if any overlay is open
-  const isOverlayOpen = isSettingsOpen || isSearchOpen;
+  const isOverlayOpen = isSettingsOpen || isSearchOpen || isPlaylistsOpen;
 
   // Handle close/settings button click
   const handleButtonClick = () => {
     if (isSearchOpen) {
       toggleSearch();
+    } else if (isPlaylistsOpen) {
+      togglePlaylists();
     } else if (isSettingsOpen) {
       toggleSettings();
     } else {
@@ -50,9 +58,11 @@ const MainScreen = () => {
           aria-label={
             isSearchOpen
               ? "Close search"
-              : isSettingsOpen
-                ? "Close settings"
-                : "Open settings"
+              : isPlaylistsOpen
+                ? "Close playlists"
+                : isSettingsOpen
+                  ? "Close settings"
+                  : "Open settings"
           }
         >
           <AnimatePresence mode="wait" initial={false}>
@@ -60,9 +70,11 @@ const MainScreen = () => {
               key={
                 isSearchOpen
                   ? "close-search"
-                  : isSettingsOpen
-                    ? "close-settings"
-                    : "settings"
+                  : isPlaylistsOpen
+                    ? "close-playlists"
+                    : isSettingsOpen
+                      ? "close-settings"
+                      : "settings"
               }
               initial={{ rotate: 0, scale: 0.8, opacity: 0 }}
               animate={{ rotate: 0, scale: 1, opacity: 1 }}
@@ -126,6 +138,21 @@ const MainScreen = () => {
             <SearchScreen />
           </motion.div>
         )}
+        {isPlaylistsOpen && (
+          <motion.div
+            key="playlists"
+            className="absolute inset-0 z-20"
+            initial={{ y: "100%" }}
+            animate={{ y: 0 }}
+            exit={{ y: "100%" }}
+            transition={{
+              duration: 0.3,
+              ease: [0.25, 0.1, 0.25, 1],
+            }}
+          >
+            <PlaylistsScreen />
+          </motion.div>
+        )}
         {isSettingsOpen && (
           <motion.div
             key="settings"
@@ -142,6 +169,9 @@ const MainScreen = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Add to Playlist Dialog - Modal on top of everything */}
+      <AddToPlaylistDialog />
     </div>
   );
 };

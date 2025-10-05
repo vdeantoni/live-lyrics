@@ -1,14 +1,20 @@
 import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
 import { formatTime } from "@/lib/utils";
-import { ListMusic, Pause, Play, Search } from "lucide-react";
+import { ListMusic, ListPlus, Pause, Play, Search } from "lucide-react";
 import { useAtomValue, useSetAtom } from "jotai";
 import {
   playerStateAtom,
   playerUIStateAtom,
   playerControlAtom,
 } from "@/atoms/playerAtoms";
-import { toggleSearchAtom, searchOpenAtom } from "@/atoms/appState";
+import {
+  toggleSearchAtom,
+  searchOpenAtom,
+  togglePlaylistsAtom,
+  playlistsOpenAtom,
+  openAddToPlaylistDialogAtom,
+} from "@/atoms/appState";
 import AnimatedSongName from "../LyricsVisualizer/AnimatedSongName";
 import { motion } from "framer-motion";
 
@@ -17,11 +23,14 @@ const PlayerControls = () => {
   const playerState = useAtomValue(playerStateAtom);
   const { currentTime, duration, isPlaying, name, artist } = playerState;
   const isSearchOpen = useAtomValue(searchOpenAtom);
+  const isPlaylistsOpen = useAtomValue(playlistsOpenAtom);
 
   // Action atoms
   const playerControl = useSetAtom(playerControlAtom);
   const setPlayerUIState = useSetAtom(playerUIStateAtom);
   const toggleSearch = useSetAtom(toggleSearchAtom);
+  const togglePlaylists = useSetAtom(togglePlaylistsAtom);
+  const openAddToPlaylistDialog = useSetAtom(openAddToPlaylistDialogAtom);
 
   const handlePlayPause = () => {
     if (isPlaying) {
@@ -120,6 +129,18 @@ const PlayerControls = () => {
           </motion.div>
         </Button>
 
+        {/* Add to Playlist Button */}
+        <Button
+          size="sm"
+          variant="ghost"
+          className="dark:hover:bg-accent/0 hover:text-primary h-10 w-10 rounded-full p-2"
+          aria-label="Add to playlist"
+          onClick={() => openAddToPlaylistDialog(playerState)}
+          disabled={!playerState.name}
+        >
+          <ListPlus />
+        </Button>
+
         <div className="flex flex-1 items-center justify-center">
           {/* Play/Pause Button - Centered */}
           <Button
@@ -140,11 +161,24 @@ const PlayerControls = () => {
         <Button
           size="sm"
           variant="ghost"
-          className="dark:hover:bg-accent/0 hover:text-primary h-10 w-10 rounded-full p-2"
+          className={`dark:hover:bg-accent/0 hover:text-primary h-10 w-10 rounded-full p-2 transition-colors ${
+            isPlaylistsOpen ? "text-primary" : ""
+          }`}
           aria-label="View playlists"
-          onClick={() => console.log("Playlists clicked")}
+          onClick={togglePlaylists}
         >
-          <ListMusic />
+          <motion.div
+            animate={{
+              scale: isPlaylistsOpen ? [1, 1.2, 1] : 1,
+              rotate: isPlaylistsOpen ? [0, 10, -10, 0] : 0,
+            }}
+            transition={{
+              duration: 0.3,
+              ease: "easeInOut",
+            }}
+          >
+            <ListMusic />
+          </motion.div>
         </Button>
       </div>
     </div>

@@ -135,11 +135,56 @@ To me`;
       }
     };
 
-    // Shared player state (singleton-like)
-    const testPlayerState = {
+    // Shared player state (singleton-like) with queue system
+    const testPlayerState: {
+      currentTime: number;
+      isPlaying: boolean;
+      startTime: number;
+      currentSong: {
+        name: string;
+        artist: string;
+        album: string;
+        duration: number;
+        currentTime: number;
+        isPlaying: boolean;
+      } | null;
+      queue: Array<{
+        name: string;
+        artist: string;
+        album: string;
+        duration: number;
+        currentTime: number;
+        isPlaying: boolean;
+      }>;
+      history: Array<{
+        name: string;
+        artist: string;
+        album: string;
+        duration: number;
+        currentTime: number;
+        isPlaying: boolean;
+      }>;
+      settings: {
+        playOnAdd: boolean;
+      };
+    } = {
       currentTime: 0,
       isPlaying: false,
       startTime: 0,
+      // Queue-based state
+      currentSong: {
+        name: "Bohemian Rhapsody",
+        artist: "Queen",
+        album: "A Night at the Opera",
+        duration: 355,
+        currentTime: 0,
+        isPlaying: false,
+      },
+      queue: [],
+      history: [],
+      settings: {
+        playOnAdd: false,
+      },
     };
 
     // Factory: Create lyrics provider with configurable availability
@@ -149,6 +194,55 @@ To me`;
       getDescription: () => providerConfig.description,
       isAvailable: () => Promise.resolve(providerConfig.isAvailable),
       isFetching: () => Promise.resolve(false),
+      search: async (query: string) => {
+        if (!providerConfig.isAvailable) return [];
+        debugLog(`${providerConfig.name} search for: "${query}"`);
+
+        // Mock search results based on query
+        const searchResults: Array<{
+          id: string;
+          trackName: string;
+          artistName: string;
+          albumName: string;
+          duration: number;
+        }> = [];
+
+        // Return different mock songs based on search query
+        if (query.toLowerCase().includes("hotel")) {
+          searchResults.push({
+            id: "mock-hotel-california",
+            trackName: "Hotel California",
+            artistName: "Eagles",
+            albumName: "Hotel California",
+            duration: 391,
+          });
+        }
+
+        if (query.toLowerCase().includes("imagine")) {
+          searchResults.push({
+            id: "mock-imagine",
+            trackName: "Imagine",
+            artistName: "John Lennon",
+            albumName: "Imagine",
+            duration: 183,
+          });
+        }
+
+        if (query.toLowerCase().includes("stairway")) {
+          searchResults.push({
+            id: "mock-stairway",
+            trackName: "Stairway to Heaven",
+            artistName: "Led Zeppelin",
+            albumName: "Led Zeppelin IV",
+            duration: 482,
+          });
+        }
+
+        debugLog(
+          `${providerConfig.name} found ${searchResults.length} results`,
+        );
+        return searchResults;
+      },
       supportsLyrics: async (song: {
         name: string;
         artist: string;
@@ -195,7 +289,7 @@ To me`;
       },
     });
 
-    // Factory: Create player with configurable availability
+    // Factory: Create player with configurable availability and queue system
     const createPlayerProvider = (providerConfig: CustomProviderConfig) => ({
       getId: () => providerConfig.id,
       getName: () => providerConfig.name,
@@ -204,20 +298,29 @@ To me`;
       getSong: async () => {
         if (!providerConfig.isAvailable) return null;
 
+        // Handle null current song
+        if (!testPlayerState.currentSong) {
+          return {
+            name: "",
+            artist: "",
+            album: "",
+            duration: 0,
+            currentTime: 0,
+            isPlaying: false,
+          };
+        }
+
         // Simulate time progression when playing
         if (testPlayerState.isPlaying) {
           const now = Date.now();
           testPlayerState.currentTime = Math.min(
             (now - testPlayerState.startTime) / 1000,
-            355,
+            testPlayerState.currentSong.duration,
           );
         }
 
         const song = {
-          name: "Bohemian Rhapsody",
-          artist: "Queen",
-          album: "A Night at the Opera",
-          duration: 355,
+          ...testPlayerState.currentSong,
           currentTime: testPlayerState.currentTime,
           isPlaying: testPlayerState.isPlaying,
         };
@@ -225,6 +328,7 @@ To me`;
         return song;
       },
       play: async () => {
+        if (!testPlayerState.currentSong) return;
         debugLog(`${providerConfig.name} play() called`);
         testPlayerState.isPlaying = true;
         testPlayerState.startTime =
@@ -235,11 +339,107 @@ To me`;
         testPlayerState.isPlaying = false;
       },
       seek: async (time: number) => {
+        if (!testPlayerState.currentSong) return;
         debugLog(`${providerConfig.name} seek(${time}) called`);
-        testPlayerState.currentTime = Math.max(0, Math.min(time, 355));
+        testPlayerState.currentTime = Math.max(
+          0,
+          Math.min(time, testPlayerState.currentSong.duration),
+        );
         if (testPlayerState.isPlaying) {
           testPlayerState.startTime = Date.now() - time * 1000;
         }
+      },
+      next: async () => {
+        debugLog(`${providerConfig.name} next() called`);
+        if (!testPlayerState.currentSong) {
+          if (testPlayerState.queue.length > 0) {
+            testPlayerState.currentSong = testPlayerState.queue.shift()!;
+            testPlayerState.currentTime = 0;
+            testPlayerState.startTime = Date.now();
+          }
+          return;
+        }
+
+        if (testPlayerState.queue.length > 0) {
+          testPlayerState.history.push(testPlayerState.currentSong);
+          testPlayerState.currentSong = testPlayerState.queue.shift()!;
+          testPlayerState.currentTime = 0;
+          testPlayerState.startTime = Date.now();
+        } else {
+          testPlayerState.history.push(testPlayerState.currentSong);
+          testPlayerState.currentSong = null;
+          testPlayerState.currentTime = 0;
+          testPlayerState.isPlaying = false;
+        }
+      },
+      previous: async () => {
+        debugLog(`${providerConfig.name} previous() called`);
+        if (testPlayerState.currentTime > 3) {
+          testPlayerState.currentTime = 0;
+          testPlayerState.startTime = Date.now();
+          return;
+        }
+
+        if (testPlayerState.history.length > 0) {
+          if (testPlayerState.currentSong) {
+            testPlayerState.queue.unshift(testPlayerState.currentSong);
+          }
+          testPlayerState.currentSong = testPlayerState.history.pop()!;
+          testPlayerState.currentTime = 0;
+          testPlayerState.startTime = Date.now();
+        } else if (testPlayerState.currentSong) {
+          testPlayerState.currentTime = 0;
+          testPlayerState.startTime = Date.now();
+        }
+      },
+      add: async (
+        ...songs: Array<{
+          name: string;
+          artist: string;
+          album: string;
+          duration: number;
+          currentTime: number;
+          isPlaying: boolean;
+        }>
+      ) => {
+        debugLog(
+          `${providerConfig.name} add() called with ${songs.length} songs`,
+        );
+        if (songs.length === 0) return;
+
+        testPlayerState.queue.unshift(...songs);
+
+        if (!testPlayerState.currentSong && testPlayerState.queue.length > 0) {
+          testPlayerState.currentSong = testPlayerState.queue.shift()!;
+          testPlayerState.currentTime = 0;
+          testPlayerState.startTime = Date.now();
+        }
+
+        if (testPlayerState.settings.playOnAdd && testPlayerState.currentSong) {
+          testPlayerState.isPlaying = true;
+          testPlayerState.startTime =
+            Date.now() - testPlayerState.currentTime * 1000;
+        }
+      },
+      getQueue: async () => {
+        return [...testPlayerState.queue];
+      },
+      getHistory: async () => {
+        return [...testPlayerState.history];
+      },
+      clear: async () => {
+        debugLog(`${providerConfig.name} clear() called`);
+        testPlayerState.queue = [];
+        testPlayerState.currentSong = null;
+        testPlayerState.currentTime = 0;
+        testPlayerState.isPlaying = false;
+      },
+      getSettings: async () => {
+        return { ...testPlayerState.settings };
+      },
+      setSettings: async (settings: { playOnAdd?: boolean }) => {
+        debugLog(`${providerConfig.name} setSettings() called`, settings);
+        testPlayerState.settings = { ...testPlayerState.settings, ...settings };
       },
     });
 

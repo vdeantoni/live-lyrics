@@ -4,6 +4,8 @@ import {
   selectedPlayerAtom,
   toggleSettingsAtom,
   toggleSearchAtom,
+  togglePlaylistsAtom,
+  openAddToPlaylistDialogAtom,
 } from "@/atoms/appState";
 import { lyricsDataAtom, playerStateAtom } from "@/atoms/playerAtoms";
 import { loadPlayer } from "@/config/providers";
@@ -17,11 +19,15 @@ import { loadPlayer } from "@/config/providers";
  * - Up/Down arrows: Navigate to previous/next lyrics line
  * - C: Toggle settings screen (blocked when Cmd/Ctrl/Alt are pressed to avoid conflicts with copy/paste)
  * - S: Toggle search screen (blocked when Cmd/Ctrl/Alt are pressed)
+ * - P: Toggle playlists screen (blocked when Cmd/Ctrl/Alt are pressed)
+ * - A: Open add-to-playlist dialog (blocked when Cmd/Ctrl/Alt are pressed)
  */
 export const useKeyboardShortcuts = () => {
   const selectedPlayer = useAtomValue(selectedPlayerAtom);
   const toggleSettings = useSetAtom(toggleSettingsAtom);
   const toggleSearch = useSetAtom(toggleSearchAtom);
+  const togglePlaylists = useSetAtom(togglePlaylistsAtom);
+  const openAddToPlaylistDialog = useSetAtom(openAddToPlaylistDialogAtom);
   const lyricsData = useAtomValue(lyricsDataAtom);
   const playerState = useAtomValue(playerStateAtom);
   const { currentTime, duration, isPlaying } = playerState;
@@ -94,6 +100,21 @@ export const useKeyboardShortcuts = () => {
           if (hasModifier) return; // Don't trigger if modifier keys are pressed (fixes Cmd+S issue)
           event.preventDefault();
           toggleSearch();
+          break;
+
+        case "p": // P - Toggle Playlists
+          if (hasModifier) return; // Don't trigger if modifier keys are pressed (fixes Cmd+P issue)
+          event.preventDefault();
+          togglePlaylists();
+          break;
+
+        case "a": // A - Open Add to Playlist Dialog
+          if (hasModifier) return; // Don't trigger if modifier keys are pressed (fixes Cmd+A issue)
+          event.preventDefault();
+          if (playerState.name) {
+            // Only open if there's a song playing
+            openAddToPlaylistDialog(playerState);
+          }
           break;
 
         case "arrowleft": // Left Arrow - Seek backward (5s) or fast seek (15s with Shift)
@@ -173,5 +194,7 @@ export const useKeyboardShortcuts = () => {
     isPlaying,
     toggleSettings,
     toggleSearch,
+    togglePlaylists,
+    openAddToPlaylistDialog,
   ]);
 };

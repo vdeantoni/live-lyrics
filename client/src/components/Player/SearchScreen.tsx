@@ -1,10 +1,14 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useAtomValue, useSetAtom } from "jotai";
-import { enabledLyricsProvidersAtom, toggleSearchAtom } from "@/atoms/appState";
+import {
+  enabledLyricsProvidersAtom,
+  toggleSearchAtom,
+  openAddToPlaylistDialogAtom,
+} from "@/atoms/appState";
 import { playerStateAtom } from "@/atoms/playerAtoms";
 import { loadLyricsProvider } from "@/config/providers";
 import type { SearchResult } from "@/types";
-import { Search, Loader2, Music, X } from "lucide-react";
+import { Search, Loader2, Music, X, ListPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatTime } from "@/lib/utils";
 
@@ -20,6 +24,7 @@ const SearchScreen = () => {
   const enabledProviders = useAtomValue(enabledLyricsProvidersAtom);
   const toggleSearch = useSetAtom(toggleSearchAtom);
   const setPlayerState = useSetAtom(playerStateAtom);
+  const openAddToPlaylistDialog = useSetAtom(openAddToPlaylistDialogAtom);
 
   // Focus input after animation completes (1 second delay)
   useEffect(() => {
@@ -105,6 +110,18 @@ const SearchScreen = () => {
     toggleSearch();
   };
 
+  const handleAddToPlaylist = (e: React.MouseEvent, result: SearchResult) => {
+    e.stopPropagation(); // Prevent playing the song
+    openAddToPlaylistDialog({
+      name: result.trackName,
+      artist: result.artistName,
+      album: result.albumName,
+      duration: result.duration,
+      currentTime: 0,
+      isPlaying: false,
+    });
+  };
+
   const handleClearSearch = () => {
     setQuery("");
     setResults([]);
@@ -186,35 +203,49 @@ const SearchScreen = () => {
         {!isSearching && results.length > 0 && (
           <div className="space-y-3">
             {results.map((result) => (
-              <button
+              <div
                 key={`${result.providerId}-${result.id}`}
-                onClick={() => handleResultClick(result)}
-                className="w-full rounded-lg border border-white/10 bg-zinc-800/50 p-4 text-left transition-all hover:scale-[1.02] hover:border-white/20 hover:bg-zinc-800 active:scale-[0.98]"
+                className="relative w-full rounded-lg border border-white/10 bg-zinc-800/50 transition-all hover:border-white/20 hover:bg-zinc-800"
               >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0 flex-1">
-                    <h3 className="truncate text-lg font-semibold text-white">
-                      {result.trackName}
-                    </h3>
-                    <p className="truncate text-sm text-zinc-400">
-                      {result.artistName}
-                    </p>
-                    {result.albumName && (
-                      <p className="truncate text-xs text-zinc-500">
-                        {result.albumName}
+                <button
+                  onClick={() => handleResultClick(result)}
+                  className="w-full p-4 text-left transition-all active:scale-[0.98]"
+                >
+                  <div className="flex items-start justify-between gap-3 pr-10">
+                    <div className="min-w-0 flex-1">
+                      <h3 className="truncate text-lg font-semibold text-white">
+                        {result.trackName}
+                      </h3>
+                      <p className="truncate text-sm text-zinc-400">
+                        {result.artistName}
                       </p>
-                    )}
+                      {result.albumName && (
+                        <p className="truncate text-xs text-zinc-500">
+                          {result.albumName}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex flex-col items-end gap-1">
+                      <span className="text-sm text-zinc-500">
+                        {formatTime(result.duration)}
+                      </span>
+                      <span className="rounded-full bg-blue-500/20 px-2 py-0.5 text-xs text-blue-300">
+                        {result.providerId}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex flex-col items-end gap-1">
-                    <span className="text-sm text-zinc-500">
-                      {formatTime(result.duration)}
-                    </span>
-                    <span className="rounded-full bg-blue-500/20 px-2 py-0.5 text-xs text-blue-300">
-                      {result.providerId}
-                    </span>
-                  </div>
-                </div>
-              </button>
+                </button>
+                {/* Add to Playlist Button - Positioned Absolute */}
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={(e) => handleAddToPlaylist(e, result)}
+                  className="dark:hover:bg-accent/0 hover:text-primary absolute right-2 top-2 h-8 w-8 rounded-full p-0 transition-all hover:scale-110"
+                  aria-label="Add to playlist"
+                >
+                  <ListPlus className="h-4 w-4" />
+                </Button>
+              </div>
             ))}
           </div>
         )}

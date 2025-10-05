@@ -1,4 +1,4 @@
-import type { Song } from "@/types";
+import type { Song, PlayerSettings } from "@/types";
 import type { Player } from "@/types";
 
 /**
@@ -78,6 +78,66 @@ export class RemotePlayer implements Player {
     if (!response.ok) {
       throw new Error(`Failed to seek: ${response.status}`);
     }
+  }
+
+  async next(): Promise<void> {
+    const response = await fetch(`${this.baseUrl}/music`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "next" }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to skip to next track: ${response.status}`);
+    }
+  }
+
+  async previous(): Promise<void> {
+    const response = await fetch(`${this.baseUrl}/music`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "previous" }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to go to previous track: ${response.status}`);
+    }
+  }
+
+  async playSong(): Promise<void> {
+    // Remote player doesn't support direct song selection
+    // This would require integration with Apple Music's search/play API
+    console.warn(
+      "[RemotePlayer] playSong() not supported - Remote player can only control currently playing track",
+    );
+    throw new Error(
+      "Remote player does not support direct song selection. Please use local player for playlist functionality.",
+    );
+  }
+
+  // New queue-based methods (not implemented for remote player)
+  async add(): Promise<void> {
+    throw new Error("Remote player does not support queue management");
+  }
+
+  async getQueue(): Promise<Song[]> {
+    throw new Error("Remote player does not support queue management");
+  }
+
+  async getHistory(): Promise<Song[]> {
+    throw new Error("Remote player does not support history tracking");
+  }
+
+  async clear(): Promise<void> {
+    throw new Error("Remote player does not support queue management");
+  }
+
+  async getSettings(): Promise<PlayerSettings> {
+    throw new Error("Remote player does not support settings");
+  }
+
+  async setSettings(): Promise<void> {
+    throw new Error("Remote player does not support settings");
   }
 
   async isAvailable(): Promise<boolean> {
