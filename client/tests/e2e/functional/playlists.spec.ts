@@ -421,11 +421,18 @@ test.describe("Playlists Functionality", () => {
         .locator('button[aria-label="Add to playlist"]')
         .first()
         .click();
-      // Click playlist in dialog using test ID
-      await page
+
+      // Wait for dialog to be visible
+      await expect(
+        page.getByRole("heading", { name: "Add to Playlist" }),
+      ).toBeVisible();
+
+      // Click playlist in dialog - wait for it to be enabled
+      const firstPlaylistButton = page
         .locator('[data-testid^="add-to-playlist-item-"]')
-        .filter({ hasText: "Multi-Song" })
-        .click();
+        .filter({ hasText: "Multi-Song" });
+      await expect(firstPlaylistButton).toBeEnabled();
+      await firstPlaylistButton.click();
 
       // Wait for dialog to close
       await expect(
@@ -443,11 +450,18 @@ test.describe("Playlists Functionality", () => {
         .locator('button[aria-label="Add to playlist"]')
         .first()
         .click();
-      // Click playlist in dialog using test ID
-      await page
+
+      // Wait for dialog to be visible
+      await expect(
+        page.getByRole("heading", { name: "Add to Playlist" }),
+      ).toBeVisible();
+
+      // Click playlist in dialog - wait for it to be enabled
+      const secondPlaylistButton = page
         .locator('[data-testid^="add-to-playlist-item-"]')
-        .filter({ hasText: "Multi-Song" })
-        .click();
+        .filter({ hasText: "Multi-Song" });
+      await expect(secondPlaylistButton).toBeEnabled();
+      await secondPlaylistButton.click();
 
       // Close search and check playlist
       await page.keyboard.press("s");
