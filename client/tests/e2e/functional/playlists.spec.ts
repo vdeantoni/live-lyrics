@@ -124,57 +124,7 @@ test.describe("Playlists Functionality", () => {
     });
   });
 
-  test.describe("Empty State", () => {
-    test("should display empty state when no playlists exist", async ({
-      page,
-    }) => {
-      await page.setViewportSize({ width: 768, height: 1024 });
-
-      // Open playlists screen
-      await page.keyboard.press("p");
-
-      // Should show empty state
-      await expect(page.getByText("No playlists yet")).toBeVisible();
-      await expect(
-        page.getByText("Create a playlist to get started"),
-      ).toBeVisible();
-      await expect(page.getByText("Create Playlist")).toBeVisible();
-    });
-  });
-
   test.describe("Playlist Creation", () => {
-    test("should create a new playlist from empty state", async ({ page }) => {
-      await page.setViewportSize({ width: 768, height: 1024 });
-
-      // Open playlists screen
-      await page.keyboard.press("p");
-
-      // Click create playlist button using test ID
-      await page.getByTestId("create-playlist-empty-state").click();
-
-      // Should show create dialog
-      await expect(
-        page.getByRole("heading", { name: "Create Playlist" }),
-      ).toBeVisible();
-
-      // Fill in playlist details
-      await page.locator("#playlist-name").fill("My Test Playlist");
-      await page
-        .locator("#playlist-description")
-        .fill("This is a test playlist");
-
-      // Click create button
-      await page.getByTestId("create-playlist-submit").click();
-
-      // Dialog should close and playlist should appear
-      await expect(
-        page.getByRole("heading", { name: "Create Playlist" }),
-      ).not.toBeVisible();
-      await expect(page.getByText("My Test Playlist")).toBeVisible();
-      await expect(page.getByText("This is a test playlist")).toBeVisible();
-      await expect(page.getByText("0 songs")).toBeVisible();
-    });
-
     test("should create a new playlist when playlists exist", async ({
       page,
     }) => {
@@ -182,7 +132,7 @@ test.describe("Playlists Functionality", () => {
 
       // Open playlists and create first playlist
       await page.keyboard.press("p");
-      await page.getByTestId("create-playlist-empty-state").click();
+      await page.getByTestId("create-new-playlist-button").click();
       await page.locator("#playlist-name").fill("First Playlist");
       await page.getByTestId("create-playlist-submit").click();
 
@@ -203,7 +153,7 @@ test.describe("Playlists Functionality", () => {
       await page.setViewportSize({ width: 768, height: 1024 });
 
       await page.keyboard.press("p");
-      await page.getByTestId("create-playlist-empty-state").click();
+      await page.getByTestId("create-new-playlist-button").click();
 
       // Create button should be disabled with empty name
       const createButton = page.getByTestId("create-playlist-submit");
@@ -252,7 +202,7 @@ test.describe("Playlists Functionality", () => {
 
       // Create a playlist first
       await page.keyboard.press("p");
-      await page.getByTestId("create-playlist-empty-state").click();
+      await page.getByTestId("create-new-playlist-button").click();
       await page.locator("#playlist-name").fill("My Favorites");
       await page.getByTestId("create-playlist-submit").click();
 
@@ -350,7 +300,7 @@ test.describe("Playlists Functionality", () => {
 
       // Create playlist and add song once
       await page.keyboard.press("p");
-      await page.getByTestId("create-playlist-empty-state").click();
+      await page.getByTestId("create-new-playlist-button").click();
       await page.locator("#playlist-name").fill("No Duplicates");
       await page.getByTestId("create-playlist-submit").click();
 
@@ -367,13 +317,13 @@ test.describe("Playlists Functionality", () => {
       // Try to add the same song again
       await page.keyboard.press("a");
 
-      // Playlist should show "Added" badge
-      await expect(page.getByText("Added")).toBeVisible();
-
-      // Clicking it should not do anything (it's disabled) - use test ID
+      // Playlist should show "Added" badge - scope to specific playlist
       const playlistButton = page
         .locator('[data-testid^="add-to-playlist-item-"]')
         .filter({ hasText: "No Duplicates" });
+      await expect(playlistButton.getByText("Added")).toBeVisible();
+
+      // Clicking it should not do anything (it's disabled)
       await expect(playlistButton).toBeDisabled();
     });
   });
@@ -384,7 +334,7 @@ test.describe("Playlists Functionality", () => {
 
       // Create a playlist first
       await page.keyboard.press("p");
-      await page.getByTestId("create-playlist-empty-state").click();
+      await page.getByTestId("create-new-playlist-button").click();
       await page.locator("#playlist-name").fill("Search Finds");
       await page.getByTestId("create-playlist-submit").click();
 
@@ -449,7 +399,7 @@ test.describe("Playlists Functionality", () => {
 
       // Create playlist
       await page.keyboard.press("p");
-      await page.getByTestId("create-playlist-empty-state").click();
+      await page.getByTestId("create-new-playlist-button").click();
       await page.locator("#playlist-name").fill("Multi-Song");
       await page.getByTestId("create-playlist-submit").click();
 
@@ -518,7 +468,7 @@ test.describe("Playlists Functionality", () => {
 
       // Create playlist with song
       await page.keyboard.press("p");
-      await page.getByTestId("create-playlist-empty-state").click();
+      await page.getByTestId("create-new-playlist-button").click();
       await page.locator("#playlist-name").fill("Expandable");
       await page.getByTestId("create-playlist-submit").click();
 
@@ -572,7 +522,7 @@ test.describe("Playlists Functionality", () => {
 
       // Create playlist
       await page.keyboard.press("p");
-      await page.getByTestId("create-playlist-empty-state").click();
+      await page.getByTestId("create-new-playlist-button").click();
       await page.locator("#playlist-name").fill("To Be Deleted");
       await page.getByTestId("create-playlist-submit").click();
 
@@ -594,9 +544,9 @@ test.describe("Playlists Functionality", () => {
       );
       await deleteButton.click();
 
-      // Playlist should be gone, back to empty state
+      // Playlist should be gone, Classic Hits should still be visible
       await expect(page.getByText("To Be Deleted")).not.toBeVisible();
-      await expect(page.getByText("No playlists yet")).toBeVisible();
+      await expect(page.getByText("Classic Hits")).toBeVisible();
     });
   });
 
@@ -606,7 +556,7 @@ test.describe("Playlists Functionality", () => {
 
       // Create playlist and add song
       await page.keyboard.press("p");
-      await page.getByTestId("create-playlist-empty-state").click();
+      await page.getByTestId("create-new-playlist-button").click();
       await page.locator("#playlist-name").fill("Removable");
       await page.getByTestId("create-playlist-submit").click();
 
@@ -658,10 +608,12 @@ test.describe("Playlists Functionality", () => {
       await expect(
         page.getByRole("heading", { name: "Playlists" }),
       ).toBeVisible();
-      await expect(page.getByText("No playlists yet")).toBeVisible();
+
+      // Should show default playlist in landscape
+      await expect(page.getByText("Classic Hits")).toBeVisible();
 
       // Create button should work
-      await page.getByTestId("create-playlist-empty-state").click();
+      await page.getByTestId("create-new-playlist-button").click();
       await expect(
         page.getByRole("heading", { name: "Create Playlist" }),
       ).toBeVisible();
@@ -717,6 +669,146 @@ test.describe("Playlists Functionality", () => {
 
       // Should not be highlighted anymore
       await expect(playlistsButton).not.toHaveClass(/(?<!:)text-primary\b/);
+    });
+  });
+
+  test.describe("Default Playlists", () => {
+    test("should load 'Classic Hits' playlist on first launch", async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width: 768, height: 1024 });
+
+      // Clear localStorage to simulate first launch
+      await page.evaluate(() => {
+        localStorage.removeItem("LIVE_LYRICS_PLAYLISTS");
+      });
+
+      // Reload to apply cleared storage
+      await page.reload();
+      await page.waitForSelector('[data-testid="player"]');
+
+      // Open playlists
+      await page.keyboard.press("p");
+
+      // Should see default playlist
+      await expect(page.getByText("Classic Hits")).toBeVisible();
+      await expect(
+        page.getByText("A collection of timeless classics"),
+      ).toBeVisible();
+      await expect(page.getByText("5 songs")).toBeVisible();
+    });
+
+    test("should allow editing default playlists (remove songs)", async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width: 768, height: 1024 });
+
+      // Clear localStorage to get fresh default
+      await page.evaluate(() => {
+        localStorage.removeItem("LIVE_LYRICS_PLAYLISTS");
+      });
+      await page.reload();
+      await page.waitForSelector('[data-testid="player"]');
+
+      // Open playlists
+      await page.keyboard.press("p");
+
+      // Expand Classic Hits
+      await page
+        .locator('[data-testid^="playlist-header-"]')
+        .filter({ hasText: "Classic Hits" })
+        .click();
+
+      // Should have 5 songs initially
+      await expect(page.getByText("5 songs")).toBeVisible();
+
+      // Hover over first song to reveal delete button
+      const firstSong = page.locator('[data-testid^="playlist-song-"]').first();
+      await firstSong.hover();
+
+      // Remove the song
+      const removeButton = firstSong.locator('[data-testid^="remove-song-"]');
+      await removeButton.click();
+
+      // Should show 4 songs now
+      await expect(page.getByText("4 songs")).toBeVisible();
+    });
+
+    test("should allow deleting default playlists", async ({ page }) => {
+      await page.setViewportSize({ width: 768, height: 1024 });
+
+      // Clear localStorage to get fresh default
+      await page.evaluate(() => {
+        localStorage.removeItem("LIVE_LYRICS_PLAYLISTS");
+      });
+      await page.reload();
+      await page.waitForSelector('[data-testid="player"]');
+
+      // Open playlists
+      await page.keyboard.press("p");
+
+      // Classic Hits should be visible
+      await expect(page.getByText("Classic Hits")).toBeVisible();
+
+      // Set up dialog handler
+      page.on("dialog", (dialog) => {
+        expect(dialog.message()).toContain("Are you sure");
+        dialog.accept();
+      });
+
+      // Delete Classic Hits
+      const playlistCard = page
+        .locator('[data-testid^="playlist-card-"]')
+        .filter({ hasText: "Classic Hits" });
+      const deleteButton = playlistCard.locator(
+        '[data-testid^="delete-playlist-"]',
+      );
+      await deleteButton.click();
+
+      // Should be gone, back to empty state
+      await expect(page.getByText("Classic Hits")).not.toBeVisible();
+      await expect(page.getByText("No playlists yet")).toBeVisible();
+    });
+
+    test("should persist edits to default playlists across sessions", async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width: 768, height: 1024 });
+
+      // Clear localStorage to get fresh default
+      await page.evaluate(() => {
+        localStorage.removeItem("LIVE_LYRICS_PLAYLISTS");
+      });
+      await page.reload();
+      await page.waitForSelector('[data-testid="player"]');
+
+      // Open playlists and remove a song from Classic Hits
+      await page.keyboard.press("p");
+      await page
+        .locator('[data-testid^="playlist-header-"]')
+        .filter({ hasText: "Classic Hits" })
+        .click();
+
+      const firstSong = page.locator('[data-testid^="playlist-song-"]').first();
+      await firstSong.hover();
+      await firstSong.locator('[data-testid^="remove-song-"]').click();
+
+      // Should show 4 songs
+      await expect(page.getByText("4 songs")).toBeVisible();
+
+      // Reload the page
+      await page.reload();
+      await page.waitForSelector('[data-testid="player"]');
+
+      // Open playlists again
+      await page.keyboard.press("p");
+      await page
+        .locator('[data-testid^="playlist-header-"]')
+        .filter({ hasText: "Classic Hits" })
+        .click();
+
+      // Should still show 4 songs (edit persisted)
+      await expect(page.getByText("4 songs")).toBeVisible();
     });
   });
 });
