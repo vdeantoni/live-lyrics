@@ -1,65 +1,32 @@
-import type { Song } from "@/types";
+import type { Song, PlayerSettings } from "@/types";
 import type { Player } from "@/types";
 
 /**
- * Local player
+ * Local player with queue-based architecture
  * Singleton pattern to maintain state across player switches
+ *
+ * Playback flow: queue → current → history
+ * - Queue: Songs waiting to be played (FIFO)
+ * - Current: Currently playing song
+ * - History: Previously played songs (LIFO for previous())
  */
 export class LocalPlayer implements Player {
   private static instance: LocalPlayer | null = null;
 
+  // Playback state
   private currentTime: number = 0;
-  private duration: number = 180; // 3 minutes default
+  private duration: number = 0;
   private isPlaying: boolean = false;
-  private hasEverBeenPlayed: boolean = false; // Track if ever played
   private lastUpdateTime: number = Date.now();
   private intervalId: number | null = null;
 
-  // Demo playlist of songs
-  private playlist: Song[] = [
-    {
-      name: "Bohemian Rhapsody",
-      artist: "Queen",
-      album: "A Night at the Opera",
-      duration: 355, // 5:55
-      currentTime: 0,
-      isPlaying: false,
-    },
-    {
-      name: "Stairway to Heaven",
-      artist: "Led Zeppelin",
-      album: "Led Zeppelin IV",
-      duration: 482, // 8:02
-      currentTime: 0,
-      isPlaying: false,
-    },
-    {
-      name: "Hotel California",
-      artist: "Eagles",
-      album: "Hotel California",
-      duration: 391, // 6:31
-      currentTime: 0,
-      isPlaying: false,
-    },
-    {
-      name: "Imagine",
-      artist: "John Lennon",
-      album: "Imagine",
-      duration: 183, // 3:03
-      currentTime: 0,
-      isPlaying: false,
-    },
-    {
-      name: "Sweet Child O Mine",
-      artist: "Guns N Roses",
-      album: "Appetite for Destruction",
-      duration: 356, // 5:56
-      currentTime: 0,
-      isPlaying: false,
-    },
-  ];
+  // Queue system
+  private currentSong: Song | null = null;
+  private queue: Song[] = [];
+  private history: Song[] = [];
 
-  private currentSongIndex: number = 0;
+  // Settings
+  private settings: PlayerSettings = { playOnAdd: false };
 
   constructor() {
     // Return existing instance if it exists (singleton pattern)
@@ -93,57 +60,92 @@ export class LocalPlayer implements Player {
   }
 
   getDescription(): string {
-    return "Local player";
+    return "Local player with queue management";
   }
 
   private startClock(): void {
     // Update the internal clock every 100ms for smooth progress
     this.intervalId = window.setInterval(() => {
-      // Clock always ticks if it has ever been played, regardless of playing state
-      if (this.hasEverBeenPlayed) {
+      // Clock ticks when there's a current song
+      if (this.currentSong && this.isPlaying) {
         const now = Date.now();
         const deltaTime = (now - this.lastUpdateTime) / 1000; // Convert to seconds
 
-        // Only advance time if playing
-        if (this.isPlaying) {
-          this.currentTime = Math.min(
-            this.currentTime + deltaTime,
-            this.duration,
-          );
+        this.currentTime = Math.min(
+          this.currentTime + deltaTime,
+          this.duration,
+        );
 
-          // Auto-advance to next song when current song ends
-          if (this.currentTime >= this.duration) {
-            this.nextSong();
-          }
-          this.lastUpdateTime = Date.now();
+        // Auto-advance when current song ends
+        if (this.currentTime >= this.duration) {
+          this.autoAdvance();
         }
+        this.lastUpdateTime = Date.now();
       }
     }, 100);
   }
 
-  private nextSong(): void {
-    this.currentSongIndex = (this.currentSongIndex + 1) % this.playlist.length;
-    this.currentTime = 0;
-    this.duration = this.playlist[this.currentSongIndex].duration;
-    // Keep playing state when advancing - songs loop forever
+  private autoAdvance(): void {
+    // When song ends naturally, advance to next
+    if (this.queue.length > 0) {
+      // Queue has songs: shift to current
+      this.shiftQueueToCurrentSong();
+    } else {
+      // No queue: play current to end, then clear and stop
+      if (this.currentSong) {
+        this.history.push(this.currentSong);
+      }
+      this.currentSong = null;
+      this.currentTime = 0;
+      this.duration = 0;
+      this.isPlaying = false;
+    }
   }
 
-  private getCurrentSong(): Song {
-    const song = this.playlist[this.currentSongIndex];
+  private shiftQueueToCurrentSong(): void {
+    // Move current to history
+    if (this.currentSong) {
+      this.history.push(this.currentSong);
+    }
+
+    // Shift first song from queue to current
+    const nextSong = this.queue.shift();
+    if (nextSong) {
+      this.currentSong = nextSong;
+      this.currentTime = 0;
+      this.duration = nextSong.duration;
+      this.lastUpdateTime = Date.now();
+    }
+  }
+
+  async getSong(): Promise<Song> {
+    // Handle null current song
+    if (!this.currentSong) {
+      // Return a default empty song
+      return {
+        name: "",
+        artist: "",
+        album: "",
+        duration: 0,
+        currentTime: 0,
+        isPlaying: false,
+      };
+    }
+
     return {
-      ...song,
+      ...this.currentSong,
       currentTime: this.currentTime,
       isPlaying: this.isPlaying,
     };
   }
 
-  async getSong(): Promise<Song> {
-    return this.getCurrentSong();
-  }
-
   async play(): Promise<void> {
+    // No-op if no current song
+    if (!this.currentSong) {
+      return;
+    }
+
     this.isPlaying = true;
-    this.hasEverBeenPlayed = true; // Mark as ever played
     this.lastUpdateTime = Date.now();
   }
 
@@ -152,8 +154,110 @@ export class LocalPlayer implements Player {
   }
 
   async seek(time: number): Promise<void> {
+    // No-op if no current song
+    if (!this.currentSong) {
+      return;
+    }
+
     this.currentTime = Math.max(0, Math.min(time, this.duration));
     this.lastUpdateTime = Date.now();
+  }
+
+  async next(): Promise<void> {
+    // Handle null current song
+    if (!this.currentSong) {
+      // If queue has songs, shift first to current
+      if (this.queue.length > 0) {
+        this.shiftQueueToCurrentSong();
+      }
+      return;
+    }
+
+    // If queue has songs, shift to current
+    if (this.queue.length > 0) {
+      this.shiftQueueToCurrentSong();
+    } else {
+      // No queue: play current to end, clear, stop
+      this.history.push(this.currentSong);
+      this.currentSong = null;
+      this.currentTime = 0;
+      this.duration = 0;
+      this.isPlaying = false;
+    }
+    this.lastUpdateTime = Date.now();
+  }
+
+  async previous(): Promise<void> {
+    // If more than 3 seconds into current song, restart it
+    if (this.currentTime > 3) {
+      this.currentTime = 0;
+      this.lastUpdateTime = Date.now();
+      return;
+    }
+
+    // Otherwise, pop from history
+    if (this.history.length > 0) {
+      // Push current back to front of queue
+      if (this.currentSong) {
+        this.queue.unshift(this.currentSong);
+      }
+
+      // Pop last from history to current
+      const previousSong = this.history.pop();
+      if (previousSong) {
+        this.currentSong = previousSong;
+        this.currentTime = 0;
+        this.duration = previousSong.duration;
+      }
+    } else {
+      // No history: restart current song (if exists)
+      if (this.currentSong) {
+        this.currentTime = 0;
+      }
+    }
+    this.lastUpdateTime = Date.now();
+  }
+
+  async add(...songs: Song[]): Promise<void> {
+    if (songs.length === 0) return;
+
+    // Insert songs at beginning of queue (after current)
+    this.queue.unshift(...songs);
+
+    // If no current song, shift first to current
+    if (!this.currentSong && this.queue.length > 0) {
+      this.shiftQueueToCurrentSong();
+    }
+
+    // Auto-play if playOnAdd is enabled and we have a current song
+    if (this.settings.playOnAdd && this.currentSong) {
+      await this.play();
+    }
+  }
+
+  async getQueue(): Promise<Song[]> {
+    return [...this.queue];
+  }
+
+  async getHistory(): Promise<Song[]> {
+    return [...this.history];
+  }
+
+  async clear(): Promise<void> {
+    this.queue = [];
+    this.currentSong = null;
+    this.currentTime = 0;
+    this.duration = 0;
+    this.isPlaying = false;
+    // Don't clear history - preserve for previous()
+  }
+
+  async getSettings(): Promise<PlayerSettings> {
+    return { ...this.settings };
+  }
+
+  async setSettings(settings: Partial<PlayerSettings>): Promise<void> {
+    this.settings = { ...this.settings, ...settings };
   }
 
   async isAvailable(): Promise<boolean> {

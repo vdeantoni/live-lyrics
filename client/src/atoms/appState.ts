@@ -8,7 +8,9 @@ import type {
   ProviderConfig,
   EffectiveProvider,
 } from "@/types/appState";
+import type { Playlist, PlaylistSong, Song } from "@/types";
 import { BUILTIN_PROVIDER_CONFIGS } from "@/config/providers";
+import { DEFAULT_PLAYLISTS } from "@/config/playlists";
 
 /**
  * Unified AppState Atoms
@@ -394,10 +396,16 @@ export const settingsOpenAtom = atom(false);
 export const toggleSettingsAtom = atom(null, (get, set) => {
   const isSettingsOpen = get(settingsOpenAtom);
   const isSearchOpen = get(searchOpenAtom);
+  const isPlaylistsOpen = get(playlistsOpenAtom);
 
   // Close search if open (mutual exclusivity)
   if (isSearchOpen) {
     set(searchOpenAtom, false);
+  }
+
+  // Close playlists if open (mutual exclusivity)
+  if (isPlaylistsOpen) {
+    set(playlistsOpenAtom, false);
   }
 
   // Toggle settings
@@ -409,12 +417,191 @@ export const searchOpenAtom = atom(false);
 export const toggleSearchAtom = atom(null, (get, set) => {
   const isSearchOpen = get(searchOpenAtom);
   const isSettingsOpen = get(settingsOpenAtom);
+  const isPlaylistsOpen = get(playlistsOpenAtom);
 
   // Close settings if open (mutual exclusivity)
   if (isSettingsOpen) {
     set(settingsOpenAtom, false);
   }
 
+  // Close playlists if open (mutual exclusivity)
+  if (isPlaylistsOpen) {
+    set(playlistsOpenAtom, false);
+  }
+
   // Toggle search
   set(searchOpenAtom, !isSearchOpen);
+});
+
+// 9. Playlists State
+// Pre-installed with default playlists, lazy loads on first access
+export const playlistsAtom = atomWithStorage<Playlist[]>(
+  "LIVE_LYRICS_PLAYLISTS",
+  DEFAULT_PLAYLISTS,
+);
+
+export const playlistsOpenAtom = atom(false);
+export const selectedSongForPlaylistAtom = atom<Song | null>(null);
+export const addToPlaylistDialogOpenAtom = atom(false);
+
+export const togglePlaylistsAtom = atom(null, (get, set) => {
+  const isPlaylistsOpen = get(playlistsOpenAtom);
+  const isSettingsOpen = get(settingsOpenAtom);
+  const isSearchOpen = get(searchOpenAtom);
+
+  // Close settings if open (mutual exclusivity)
+  if (isSettingsOpen) {
+    set(settingsOpenAtom, false);
+  }
+
+  // Close search if open (mutual exclusivity)
+  if (isSearchOpen) {
+    set(searchOpenAtom, false);
+  }
+
+  // Toggle playlists
+  set(playlistsOpenAtom, !isPlaylistsOpen);
+});
+
+// Playlist CRUD action atoms
+export const createPlaylistAtom = atom(
+  null,
+  (get, set, name: string, description?: string) => {
+    const playlists = get(playlistsAtom);
+    const newPlaylist: Playlist = {
+      id: `playlist_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+      name,
+      description,
+      songs: [],
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    };
+    set(playlistsAtom, [...playlists, newPlaylist]);
+    return newPlaylist;
+  },
+);
+
+export const updatePlaylistAtom = atom(
+  null,
+  (
+    get,
+    set,
+    playlistId: string,
+    updates: Partial<Omit<Playlist, "id" | "createdAt">>,
+  ) => {
+    const playlists = get(playlistsAtom);
+    set(
+      playlistsAtom,
+      playlists.map((playlist) =>
+        playlist.id === playlistId
+          ? { ...playlist, ...updates, updatedAt: Date.now() }
+          : playlist,
+      ),
+    );
+  },
+);
+
+export const deletePlaylistAtom = atom(null, (get, set, playlistId: string) => {
+  const playlists = get(playlistsAtom);
+  set(
+    playlistsAtom,
+    playlists.filter((playlist) => playlist.id !== playlistId),
+  );
+});
+
+export const addSongToPlaylistAtom = atom(
+  null,
+  (get, set, playlistId: string, song: Omit<PlaylistSong, "id" | "order">) => {
+    const playlists = get(playlistsAtom);
+    set(
+      playlistsAtom,
+      playlists.map((playlist) => {
+        if (playlist.id === playlistId) {
+          // Check for duplicates based on name + artist
+          const isDuplicate = playlist.songs.some(
+            (s) => s.name === song.name && s.artist === song.artist,
+          );
+          if (isDuplicate) {
+            return playlist;
+          }
+
+          const newSong: PlaylistSong = {
+            ...song,
+            id: `song_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+            order: playlist.songs.length,
+          };
+          return {
+            ...playlist,
+            songs: [...playlist.songs, newSong],
+            updatedAt: Date.now(),
+          };
+        }
+        return playlist;
+      }),
+    );
+  },
+);
+
+export const removeSongFromPlaylistAtom = atom(
+  null,
+  (get, set, playlistId: string, songId: string) => {
+    const playlists = get(playlistsAtom);
+    set(
+      playlistsAtom,
+      playlists.map((playlist) => {
+        if (playlist.id === playlistId) {
+          const updatedSongs = playlist.songs
+            .filter((song) => song.id !== songId)
+            .map((song, index) => ({ ...song, order: index })); // Re-index orders
+          return {
+            ...playlist,
+            songs: updatedSongs,
+            updatedAt: Date.now(),
+          };
+        }
+        return playlist;
+      }),
+    );
+  },
+);
+
+export const reorderPlaylistSongsAtom = atom(
+  null,
+  (get, set, playlistId: string, oldIndex: number, newIndex: number) => {
+    const playlists = get(playlistsAtom);
+    set(
+      playlistsAtom,
+      playlists.map((playlist) => {
+        if (playlist.id === playlistId) {
+          const songs = [...playlist.songs];
+          const [movedSong] = songs.splice(oldIndex, 1);
+          songs.splice(newIndex, 0, movedSong);
+          // Re-index all songs
+          const reorderedSongs = songs.map((song, index) => ({
+            ...song,
+            order: index,
+          }));
+          return {
+            ...playlist,
+            songs: reorderedSongs,
+            updatedAt: Date.now(),
+          };
+        }
+        return playlist;
+      }),
+    );
+  },
+);
+
+export const openAddToPlaylistDialogAtom = atom(
+  null,
+  (_get, set, song: Song) => {
+    set(selectedSongForPlaylistAtom, song);
+    set(addToPlaylistDialogOpenAtom, true);
+  },
+);
+
+export const closeAddToPlaylistDialogAtom = atom(null, (_get, set) => {
+  set(addToPlaylistDialogOpenAtom, false);
+  set(selectedSongForPlaylistAtom, null);
 });

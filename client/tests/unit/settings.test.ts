@@ -9,7 +9,7 @@ describe("Players", () => {
     const player = LocalPlayer.getInstance();
     expect(player.getId()).toBe("local");
     expect(player.getName()).toBe("Local");
-    expect(player.getDescription()).toBe("Local player");
+    expect(player.getDescription()).toBe("Local player with queue management");
   });
 
   it("should create remote player instance", () => {

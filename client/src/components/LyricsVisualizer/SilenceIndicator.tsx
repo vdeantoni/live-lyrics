@@ -160,9 +160,7 @@ const SilenceIndicator: React.FC<SilenceIndicatorProps> = ({
               fill="none"
               strokeDasharray={`${2 * Math.PI * 20}`}
               strokeDashoffset={
-                blockType === "last"
-                  ? `${2 * Math.PI * 20 * (progress / 100)}` // Starts at 0 (full), increases to circumference (empty)
-                  : `${2 * Math.PI * 20 * (1 - progress / 100)}` // Starts at circumference (empty), decreases to 0 (full)
+                `${2 * Math.PI * 20 * (progress / 100)}` // Starts at 0 (full), increases to circumference (empty)
               }
               className={`transition-all duration-300 ${isActive ? "text-white/90" : "text-white/40"}`}
               strokeLinecap="round"
