@@ -5,7 +5,13 @@
  * predictable data for both unit and E2E tests.
  */
 
-import type { Player, LyricsProvider, ArtworkProvider, Song } from "@/types";
+import type {
+  Player,
+  LyricsProvider,
+  ArtworkProvider,
+  Song,
+  PlayerSettings,
+} from "@/types";
 
 /**
  * Mock lyrics data for Bohemian Rhapsody - centralized for all tests
@@ -193,6 +199,7 @@ export class TestArtworkProvider implements ArtworkProvider {
 /**
  * Test player provider with stateful playback simulation
  * Tracks play/pause/seek state and simulates time progression
+ * Implements queue-based architecture for testing
  */
 export class TestPlayer implements Player {
   private state = {
@@ -200,6 +207,19 @@ export class TestPlayer implements Player {
     isPlaying: false,
     startTime: 0,
   };
+
+  // Queue system for testing
+  private currentSong: Song | null = {
+    name: "Bohemian Rhapsody",
+    artist: "Queen",
+    album: "A Night at the Opera",
+    duration: 355,
+    currentTime: 0,
+    isPlaying: false,
+  };
+  private queue: Song[] = [];
+  private history: Song[] = [];
+  private settings: PlayerSettings = { playOnAdd: false };
 
   private id: string;
   private name: string;
@@ -226,24 +246,35 @@ export class TestPlayer implements Player {
   }
 
   async getSong() {
+    // Handle null current song
+    if (!this.currentSong) {
+      return {
+        name: "",
+        artist: "",
+        album: "",
+        duration: 0,
+        currentTime: 0,
+        isPlaying: false,
+      };
+    }
+
     // Simulate time progression when playing
     if (this.state.isPlaying) {
       const now = Date.now();
       const elapsed = (now - this.state.startTime) / 1000;
-      this.state.currentTime = Math.min(elapsed, 355); // Cap at song duration
+      this.state.currentTime = Math.min(elapsed, this.currentSong.duration);
     }
 
     return {
-      name: "Bohemian Rhapsody",
-      artist: "Queen",
-      album: "A Night at the Opera",
-      duration: 355,
+      ...this.currentSong,
       currentTime: this.state.currentTime,
       isPlaying: this.state.isPlaying,
     };
   }
 
   async play(): Promise<void> {
+    if (!this.currentSong) return;
+
     this.state.isPlaying = true;
     // Resume from current position
     this.state.startTime = Date.now() - this.state.currentTime * 1000;
@@ -251,17 +282,22 @@ export class TestPlayer implements Player {
 
   async pause(): Promise<void> {
     // Update currentTime before pausing
-    if (this.state.isPlaying) {
+    if (this.state.isPlaying && this.currentSong) {
       const now = Date.now();
       const elapsed = (now - this.state.startTime) / 1000;
-      this.state.currentTime = Math.min(elapsed, 355);
+      this.state.currentTime = Math.min(elapsed, this.currentSong.duration);
     }
     this.state.isPlaying = false;
   }
 
   async seek(time: number): Promise<void> {
+    if (!this.currentSong) return;
+
     // Clamp time to valid range [0, duration]
-    this.state.currentTime = Math.max(0, Math.min(time, 355));
+    this.state.currentTime = Math.max(
+      0,
+      Math.min(time, this.currentSong.duration),
+    );
 
     // If playing, update startTime to maintain continuity
     if (this.state.isPlaying) {
@@ -270,28 +306,104 @@ export class TestPlayer implements Player {
   }
 
   async next(): Promise<void> {
-    // Test implementation: just reset to beginning
-    this.state.currentTime = 0;
-    this.state.startTime = Date.now();
+    // Handle null current song
+    if (!this.currentSong) {
+      if (this.queue.length > 0) {
+        this.shiftQueueToCurrentSong();
+      }
+      return;
+    }
+
+    // If queue has songs, shift to current
+    if (this.queue.length > 0) {
+      this.shiftQueueToCurrentSong();
+    } else {
+      // No queue: clear current and stop
+      this.history.push(this.currentSong);
+      this.currentSong = null;
+      this.state.currentTime = 0;
+      this.state.isPlaying = false;
+    }
   }
 
   async previous(): Promise<void> {
-    // Test implementation: just reset to beginning
-    this.state.currentTime = 0;
-    this.state.startTime = Date.now();
+    // If more than 3 seconds, restart current song
+    if (this.state.currentTime > 3) {
+      this.state.currentTime = 0;
+      this.state.startTime = Date.now();
+      return;
+    }
+
+    // Otherwise, pop from history
+    if (this.history.length > 0) {
+      if (this.currentSong) {
+        this.queue.unshift(this.currentSong);
+      }
+      const previousSong = this.history.pop();
+      if (previousSong) {
+        this.currentSong = previousSong;
+        this.state.currentTime = 0;
+        this.state.startTime = Date.now();
+      }
+    } else if (this.currentSong) {
+      // No history: restart current song
+      this.state.currentTime = 0;
+      this.state.startTime = Date.now();
+    }
   }
 
-  async playSong(): Promise<void> {
-    // Test implementation: just reset to beginning and start playing
-    this.state.currentTime = 0;
-    this.state.isPlaying = true;
-    this.state.startTime = Date.now();
+  async add(...songs: Song[]): Promise<void> {
+    if (songs.length === 0) return;
+
+    // Insert songs at beginning of queue
+    this.queue.unshift(...songs);
+
+    // If no current song, shift first to current
+    if (!this.currentSong && this.queue.length > 0) {
+      this.shiftQueueToCurrentSong();
+    }
+
+    // Auto-play if playOnAdd is enabled
+    if (this.settings.playOnAdd && this.currentSong) {
+      await this.play();
+    }
   }
 
-  async playQueue(songs: Song[]): Promise<void> {
-    // Test implementation: play the first song
-    if (songs.length > 0) {
-      await this.playSong();
+  async getQueue(): Promise<Song[]> {
+    return [...this.queue];
+  }
+
+  async getHistory(): Promise<Song[]> {
+    return [...this.history];
+  }
+
+  async clear(): Promise<void> {
+    this.queue = [];
+    this.currentSong = null;
+    this.state.currentTime = 0;
+    this.state.isPlaying = false;
+  }
+
+  async getSettings(): Promise<PlayerSettings> {
+    return { ...this.settings };
+  }
+
+  async setSettings(settings: Partial<PlayerSettings>): Promise<void> {
+    this.settings = { ...this.settings, ...settings };
+  }
+
+  private shiftQueueToCurrentSong(): void {
+    // Move current to history
+    if (this.currentSong) {
+      this.history.push(this.currentSong);
+    }
+
+    // Shift first song from queue to current
+    const nextSong = this.queue.shift();
+    if (nextSong) {
+      this.currentSong = nextSong;
+      this.state.currentTime = 0;
+      this.state.startTime = Date.now();
     }
   }
 
@@ -305,5 +417,16 @@ export class TestPlayer implements Player {
       isPlaying: false,
       startTime: 0,
     };
+    this.currentSong = {
+      name: "Bohemian Rhapsody",
+      artist: "Queen",
+      album: "A Night at the Opera",
+      duration: 355,
+      currentTime: 0,
+      isPlaying: false,
+    };
+    this.queue = [];
+    this.history = [];
+    this.settings = { playOnAdd: false };
   }
 }
