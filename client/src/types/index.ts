@@ -83,6 +83,10 @@ export interface Player {
   getSettings(): Promise<PlayerSettings>;
   /** Update player settings */
   setSettings(settings: Partial<PlayerSettings>): Promise<void>;
+  /** Set the entire queue (enables remove, reorder, add operations) */
+  setQueue(songs: Song[]): Promise<void>;
+  /** Clear playback history */
+  clearHistory(): Promise<void>;
 }
 
 // Search result type for lyrics providers

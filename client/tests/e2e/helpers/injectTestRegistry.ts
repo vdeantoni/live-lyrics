@@ -1,4 +1,5 @@
 import type { Page } from "@playwright/test";
+import type { Song } from "@/types";
 
 /**
  * Custom provider configuration for error handling tests
@@ -440,6 +441,14 @@ To me`;
       setSettings: async (settings: { playOnAdd?: boolean }) => {
         debugLog(`${providerConfig.name} setSettings() called`, settings);
         testPlayerState.settings = { ...testPlayerState.settings, ...settings };
+      },
+      setQueue: async (songs: Song[]) => {
+        debugLog(`${providerConfig.name} setQueue() called`, songs.length);
+        testPlayerState.queue = [...songs];
+      },
+      clearHistory: async () => {
+        debugLog(`${providerConfig.name} clearHistory() called`);
+        testPlayerState.history = [];
       },
     });
 

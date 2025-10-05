@@ -260,6 +260,16 @@ export class LocalPlayer implements Player {
     this.settings = { ...this.settings, ...settings };
   }
 
+  async setQueue(songs: Song[]): Promise<void> {
+    // Replace the entire queue
+    this.queue = [...songs];
+  }
+
+  async clearHistory(): Promise<void> {
+    // Clear playback history
+    this.history = [];
+  }
+
   async isAvailable(): Promise<boolean> {
     // Local player is always available
     return true;

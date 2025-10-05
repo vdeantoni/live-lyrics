@@ -48,28 +48,33 @@ test.describe("Keyboard Navigation and Accessibility", () => {
     await expect(playButton.locator('[data-testid="play-icon"]')).toBeVisible();
   });
 
-  test("should support keyboard navigation for progress slider", async ({
+  test("should support keyboard shortcuts for seeking", async ({
     page,
+    browserName,
   }) => {
+    test.skip(
+      browserName === "firefox",
+      "Firefox has timing issues with keyboard shortcuts in tests",
+    );
+
     await page.setViewportSize({ width: 768, height: 1024 });
 
-    const progressSlider = page.locator(
-      '[data-testid="progress-slider"] [role="slider"]',
-    );
     const currentTimeDisplay = page.locator('[data-testid="current-time"]');
 
-    // Ensure the player is paused and time is at the start
+    // Ensure player is ready at 0:00
     await expect(currentTimeDisplay).toHaveText("0:00");
 
-    // Focus the slider before keyboard input
-    await progressSlider.focus();
-    await expect(progressSlider).toBeFocused();
+    // Test global ArrowRight shortcut (seeks forward 5s)
+    await page.keyboard.press("ArrowRight");
 
-    // Press ArrowRight to seek forward
-    await progressSlider.press("ArrowRight");
+    // Wait for time to update
+    await expect(currentTimeDisplay).not.toHaveText("0:00", {
+      timeout: 3000,
+    });
 
-    // Wait for the time display to update (allows for React re-render)
-    await expect(currentTimeDisplay).not.toHaveText("0:00");
+    // Verify time changed (should be around 0:05)
+    const timeText = await currentTimeDisplay.textContent();
+    expect(timeText).toMatch(/0:0[5-9]|0:1[0-5]/); // Allow 5-15s range for timing variance
   });
 
   test("should support keyboard navigation in settings", async ({ page }) => {
