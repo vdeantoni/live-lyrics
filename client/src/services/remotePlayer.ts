@@ -1,4 +1,4 @@
-import type { Song } from "@/types";
+import type { Song, PlayerSettings } from "@/types";
 import type { Player } from "@/types";
 
 /**
@@ -113,6 +113,31 @@ export class RemotePlayer implements Player {
     throw new Error(
       "Remote player does not support direct song selection. Please use local player for playlist functionality.",
     );
+  }
+
+  // New queue-based methods (not implemented for remote player)
+  async add(): Promise<void> {
+    throw new Error("Remote player does not support queue management");
+  }
+
+  async getQueue(): Promise<Song[]> {
+    throw new Error("Remote player does not support queue management");
+  }
+
+  async getHistory(): Promise<Song[]> {
+    throw new Error("Remote player does not support history tracking");
+  }
+
+  async clear(): Promise<void> {
+    throw new Error("Remote player does not support queue management");
+  }
+
+  async getSettings(): Promise<PlayerSettings> {
+    throw new Error("Remote player does not support settings");
+  }
+
+  async setSettings(): Promise<void> {
+    throw new Error("Remote player does not support settings");
   }
 
   async isAvailable(): Promise<boolean> {

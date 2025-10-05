@@ -45,6 +45,11 @@ export interface TagsData {
 }
 
 // Interface for player (local vs remote server)
+export interface PlayerSettings {
+  /** Auto-play when songs are added to queue */
+  playOnAdd: boolean;
+}
+
 export interface Player {
   /** Unique identifier for this player */
   getId(): string;
@@ -66,15 +71,18 @@ export interface Player {
   next(): Promise<void>;
   /** Go to previous song */
   previous(): Promise<void>;
-  /** Play a specific song */
-  playSong(song: {
-    name: string;
-    artist: string;
-    album: string;
-    duration?: number;
-  }): Promise<void>;
-  /** Play a queue of songs (optional) */
-  playQueue?(songs: Song[]): Promise<void>;
+  /** Add one or more songs to the queue (inserts at beginning after current) */
+  add(...songs: Song[]): Promise<void>;
+  /** Get current queue */
+  getQueue(): Promise<Song[]>;
+  /** Get playback history */
+  getHistory(): Promise<Song[]>;
+  /** Clear queue and current song */
+  clear(): Promise<void>;
+  /** Get player settings */
+  getSettings(): Promise<PlayerSettings>;
+  /** Update player settings */
+  setSettings(settings: Partial<PlayerSettings>): Promise<void>;
 }
 
 // Search result type for lyrics providers
