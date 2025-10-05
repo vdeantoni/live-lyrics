@@ -40,9 +40,38 @@ const PlaylistsScreen = () => {
 
     try {
       const player = await loadPlayer(playerId);
-      await player.playSong(song);
+      // Convert to full Song object with playback state
+      await player.add({
+        ...song,
+        currentTime: 0,
+        isPlaying: false,
+      });
     } catch (error) {
-      console.error("Failed to play song:", error);
+      console.error("Failed to add song to queue:", error);
+    }
+  };
+
+  const handlePlayAll = async (playlistId: string) => {
+    const playlist = playlists.find((p) => p.id === playlistId);
+    if (!playlist || playlist.songs.length === 0) return;
+
+    const playerId = selectedPlayer?.config.id;
+    if (!playerId) return;
+
+    try {
+      const player = await loadPlayer(playerId);
+      // Clear queue and add all songs
+      await player.clear();
+      const songsToAdd = playlist.songs
+        .sort((a, b) => a.order - b.order)
+        .map((song) => ({
+          ...song,
+          currentTime: 0,
+          isPlaying: false,
+        }));
+      await player.add(...songsToAdd);
+    } catch (error) {
+      console.error("Failed to play all songs:", error);
     }
   };
 
@@ -151,18 +180,36 @@ const PlaylistsScreen = () => {
                           {playlist.songs.length === 1 ? "song" : "songs"}
                         </p>
                       </div>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeletePlaylist(playlist.id);
-                        }}
-                        data-testid={`delete-playlist-${playlist.id}`}
-                        className="h-8 w-8 flex-shrink-0 rounded-full p-0 hover:bg-red-500/20 hover:text-red-400"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <div className="flex flex-shrink-0 items-center gap-2">
+                        {/* Play All Button */}
+                        {playlist.songs.length > 0 && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handlePlayAll(playlist.id);
+                            }}
+                            data-testid={`play-all-${playlist.id}`}
+                            className="hover:bg-primary/20 hover:text-primary h-8 w-8 rounded-full p-0"
+                          >
+                            <Play className="h-4 w-4" />
+                          </Button>
+                        )}
+                        {/* Delete Button */}
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeletePlaylist(playlist.id);
+                          }}
+                          data-testid={`delete-playlist-${playlist.id}`}
+                          className="h-8 w-8 rounded-full p-0 hover:bg-red-500/20 hover:text-red-400"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   </button>
 

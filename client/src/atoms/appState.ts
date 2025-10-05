@@ -10,6 +10,7 @@ import type {
 } from "@/types/appState";
 import type { Playlist, PlaylistSong, Song } from "@/types";
 import { BUILTIN_PROVIDER_CONFIGS } from "@/config/providers";
+import { DEFAULT_PLAYLISTS } from "@/config/playlists";
 
 /**
  * Unified AppState Atoms
@@ -433,9 +434,10 @@ export const toggleSearchAtom = atom(null, (get, set) => {
 });
 
 // 9. Playlists State
+// Pre-installed with default playlists, lazy loads on first access
 export const playlistsAtom = atomWithStorage<Playlist[]>(
   "LIVE_LYRICS_PLAYLISTS",
-  [],
+  DEFAULT_PLAYLISTS,
 );
 
 export const playlistsOpenAtom = atom(false);
