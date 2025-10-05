@@ -1,17 +1,17 @@
-import { useEffect, useState, useCallback } from "react";
-import { useAtomValue } from "jotai";
-import { artworkUrlsAtom } from "@/atoms/playerAtoms";
+import { useEffect, useCallback } from "react";
+import { useAtomValue, useSetAtom } from "jotai";
+import { artworkUrlsAtom, currentArtworkUrlAtom } from "@/atoms/playerAtoms";
 import { useArtworkSync } from "@/hooks/useArtworkSync";
 import LyricsManager from "../LyricsVisualizer/LyricsManager";
 
 const LyricsScreen = () => {
   // Get artwork URLs from atom
   const artworkUrls = useAtomValue(artworkUrlsAtom);
+  const currentArtworkUrl = useAtomValue(currentArtworkUrlAtom);
+  const setCurrentArtworkUrl = useSetAtom(currentArtworkUrlAtom);
 
   // Trigger artwork fetching (syncs to artworkUrlsAtom)
   useArtworkSync();
-
-  const [currentArtworkUrl, setCurrentArtworkUrl] = useState("");
 
   // Helper function to preload image before setting as background
   const preloadImage = (url: string): Promise<void> => {
@@ -23,19 +23,22 @@ const LyricsScreen = () => {
     });
   };
 
-  const selectAndLoadRandomArtwork = useCallback(async (urls: string[]) => {
-    const randomIndex = Math.floor(Math.random() * urls.length);
-    const selectedUrl = urls[randomIndex];
+  const selectAndLoadRandomArtwork = useCallback(
+    async (urls: string[]) => {
+      const randomIndex = Math.floor(Math.random() * urls.length);
+      const selectedUrl = urls[randomIndex];
 
-    try {
-      await preloadImage(selectedUrl);
-      setCurrentArtworkUrl(selectedUrl);
-    } catch (error) {
-      console.warn("Failed to load artwork image:", error);
-      // Fallback: set URL anyway for graceful degradation
-      setCurrentArtworkUrl(selectedUrl);
-    }
-  }, []);
+      try {
+        await preloadImage(selectedUrl);
+        setCurrentArtworkUrl(selectedUrl);
+      } catch (error) {
+        console.warn("Failed to load artwork image:", error);
+        // Fallback: set URL anyway for graceful degradation
+        setCurrentArtworkUrl(selectedUrl);
+      }
+    },
+    [setCurrentArtworkUrl],
+  );
 
   useEffect(() => {
     if (artworkUrls && artworkUrls.length > 0) {
@@ -52,7 +55,7 @@ const LyricsScreen = () => {
       // Clear artwork when no providers are enabled or artwork URLs are empty
       setCurrentArtworkUrl("");
     }
-  }, [artworkUrls, selectAndLoadRandomArtwork]);
+  }, [artworkUrls, selectAndLoadRandomArtwork, setCurrentArtworkUrl]);
 
   return (
     <div

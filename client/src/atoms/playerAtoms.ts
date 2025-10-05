@@ -21,6 +21,9 @@ export const activeWordAtom = atom<WordData | null>(null);
 
 export const artworkUrlsAtom = atom<string[]>([]);
 
+// Current artwork URL for background display (selected from artworkUrls)
+export const currentArtworkUrlAtom = atom<string>("");
+
 // Loading state atoms for explicit state management
 export const lyricsLoadingAtom = atom<boolean>(false);
 export const currentLyricsProviderAtom = atom<string | null>(null);
