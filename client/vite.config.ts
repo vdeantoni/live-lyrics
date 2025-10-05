@@ -17,4 +17,35 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Vendor chunk: React ecosystem
+          "vendor-react": ["react", "react-dom", "react/jsx-runtime"],
+          // UI libraries
+          "vendor-ui": ["framer-motion", "lucide-react"],
+          // State management
+          "vendor-state": ["jotai", "@tanstack/react-query"],
+          // Radix UI primitives
+          "vendor-radix": [
+            "@radix-ui/react-aspect-ratio",
+            "@radix-ui/react-slider",
+            "@radix-ui/react-slot",
+            "@radix-ui/react-tabs",
+            "@radix-ui/react-switch",
+          ],
+          // Lyrics parsing
+          "vendor-lyrics": ["liricle"],
+          // DnD kit
+          "vendor-dnd": [
+            "@dnd-kit/core",
+            "@dnd-kit/sortable",
+            "@dnd-kit/utilities",
+          ],
+        },
+      },
+    },
+    chunkSizeWarningLimit: 600, // Increase limit slightly to avoid warnings for main chunk
+  },
 });

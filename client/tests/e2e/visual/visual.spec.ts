@@ -183,4 +183,57 @@ test.describe("Visual Regression Tests", () => {
       fullPage: true,
     });
   });
+
+  // ===== Playlists Screen Coverage =====
+
+  test("playlists screen mobile (320x568)", async ({ page }) => {
+    await page.setViewportSize({ width: 320, height: 568 });
+    await page.goto("/");
+
+    await waitForAppReady(page);
+
+    // Open playlists screen
+    await page.click('[data-testid="playlists-button"]');
+    await page.waitForSelector('[data-testid="playlists-screen"]');
+    await page.waitForTimeout(500);
+
+    await page.screenshot({
+      path: "lost-pixel/playlists-mobile.png",
+      fullPage: true,
+    });
+  });
+
+  test("playlists screen tablet (768x1024)", async ({ page }) => {
+    await page.setViewportSize({ width: 768, height: 1024 });
+    await page.goto("/");
+
+    await waitForAppReady(page);
+
+    // Open playlists screen
+    await page.click('[data-testid="playlists-button"]');
+    await page.waitForSelector('[data-testid="playlists-screen"]');
+    await page.waitForTimeout(500);
+
+    await page.screenshot({
+      path: "lost-pixel/playlists-tablet.png",
+      fullPage: true,
+    });
+  });
+
+  test("playlists screen desktop (1440x900)", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/");
+
+    await waitForAppReady(page);
+
+    // Open playlists screen
+    await page.click('[data-testid="playlists-button"]');
+    await page.waitForSelector('[data-testid="playlists-screen"]');
+    await page.waitForTimeout(500);
+
+    await page.screenshot({
+      path: "lost-pixel/playlists-desktop.png",
+      fullPage: true,
+    });
+  });
 });

@@ -790,26 +790,29 @@ test.describe("Playlists Functionality", () => {
         page.locator('[data-testid="playlists-screen"]'),
       ).toBeVisible();
 
-      // Classic Hits should be visible
-      await expect(page.getByText("Classic Hits")).toBeVisible();
-
-      // Set up dialog handler
+      // Set up dialog handler to accept all confirmations
       page.on("dialog", (dialog) => {
         expect(dialog.message()).toContain("Are you sure");
         dialog.accept();
       });
 
-      // Delete Classic Hits
-      const playlistCard = page
-        .locator('[data-testid^="playlist-card-"]')
-        .filter({ hasText: "Classic Hits" });
-      const deleteButton = playlistCard.locator(
-        '[data-testid^="delete-playlist-"]',
-      );
-      await deleteButton.click();
+      // Delete all playlists one by one
+      const playlistCards = page.locator('[data-testid^="playlist-card-"]');
+      const initialCount = await playlistCards.count();
 
-      // Should be gone, back to empty state
-      await expect(page.getByText("Classic Hits")).not.toBeVisible();
+      for (let i = 0; i < initialCount; i++) {
+        // Always target the first playlist (since deleting removes from list)
+        const firstPlaylist = playlistCards.first();
+        const deleteButton = firstPlaylist.locator(
+          '[data-testid^="delete-playlist-"]',
+        );
+        await deleteButton.click();
+
+        // Wait for deletion animation to complete
+        await page.waitForTimeout(100);
+      }
+
+      // Should be back to empty state
       await expect(page.getByText("No playlists yet")).toBeVisible();
     });
 

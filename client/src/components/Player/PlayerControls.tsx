@@ -159,6 +159,7 @@ const PlayerControls = () => {
 
         {/* Playlists Button */}
         <Button
+          data-testid="playlists-button"
           size="sm"
           variant="ghost"
           className={`dark:hover:bg-accent/0 hover:text-primary h-10 w-10 rounded-full p-2 transition-colors ${
