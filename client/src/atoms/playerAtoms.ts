@@ -36,3 +36,12 @@ export const playerUIStateAtom = atom({
   isUserSeeking: false,
   pendingSeekTime: undefined as number | undefined,
 });
+
+/**
+ * Computed atom: Check if player has no song loaded
+ * Returns true when there's no song name (empty player state)
+ */
+export const isPlayerEmptyAtom = atom((get) => {
+  const playerState = get(playerStateAtom);
+  return !playerState.name;
+});
