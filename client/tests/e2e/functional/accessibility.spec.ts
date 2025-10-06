@@ -1,5 +1,31 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 import { injectTestRegistry } from "../helpers/injectTestRegistry";
+
+/**
+ * Helper to start playing music from the first playlist
+ * Opens playlists screen and clicks "Play All" on the first playlist
+ */
+async function startPlayingFromPlaylist(page: Page) {
+  // Open playlists screen
+  const playlistsButton = page.locator('[data-testid="playlists-button"]');
+  await playlistsButton.click();
+
+  // Wait for playlists screen to appear
+  await expect(page.locator('[data-testid="playlists-screen"]')).toBeVisible();
+
+  // Click "Play All" on the first playlist
+  const playAllButton = page.locator('[data-testid^="play-all-"]').first();
+  await playAllButton.click();
+
+  // Close playlists screen
+  const closeButton = page.locator('[data-testid="close-overlay-button"]');
+  await closeButton.click();
+
+  // Wait for song to load
+  await expect(page.locator('[data-testid="song-name"]')).not.toBeEmpty({
+    timeout: 5000,
+  });
+}
 
 test.describe("Keyboard Navigation and Accessibility", () => {
   test.beforeEach(async ({ page }) => {
@@ -14,6 +40,9 @@ test.describe("Keyboard Navigation and Accessibility", () => {
     page,
   }) => {
     await page.setViewportSize({ width: 768, height: 1024 });
+
+    // Start playing from playlist to ensure player has a song
+    await startPlayingFromPlaylist(page);
 
     const playButton = page.locator('[data-testid="play-pause-button"]');
 
@@ -31,7 +60,9 @@ test.describe("Keyboard Navigation and Accessibility", () => {
 
     // Wait for state to sync (polling interval is 300ms)
     // Wait for aria-label to change to indicate playing state
-    await expect(playButton).toHaveAttribute("aria-label", /pause/i);
+    await expect(playButton).toHaveAttribute("aria-label", /pause/i, {
+      timeout: 2000,
+    });
 
     // Should show pause icon after Enter key
     await expect(
@@ -59,6 +90,9 @@ test.describe("Keyboard Navigation and Accessibility", () => {
 
     await page.setViewportSize({ width: 768, height: 1024 });
 
+    // Start playing from playlist
+    await startPlayingFromPlaylist(page);
+
     const currentTimeDisplay = page.locator('[data-testid="current-time"]');
 
     // Ensure player is ready at 0:00
@@ -79,6 +113,9 @@ test.describe("Keyboard Navigation and Accessibility", () => {
 
   test("should support keyboard navigation in settings", async ({ page }) => {
     await page.setViewportSize({ width: 768, height: 1024 });
+
+    // Start playing from playlist
+    await startPlayingFromPlaylist(page);
 
     // Open settings using keyboard
     const settingsButton = page.locator('[data-testid="settings-button"]');
@@ -116,6 +153,9 @@ test.describe("Keyboard Navigation and Accessibility", () => {
   test("should have proper ARIA labels and roles", async ({ page }) => {
     await page.setViewportSize({ width: 768, height: 1024 });
 
+    // Start playing from playlist
+    await startPlayingFromPlaylist(page);
+
     // Check play/pause button has proper ARIA label
     const playButton = page.locator('[data-testid="play-pause-button"]');
     const buttonRole = await playButton.getAttribute("role");
@@ -139,6 +179,9 @@ test.describe("Keyboard Navigation and Accessibility", () => {
 
   test("should have sufficient color contrast", async ({ page }) => {
     await page.setViewportSize({ width: 768, height: 1024 });
+
+    // Start playing from playlist
+    await startPlayingFromPlaylist(page);
 
     // Check song name has good contrast
     const songName = page.locator('[data-testid="song-name"]');
@@ -217,6 +260,9 @@ test.describe("Keyboard Navigation and Accessibility", () => {
   test("should announce state changes to screen readers", async ({ page }) => {
     await page.setViewportSize({ width: 768, height: 1024 });
 
+    // Start playing from playlist
+    await startPlayingFromPlaylist(page);
+
     const playButton = page.locator('[data-testid="play-pause-button"]');
 
     // Check initial state has appropriate ARIA label
@@ -229,7 +275,9 @@ test.describe("Keyboard Navigation and Accessibility", () => {
 
     // Wait for state to sync (polling interval is 300ms)
     // ARIA label should change to reflect new state
-    await expect(playButton).not.toHaveAttribute("aria-label", initialLabel!);
+    await expect(playButton).not.toHaveAttribute("aria-label", initialLabel!, {
+      timeout: 2000,
+    });
 
     // Verify the new label is truthy and different
     const newLabel = await playButton.getAttribute("aria-label");
@@ -239,6 +287,9 @@ test.describe("Keyboard Navigation and Accessibility", () => {
 
   test("should handle focus management properly", async ({ page }) => {
     await page.setViewportSize({ width: 768, height: 1024 });
+
+    // Start playing from playlist
+    await startPlayingFromPlaylist(page);
 
     // Ensure settings are closed at start (defensive check for test isolation)
     const settingsScreen = page.locator('[data-testid="settings-screen"]');
