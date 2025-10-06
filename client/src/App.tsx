@@ -2,9 +2,10 @@ import { useEffect } from "react";
 import { Provider as JotaiProvider } from "jotai";
 import { useAtomValue } from "jotai";
 import Player from "@/components/Player/Player";
+import LoadingScreen from "@/components/Player/LoadingScreen";
 import { useBootstrap } from "@/hooks/useBootstrap";
 import { coreAppStateAtom } from "@/atoms/appState";
-import { currentArtworkUrlAtom } from "@/atoms/playerAtoms";
+import { currentArtworkUrlAtom, playerStateAtom } from "@/atoms/playerAtoms";
 import { initializeEventHandlers } from "@/core/services/eventHandlers";
 import { useEventSync } from "@/adapters/react/useEventSync";
 import { usePlayerSync } from "@/adapters/react/usePlayerSync";
@@ -27,9 +28,13 @@ const AppContent = () => {
   useLyricsSync(); // Fetch lyrics with caching
   useArtworkSync(); // Fetch artwork with caching
 
-  // Wait for bootstrap to complete
+  // Wait for bootstrap to complete and player to load
   const appState = useAtomValue(coreAppStateAtom);
+  const playerState = useAtomValue(playerStateAtom);
   const currentArtworkUrl = useAtomValue(currentArtworkUrlAtom);
+
+  // Show loading screen until player has loaded initial data
+  const isPlayerLoading = !playerState.name && !appState.error;
 
   if (appState.error) {
     return (
@@ -37,6 +42,10 @@ const AppContent = () => {
         <div className="text-red-400">Error: {appState.error}</div>
       </div>
     );
+  }
+
+  if (isPlayerLoading) {
+    return <LoadingScreen />;
   }
 
   return (

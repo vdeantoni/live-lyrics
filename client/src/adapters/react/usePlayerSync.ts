@@ -29,8 +29,16 @@ export const usePlayerSync = () => {
     const initializePlayer = async () => {
       try {
         await playerService.setPlayer(playerId);
-        if (!cancelled) {
-          setIsPlayerReady(true);
+        if (cancelled) return;
+
+        setIsPlayerReady(true);
+
+        // Immediately fetch initial song data after player is ready
+        try {
+          const song = await playerService.getSong();
+          emit({ type: "player.state.changed", payload: song });
+        } catch (error) {
+          console.error("Failed to fetch initial song:", error);
         }
       } catch (error) {
         console.error(`Failed to initialize player "${playerId}":`, error);
@@ -64,6 +72,7 @@ export const usePlayerSync = () => {
   useEffect(() => {
     if (isWebSocket || !playerId || !isPlayerReady) return;
 
+    // Start polling interval (initial fetch already done in initializePlayer)
     const interval = setInterval(async () => {
       try {
         const song = await playerService.getSong();
@@ -72,16 +81,6 @@ export const usePlayerSync = () => {
         console.error("Failed to poll song:", error);
       }
     }, POLLING_INTERVALS.SONG_SYNC);
-
-    // Initial fetch
-    (async () => {
-      try {
-        const song = await playerService.getSong();
-        emit({ type: "player.state.changed", payload: song });
-      } catch (error) {
-        console.error("Failed to fetch initial song:", error);
-      }
-    })();
 
     return () => clearInterval(interval);
   }, [playerId, isWebSocket, isPlayerReady]);
