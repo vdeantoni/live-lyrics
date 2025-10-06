@@ -212,21 +212,19 @@ The app uses a centralized, well-organized Jotai atom system divided into two ma
 
 **`appState.ts`** - Application-wide state:
 - **Core atoms**: `coreAppStateAtom` (bootstrap state), `appProvidersAtom` (provider registry), `settingsOpenAtom`, `searchOpenAtom` (UI state)
-- **Settings atoms**: `appProviderSettingsAtom` with custom localStorage serialization for Map types (split into separate atoms per provider type to prevent cross-contamination)
+- **Settings atoms**: Separate private atoms (`playersSettingsAtom`, `lyricsSettingsAtom`, `artworkSettingsAtom`) with custom localStorage serialization for Map types to prevent cross-contamination
 - **Computed atoms**: `effectiveLyricsProvidersAtom`, `effectiveArtworkProvidersAtom`, `effectivePlayersAtom`, `selectedPlayerAtom`, `enabledLyricsProvidersAtom` (combine configs with user overrides)
 - **Write-only action atoms**: `updateProviderSettingAtom`, `toggleProviderAtom`, `toggleSettingsAtom`, `toggleSearchAtom`, `resetProviderSettingsAtom`, etc.
 - **Helper factory**: `createProviderSettingsAtom()` eliminates duplicate localStorage serialization code
 
 **`playerAtoms.ts`** - Music player state:
 - **Read atoms**: `playerStateAtom` (current song), `lyricsContentAtom`, `lyricsDataAtom`, `activeLineAtom`, `activeWordAtom`, `artworkUrlsAtom`, loading states
-- **Write-only action atoms**: `playerControlAtom` (play/pause/seek with optimistic updates), `syncFromSourceAtom` (server sync with conflict prevention)
 - **UI state atom**: `playerUIStateAtom` (isDragging, isUserSeeking)
 
 **Design Patterns**:
 - **Separation of concerns**: App-wide state vs player state
 - **Computed atoms**: Efficient derived state with granular subscriptions
 - **Write-only atoms**: Action dispatchers instead of setters for better encapsulation
-- **Optimistic updates**: Immediate UI feedback with rollback on errors
 - **Factory functions**: DRY code for repeated patterns (storage serialization)
 
 **Timing Constants** (`client/src/constants/timing.ts`):

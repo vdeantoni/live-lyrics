@@ -82,20 +82,6 @@ const artworkSettingsAtom = createProviderSettingsAtom(
   "artwork",
 );
 
-// Backwards compatibility: unified view of settings
-export const appProviderSettingsAtom = atom(
-  (get) => ({
-    players: get(playersSettingsAtom),
-    lyrics: get(lyricsSettingsAtom),
-    artwork: get(artworkSettingsAtom),
-  }),
-  (_get, set, newValue: AppProviderSettings) => {
-    set(playersSettingsAtom, newValue.players);
-    set(lyricsSettingsAtom, newValue.lyrics);
-    set(artworkSettingsAtom, newValue.artwork);
-  },
-);
-
 // 4. Helper Atoms for Easy Updates
 
 /**
@@ -181,11 +167,9 @@ export const removeProviderSettingAtom = atom(
  * Reset all provider settings (clear user overrides)
  */
 export const resetProviderSettingsAtom = atom(null, (_get, set) => {
-  set(appProviderSettingsAtom, {
-    players: new Map(),
-    lyrics: new Map(),
-    artwork: new Map(),
-  });
+  set(playersSettingsAtom, new Map());
+  set(lyricsSettingsAtom, new Map());
+  set(artworkSettingsAtom, new Map());
 });
 
 /**
