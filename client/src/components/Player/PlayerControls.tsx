@@ -3,11 +3,7 @@ import { Button } from "@/components/ui/button";
 import { formatTime } from "@/lib/utils";
 import { ListMusic, ListPlus, Pause, Play, Search } from "lucide-react";
 import { useAtomValue, useSetAtom } from "jotai";
-import {
-  playerStateAtom,
-  playerUIStateAtom,
-  playerControlAtom,
-} from "@/atoms/playerAtoms";
+import { playerStateAtom, playerUIStateAtom } from "@/atoms/playerAtoms";
 import {
   toggleSearchAtom,
   searchOpenAtom,
@@ -17,6 +13,7 @@ import {
 } from "@/atoms/appState";
 import AnimatedSongName from "../LyricsVisualizer/AnimatedSongName";
 import { motion } from "framer-motion";
+import { usePlayerControls } from "@/adapters/react/usePlayerControls";
 
 const PlayerControls = () => {
   // Read unified atoms
@@ -25,8 +22,10 @@ const PlayerControls = () => {
   const isSearchOpen = useAtomValue(searchOpenAtom);
   const isPlaylistsOpen = useAtomValue(playlistsOpenAtom);
 
+  // Player controls (event-driven)
+  const { play, pause, seek } = usePlayerControls();
+
   // Action atoms
-  const playerControl = useSetAtom(playerControlAtom);
   const setPlayerUIState = useSetAtom(playerUIStateAtom);
   const toggleSearch = useSetAtom(toggleSearchAtom);
   const togglePlaylists = useSetAtom(togglePlaylistsAtom);
@@ -34,9 +33,9 @@ const PlayerControls = () => {
 
   const handlePlayPause = () => {
     if (isPlaying) {
-      playerControl({ type: "pause" });
+      pause();
     } else {
-      playerControl({ type: "play" });
+      play();
     }
   };
 
@@ -53,7 +52,7 @@ const PlayerControls = () => {
     setPlayerUIState((prev) => {
       // Seek to the final time when pointer is released
       if (prev.pendingSeekTime !== undefined) {
-        playerControl({ type: "seek", payload: prev.pendingSeekTime });
+        seek(prev.pendingSeekTime);
       }
       return { ...prev, isDragging: false, pendingSeekTime: undefined };
     });
@@ -62,7 +61,7 @@ const PlayerControls = () => {
   return (
     <div
       data-testid="player-controls"
-      className="flex w-full flex-col gap-2 landscape:flex-row"
+      className="flex w-full flex-col gap-2 landscape:flex-row landscape:px-2"
     >
       <div className="flex max-h-20 min-h-14 flex-col landscape:max-w-[30%]">
         <AnimatedSongName
@@ -77,6 +76,21 @@ const PlayerControls = () => {
           {artist}
         </h3>
       </div>
+
+      <div className="flex items-center justify-center gap-3">
+        {/* Add to Playlist Button */}
+        <Button
+          size="sm"
+          variant="ghost"
+          className="dark:hover:bg-accent/0 hover:text-primary h-10 w-10 rounded-full p-2"
+          aria-label="Add to playlist"
+          onClick={() => openAddToPlaylistDialog(playerState)}
+          disabled={!playerState.name}
+        >
+          <ListPlus />
+        </Button>
+      </div>
+
       <div className="flex flex-1 items-center gap-3">
         <span
           id="current-time"
@@ -127,18 +141,6 @@ const PlayerControls = () => {
           >
             <Search />
           </motion.div>
-        </Button>
-
-        {/* Add to Playlist Button */}
-        <Button
-          size="sm"
-          variant="ghost"
-          className="dark:hover:bg-accent/0 hover:text-primary h-10 w-10 rounded-full p-2"
-          aria-label="Add to playlist"
-          onClick={() => openAddToPlaylistDialog(playerState)}
-          disabled={!playerState.name}
-        >
-          <ListPlus />
         </Button>
 
         <div className="flex flex-1 items-center justify-center">

@@ -1,10 +1,9 @@
 import { useAtomValue } from "jotai";
-import { useQuery } from "@tanstack/react-query";
 import { selectedPlayerAtom } from "@/atoms/appState";
 import { loadPlayer } from "@/config/providers";
 import { POLLING_INTERVALS } from "@/constants/timing";
 import type { Song } from "@/types";
-import { useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 /**
  * Hook that fetches and manages the player history
@@ -15,32 +14,43 @@ export const usePlayerHistory = () => {
   const selectedPlayer = useAtomValue(selectedPlayerAtom);
   const playerId = selectedPlayer?.config.id;
 
-  // Fetch history from player
-  const {
-    data: history = [],
-    isLoading,
-    error,
-    refetch,
-  } = useQuery({
-    queryKey: ["player-history", playerId],
-    queryFn: async () => {
-      if (!playerId) return [];
+  const [history, setHistory] = useState<Song[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
 
-      try {
-        const player = await loadPlayer(playerId);
-        const historyData = await player.getHistory();
-        return historyData;
-      } catch (error) {
-        console.error(`Failed to fetch history from "${playerId}":`, error);
-        // Return empty array on error to prevent UI crashes
-        return [];
-      }
-    },
-    enabled: !!playerId,
-    refetchInterval: POLLING_INTERVALS.SONG_SYNC, // 300ms
-    staleTime: 0,
-    gcTime: 0,
-  });
+  // Fetch history function
+  const fetchHistory = useCallback(async () => {
+    if (!playerId) {
+      setHistory([]);
+      return;
+    }
+
+    try {
+      const player = await loadPlayer(playerId);
+      const historyData = await player.getHistory();
+      setHistory(historyData);
+      setError(null);
+    } catch (err) {
+      console.error(`Failed to fetch history from "${playerId}":`, err);
+      setError(err as Error);
+      setHistory([]); // Return empty array on error to prevent UI crashes
+    }
+  }, [playerId]);
+
+  // Poll for history updates
+  useEffect(() => {
+    if (!playerId) {
+      setHistory([]);
+      return;
+    }
+
+    setIsLoading(true);
+    fetchHistory().finally(() => setIsLoading(false));
+
+    const interval = setInterval(fetchHistory, POLLING_INTERVALS.SONG_SYNC);
+
+    return () => clearInterval(interval);
+  }, [playerId, fetchHistory]);
 
   // Helper: Clear entire history
   const clear = useCallback(async () => {
@@ -49,11 +59,11 @@ export const usePlayerHistory = () => {
     try {
       const player = await loadPlayer(playerId);
       await player.clearHistory();
-      await refetch(); // Refresh immediately
+      await fetchHistory(); // Refresh immediately
     } catch (error) {
       console.error("Failed to clear history:", error);
     }
-  }, [playerId, refetch]);
+  }, [playerId, fetchHistory]);
 
   // Helper: Replay a song from history (add to queue)
   const replay = useCallback(
@@ -74,7 +84,7 @@ export const usePlayerHistory = () => {
   return {
     history,
     isLoading,
-    error: error as Error | null,
+    error,
     clear,
     replay,
   };

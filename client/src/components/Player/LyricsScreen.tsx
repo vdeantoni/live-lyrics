@@ -1,7 +1,6 @@
 import { useEffect, useCallback } from "react";
 import { useAtomValue, useSetAtom } from "jotai";
 import { artworkUrlsAtom, currentArtworkUrlAtom } from "@/atoms/playerAtoms";
-import { useArtworkSync } from "@/hooks/useArtworkSync";
 import LyricsManager from "../LyricsVisualizer/LyricsManager";
 
 const LyricsScreen = () => {
@@ -9,9 +8,6 @@ const LyricsScreen = () => {
   const artworkUrls = useAtomValue(artworkUrlsAtom);
   const currentArtworkUrl = useAtomValue(currentArtworkUrlAtom);
   const setCurrentArtworkUrl = useSetAtom(currentArtworkUrlAtom);
-
-  // Trigger artwork fetching (syncs to artworkUrlsAtom)
-  useArtworkSync();
 
   // Helper function to preload image before setting as background
   const preloadImage = (url: string): Promise<void> => {

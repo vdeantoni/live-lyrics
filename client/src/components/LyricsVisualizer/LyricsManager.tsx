@@ -3,7 +3,6 @@ import { useEffect, useState, useRef } from "react";
 import LyricsContent from "./LyricsContent";
 import NoLyricsFound from "./NoLyricsFound";
 import Liricle from "liricle";
-import { useLyricsSync } from "@/hooks/useLyricsSync";
 import { useAtomValue, useSetAtom } from "jotai";
 import {
   playerStateAtom,
@@ -33,9 +32,6 @@ const LyricsManager = () => {
 
   const liricleRef = useRef<Liricle | null>(null);
   const [showNoLyrics, setShowNoLyrics] = useState(false);
-
-  // Trigger lyrics fetching
-  useLyricsSync();
 
   // Get current provider name for UI display
   const currentProviderName = currentProvider

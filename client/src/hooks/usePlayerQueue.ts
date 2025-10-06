@@ -1,10 +1,9 @@
 import { useAtomValue } from "jotai";
-import { useQuery } from "@tanstack/react-query";
 import { selectedPlayerAtom } from "@/atoms/appState";
 import { loadPlayer } from "@/config/providers";
 import { POLLING_INTERVALS } from "@/constants/timing";
 import type { Song } from "@/types";
-import { useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 /**
  * Hook that fetches and manages the player queue
@@ -15,32 +14,43 @@ export const usePlayerQueue = () => {
   const selectedPlayer = useAtomValue(selectedPlayerAtom);
   const playerId = selectedPlayer?.config.id;
 
-  // Fetch queue from player
-  const {
-    data: queue = [],
-    isLoading,
-    error,
-    refetch,
-  } = useQuery({
-    queryKey: ["player-queue", playerId],
-    queryFn: async () => {
-      if (!playerId) return [];
+  const [queue, setQueue] = useState<Song[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
 
-      try {
-        const player = await loadPlayer(playerId);
-        const queueData = await player.getQueue();
-        return queueData;
-      } catch (error) {
-        console.error(`Failed to fetch queue from "${playerId}":`, error);
-        // Return empty array on error to prevent UI crashes
-        return [];
-      }
-    },
-    enabled: !!playerId,
-    refetchInterval: POLLING_INTERVALS.SONG_SYNC, // 300ms
-    staleTime: 0,
-    gcTime: 0,
-  });
+  // Fetch queue function
+  const fetchQueue = useCallback(async () => {
+    if (!playerId) {
+      setQueue([]);
+      return;
+    }
+
+    try {
+      const player = await loadPlayer(playerId);
+      const queueData = await player.getQueue();
+      setQueue(queueData);
+      setError(null);
+    } catch (err) {
+      console.error(`Failed to fetch queue from "${playerId}":`, err);
+      setError(err as Error);
+      setQueue([]); // Return empty array on error to prevent UI crashes
+    }
+  }, [playerId]);
+
+  // Poll for queue updates
+  useEffect(() => {
+    if (!playerId) {
+      setQueue([]);
+      return;
+    }
+
+    setIsLoading(true);
+    fetchQueue().finally(() => setIsLoading(false));
+
+    const interval = setInterval(fetchQueue, POLLING_INTERVALS.SONG_SYNC);
+
+    return () => clearInterval(interval);
+  }, [playerId, fetchQueue]);
 
   // Helper: Remove song at specific index
   const removeAt = useCallback(
@@ -49,14 +59,14 @@ export const usePlayerQueue = () => {
 
       try {
         const player = await loadPlayer(playerId);
-        const newQueue = queue.filter((_, i) => i !== index);
+        const newQueue = queue.filter((_: Song, i: number) => i !== index);
         await player.setQueue(newQueue);
-        await refetch(); // Refresh immediately
+        await fetchQueue(); // Refresh immediately
       } catch (error) {
         console.error("Failed to remove song from queue:", error);
       }
     },
-    [playerId, queue, refetch],
+    [playerId, queue, fetchQueue],
   );
 
   // Helper: Reorder songs (for drag & drop)
@@ -72,12 +82,12 @@ export const usePlayerQueue = () => {
         result.splice(newIndex, 0, removed);
 
         await player.setQueue(result);
-        await refetch(); // Refresh immediately
+        await fetchQueue(); // Refresh immediately
       } catch (error) {
         console.error("Failed to reorder queue:", error);
       }
     },
-    [playerId, queue, refetch],
+    [playerId, queue, fetchQueue],
   );
 
   // Helper: Clear entire queue
@@ -87,11 +97,11 @@ export const usePlayerQueue = () => {
     try {
       const player = await loadPlayer(playerId);
       await player.setQueue([]);
-      await refetch(); // Refresh immediately
+      await fetchQueue(); // Refresh immediately
     } catch (error) {
       console.error("Failed to clear queue:", error);
     }
-  }, [playerId, refetch]);
+  }, [playerId, fetchQueue]);
 
   // Helper: Add songs to queue
   const addSongs = useCallback(
@@ -101,18 +111,18 @@ export const usePlayerQueue = () => {
       try {
         const player = await loadPlayer(playerId);
         await player.add(...songs);
-        await refetch(); // Refresh immediately
+        await fetchQueue(); // Refresh immediately
       } catch (error) {
         console.error("Failed to add songs to queue:", error);
       }
     },
-    [playerId, refetch],
+    [playerId, fetchQueue],
   );
 
   return {
     queue,
     isLoading,
-    error: error as Error | null,
+    error,
     removeAt,
     reorder,
     clear,

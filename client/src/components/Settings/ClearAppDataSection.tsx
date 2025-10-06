@@ -1,6 +1,5 @@
 import { useSetAtom } from "jotai";
 import { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
 import { resetProviderSettingsAtom } from "@/atoms/appState";
@@ -8,13 +7,12 @@ import { clearAppData } from "@/utils/clearAppData";
 
 export const ClearAppDataSection = () => {
   const resetProviderSettings = useSetAtom(resetProviderSettingsAtom);
-  const queryClient = useQueryClient();
   const [isClearing, setIsClearing] = useState(false);
 
   const handleClearAppData = async () => {
     setIsClearing(true);
     try {
-      await clearAppData(queryClient);
+      await clearAppData();
 
       // Reset provider settings to defaults in memory as well
       resetProviderSettings();

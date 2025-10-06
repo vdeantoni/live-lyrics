@@ -3,8 +3,7 @@ import { createRoot } from "react-dom/client";
 import "./index.css";
 import App from "./App.tsx";
 import { providerAPI, providerRegistryAPI } from "./api/providerAPI";
-import { getDefaultStore } from "jotai";
-import { playerControlAtom } from "./atoms/playerAtoms";
+import { playerService } from "./core/services/PlayerService";
 
 /**
  * Development and testing utilities
@@ -12,19 +11,16 @@ import { playerControlAtom } from "./atoms/playerAtoms";
  * TODO: Consider restricting to dev/test environments in production
  */
 
-// Get the global Jotai store for player state management
-const store = getDefaultStore();
-
-// Create player control API for testing
+// Create player control API for testing (using event-driven PlayerService)
 const playerControlAPI = {
   seek: async (time: number) => {
-    await store.set(playerControlAtom, { type: "seek", payload: time });
+    await playerService.seek(time);
   },
   play: async () => {
-    await store.set(playerControlAtom, { type: "play" });
+    await playerService.play();
   },
   pause: async () => {
-    await store.set(playerControlAtom, { type: "pause" });
+    await playerService.pause();
   },
 };
 

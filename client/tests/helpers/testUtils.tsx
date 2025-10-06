@@ -2,7 +2,6 @@ import React from "react";
 import { expect } from "vitest";
 import { render, type RenderOptions, waitFor } from "@testing-library/react";
 import { Provider as JotaiProvider, useSetAtom } from "jotai";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { TestProvider } from "./TestProvider";
 import type { LyricsProvider, ArtworkProvider, Player } from "@/types";
 import type { ProviderConfig } from "@/types/appState";
@@ -22,35 +21,9 @@ interface CustomRenderOptions extends Omit<RenderOptions, "wrapper"> {
   waitForBootstrap?: boolean;
 }
 
-interface LightweightRenderOptions extends Omit<RenderOptions, "wrapper"> {
-  /**
-   * Whether to include QueryClient for components that need it
-   * @default true
-   */
-  withQueryClient?: boolean;
-}
+type LightweightRenderOptions = Omit<RenderOptions, "wrapper">;
 
-interface AtomMockRenderOptions extends Omit<RenderOptions, "wrapper"> {
-  /**
-   * Whether to include QueryClient for components that need it
-   * @default true
-   */
-  withQueryClient?: boolean;
-}
-
-// Create a test QueryClient that doesn't retry
-const createTestQueryClient = () =>
-  new QueryClient({
-    defaultOptions: {
-      queries: {
-        retry: false,
-        gcTime: 0, // Updated from cacheTime
-      },
-      mutations: {
-        retry: false,
-      },
-    },
-  });
+type AtomMockRenderOptions = Omit<RenderOptions, "wrapper">;
 
 /**
  * Create default test providers for Jotai atoms
@@ -69,33 +42,19 @@ export const createJotaiTestProviders = () => {
  *
  * @example
  * ```typescript
- * // Just Jotai + QueryClient - super fast, no bootstrap
+ * // Just Jotai - super fast, no bootstrap
  * renderLightweight(<MyComponent />);
- *
- * // Skip QueryClient for components that don't need it
- * renderLightweight(<SimpleComponent />, { withQueryClient: false });
  * ```
  */
 export const renderLightweight = (
   ui: React.ReactElement,
   options: LightweightRenderOptions = {},
 ) => {
-  const { withQueryClient = true, ...renderOptions } = options;
-
   const Wrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    if (withQueryClient) {
-      const queryClient = createTestQueryClient();
-      return (
-        <QueryClientProvider client={queryClient}>
-          <JotaiProvider>{children}</JotaiProvider>
-        </QueryClientProvider>
-      );
-    }
-
     return <JotaiProvider>{children}</JotaiProvider>;
   };
 
-  return render(ui, { wrapper: Wrapper, ...renderOptions });
+  return render(ui, { wrapper: Wrapper, ...options });
 };
 
 /**
@@ -126,8 +85,6 @@ export const renderWithAtomMocks = (
   atomMocks: Map<Atom<unknown>, unknown>,
   options: AtomMockRenderOptions = {},
 ) => {
-  const { withQueryClient = true, ...renderOptions } = options;
-
   // Component to set a single atom value
   const AtomSetter: React.FC<{ atom: Atom<unknown>; value: unknown }> = ({
     atom,
@@ -162,17 +119,6 @@ export const renderWithAtomMocks = (
   };
 
   const Wrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    if (withQueryClient) {
-      const queryClient = createTestQueryClient();
-      return (
-        <QueryClientProvider client={queryClient}>
-          <JotaiProvider>
-            <AtomHydrator>{children}</AtomHydrator>
-          </JotaiProvider>
-        </QueryClientProvider>
-      );
-    }
-
     return (
       <JotaiProvider>
         <AtomHydrator>{children}</AtomHydrator>
@@ -180,7 +126,7 @@ export const renderWithAtomMocks = (
     );
   };
 
-  return render(ui, { wrapper: Wrapper, ...renderOptions });
+  return render(ui, { wrapper: Wrapper, ...options });
 };
 
 /**

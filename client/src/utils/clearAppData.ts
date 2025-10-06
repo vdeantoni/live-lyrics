@@ -1,15 +1,16 @@
-import { QueryClient } from "@tanstack/react-query";
+import { getCache } from "@/core/services/cache";
 
 /**
  * Clears all application data including:
- * - React Query cache (both in-memory and persisted)
+ * - IndexedDB cache (lyrics and artwork)
  * - Jotai atoms localStorage data
  * - Any other app-specific localStorage entries
  */
-export const clearAppData = async (queryClient: QueryClient): Promise<void> => {
+export const clearAppData = async (): Promise<void> => {
   try {
-    // Clear React Query cache (in-memory)
-    queryClient.clear();
+    // Clear IndexedDB cache
+    const cache = getCache();
+    await cache.clear();
 
     // Clear localStorage entries related to our app
     const keysToRemove: string[] = [];

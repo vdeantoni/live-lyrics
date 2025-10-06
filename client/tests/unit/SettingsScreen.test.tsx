@@ -2,19 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { screen, fireEvent, act } from "@testing-library/react";
 import { renderWithProviders } from "../helpers/testUtils";
 import SettingsScreen from "@/components/Player/SettingsScreen";
-import { useQueryClient } from "@tanstack/react-query";
 import { clearAppData } from "@/utils/clearAppData";
-
-// Mock React Query
-vi.mock("@tanstack/react-query", async () => {
-  const actual = await vi.importActual("@tanstack/react-query");
-  return {
-    ...actual,
-    useQueryClient: vi.fn(() => ({
-      clear: vi.fn(),
-    })),
-  };
-});
 
 // Mock the clearAppData utility
 vi.mock("@/utils/clearAppData", () => ({
@@ -22,14 +10,8 @@ vi.mock("@/utils/clearAppData", () => ({
 }));
 
 describe("SettingsScreen", () => {
-  const mockQueryClient = {
-    clear: vi.fn(),
-  };
-
   beforeEach(() => {
     vi.clearAllMocks();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    vi.mocked(useQueryClient).mockReturnValue(mockQueryClient as any);
   });
 
   it("renders settings screen correctly", async () => {
@@ -116,7 +98,7 @@ describe("SettingsScreen", () => {
       fireEvent.click(clearButton);
     });
 
-    expect(clearAppData).toHaveBeenCalledWith(mockQueryClient);
+    expect(clearAppData).toHaveBeenCalled();
   });
 
   it("displays provider status icons correctly", async () => {

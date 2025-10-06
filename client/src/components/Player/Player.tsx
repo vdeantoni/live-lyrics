@@ -1,12 +1,8 @@
 import MainScreen from "./MainScreen";
 import PlayerControls from "./PlayerControls";
-import { useSongSync } from "@/hooks/useSongSync";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 
 const Player = () => {
-  // Sync with current player data - only called once at the top level
-  useSongSync();
-
   // Global keyboard shortcuts with lyrics navigation
   useKeyboardShortcuts();
 
