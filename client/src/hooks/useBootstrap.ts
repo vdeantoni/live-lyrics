@@ -32,9 +32,6 @@ export const useBootstrap = () => {
         // Wait a tick for provider atoms to be populated
         await new Promise((resolve) => setTimeout(resolve, 0));
 
-        // Provider availability will be checked when they're actually used
-        // No need to pre-check availability during bootstrap
-
         // Mark app as ready
         setAppState({ isLoading: false, isReady: true });
       } catch (error) {

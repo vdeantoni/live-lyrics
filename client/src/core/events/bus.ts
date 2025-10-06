@@ -58,3 +58,13 @@ export const once = <T extends AppEvent["type"]>(
 export const clearAll = (): void => {
   eventBus.all.clear();
 };
+
+/**
+ * Expose emit function on window for E2E testing
+ * This allows test helpers to trigger events
+ */
+if (typeof window !== "undefined") {
+  (window as Window & { __EVENT_BUS__?: { emit: typeof emit } }).__EVENT_BUS__ = {
+    emit,
+  };
+}

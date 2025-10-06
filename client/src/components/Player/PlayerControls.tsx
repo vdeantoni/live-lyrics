@@ -112,7 +112,7 @@ const PlayerControls = () => {
         />
         <span
           id="total-duration"
-          data-testid="duration"
+          data-testid="total-time"
           className="min-w-10 text-center text-sm"
         >
           {formatTime(duration)}
@@ -150,6 +150,7 @@ const PlayerControls = () => {
             className="flex h-12 w-12 items-center justify-center rounded-full"
             onClick={handlePlayPause}
             aria-label={isPlaying ? "Pause" : "Play"}
+            disabled={!name}
           >
             {isPlaying ? (
               <Pause data-testid="pause-icon" className="h-6 w-6" />

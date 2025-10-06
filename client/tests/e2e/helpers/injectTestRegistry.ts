@@ -170,8 +170,8 @@ To me`;
       };
     } = {
       currentTime: 0,
-      isPlaying: false,
-      startTime: 0,
+      isPlaying: true,
+      startTime: new Date().getTime(),
       // Queue-based state
       currentSong: {
         name: "Bohemian Rhapsody",
@@ -179,7 +179,7 @@ To me`;
         album: "A Night at the Opera",
         duration: 355,
         currentTime: 0,
-        isPlaying: false,
+        isPlaying: true,
       },
       queue: [],
       history: [],
@@ -676,6 +676,49 @@ To me`;
                     settingsError,
                   );
                 }
+
+                // Expose test helpers for E2E tests to trigger events
+                (
+                  window as Window & { __TEST_PLAYER_HELPERS__?: unknown }
+                ).__TEST_PLAYER_HELPERS__ = {
+                  /**
+                   * Trigger a player state change event with current state
+                   * This simulates the polling mechanism that updates the UI
+                   */
+                  triggerStateUpdate: () => {
+                    debugLog("Test helper: triggering state update");
+                    const song = {
+                      name: testPlayerState.currentSong?.name || "",
+                      artist: testPlayerState.currentSong?.artist || "",
+                      album: testPlayerState.currentSong?.album || "",
+                      duration: testPlayerState.currentSong?.duration || 0,
+                      currentTime: testPlayerState.currentTime,
+                      isPlaying: testPlayerState.isPlaying,
+                    };
+
+                    // Find the emit function from event bus
+                    const eventBus = (
+                      window as Window & {
+                        __EVENT_BUS__?: { emit?: (event: unknown) => void };
+                      }
+                    ).__EVENT_BUS__;
+                    if (eventBus?.emit) {
+                      eventBus.emit({
+                        type: "player.state.changed",
+                        payload: song,
+                      });
+                      debugLog(
+                        "Test helper: emitted player.state.changed",
+                        song,
+                      );
+                    } else {
+                      debugLog("Test helper: event bus not found");
+                    }
+                  },
+                };
+                debugLog(
+                  "Test player helpers exposed on window.__TEST_PLAYER_HELPERS__",
+                );
 
                 debugLog("Test registry setup completed successfully");
                 resolve();
