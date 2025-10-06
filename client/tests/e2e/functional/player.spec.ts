@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { injectTestRegistry } from "../helpers/injectTestRegistry";
+import { loadTestSong } from "../helpers/testPlayerHelpers";
 
 test.describe("Player Component", () => {
   test.beforeEach(async ({ page }) => {
@@ -7,6 +8,16 @@ test.describe("Player Component", () => {
     await injectTestRegistry(page);
 
     await page.goto("/");
+
+    // Load test song to populate player state
+    await loadTestSong(page, {
+      name: "Bohemian Rhapsody",
+      artist: "Queen",
+      album: "A Night at the Opera",
+      currentTime: 0,
+      duration: 355,
+      isPlaying: true,
+    });
 
     // Wait for the player to load
     await page.waitForSelector('[data-testid="player-controls"]');

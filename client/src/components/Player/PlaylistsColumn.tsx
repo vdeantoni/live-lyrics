@@ -1,12 +1,8 @@
 import { useState } from "react";
-import { useAtomValue, useSetAtom } from "jotai";
-import {
-  playlistsAtom,
-  removeSongFromPlaylistAtom,
-  deletePlaylistAtom,
-  selectedPlayerAtom,
-} from "@/atoms/appState";
+import { useAtomValue } from "jotai";
+import { playlistsAtom, selectedPlayerAtom } from "@/atoms/appState";
 import { loadPlayer } from "@/config/providers";
+import { usePlaylists } from "@/adapters/react/usePlaylists";
 import {
   ListMusic,
   Plus,
@@ -29,8 +25,7 @@ const PlaylistsColumn = ({ showHeader = false }: PlaylistsColumnProps) => {
   const [expandedPlaylistId, setExpandedPlaylistId] = useState<string | null>(
     null,
   );
-  const removeSongFromPlaylist = useSetAtom(removeSongFromPlaylistAtom);
-  const deletePlaylist = useSetAtom(deletePlaylistAtom);
+  const { removeSongFromPlaylist, deletePlaylist } = usePlaylists();
   const selectedPlayer = useAtomValue(selectedPlayerAtom);
 
   const handlePlaySong = async (song: {

@@ -4,8 +4,8 @@ import {
   selectedSongForPlaylistAtom,
   addToPlaylistDialogOpenAtom,
   closeAddToPlaylistDialogAtom,
-  addSongToPlaylistAtom,
 } from "@/atoms/appState";
+import { usePlaylists } from "@/adapters/react/usePlaylists";
 import { X, Plus, Check, Music2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
@@ -17,7 +17,7 @@ const AddToPlaylistDialog = () => {
   const selectedSong = useAtomValue(selectedSongForPlaylistAtom);
   const playlists = useAtomValue(playlistsAtom);
   const closeDialog = useSetAtom(closeAddToPlaylistDialogAtom);
-  const addSongToPlaylist = useSetAtom(addSongToPlaylistAtom);
+  const { addSongToPlaylist } = usePlaylists();
   const [showCreateDialog, setShowCreateDialog] = useState(false);
 
   if (!isOpen || !selectedSong) return null;

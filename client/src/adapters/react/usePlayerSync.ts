@@ -3,18 +3,16 @@ import { useAtomValue } from "jotai";
 import { selectedPlayerAtom } from "@/atoms/appState";
 import { playerService } from "@/core/services/PlayerService";
 import { emit } from "@/core/events/bus";
-import { POLLING_INTERVALS } from "@/constants/timing";
 
 /**
  * Hook that syncs player state with the selected player
- * Handles both WebSocket subscription (for RemotePlayer) and polling (for LocalPlayer)
+ * All players now use subscription-based updates (fully reactive!)
  *
- * Replaces the old useSongSync hook
+ * Replaces the old polling-based useSongSync hook
  */
 export const usePlayerSync = () => {
   const selectedPlayer = useAtomValue(selectedPlayerAtom);
   const playerId = selectedPlayer?.config.id;
-  const isWebSocket = playerId === "remote";
   const [isPlayerReady, setIsPlayerReady] = useState(false);
 
   // Initialize player service when player changes
@@ -28,6 +26,24 @@ export const usePlayerSync = () => {
 
     const initializePlayer = async () => {
       try {
+        // IMMEDIATELY clear player state when switching players
+        // This ensures artwork/lyrics are cleared instantly during transitions
+        emit({
+          type: "player.state.changed",
+          payload: {
+            name: "",
+            artist: "",
+            album: "",
+            currentTime: 0,
+            duration: 0,
+            isPlaying: false,
+          },
+        });
+
+        // Small delay to ensure React processes the empty state
+        // before we fetch the new player's state
+        await new Promise((resolve) => setTimeout(resolve, 50));
+
         await playerService.setPlayer(playerId);
         if (cancelled) return;
 
@@ -57,31 +73,14 @@ export const usePlayerSync = () => {
     };
   }, [playerId]);
 
-  // WebSocket subscription for RemotePlayer
+  // Subscribe to player updates (works for all players!)
   useEffect(() => {
-    if (!isWebSocket || !playerId || !isPlayerReady) return;
+    if (!playerId || !isPlayerReady) return;
 
     const unsubscribe = playerService.onSongUpdate((song) => {
       emit({ type: "player.state.changed", payload: song });
     });
 
     return unsubscribe;
-  }, [playerId, isWebSocket, isPlayerReady]);
-
-  // Polling for non-WebSocket players (e.g., LocalPlayer)
-  useEffect(() => {
-    if (isWebSocket || !playerId || !isPlayerReady) return;
-
-    // Start polling interval (initial fetch already done in initializePlayer)
-    const interval = setInterval(async () => {
-      try {
-        const song = await playerService.getSong();
-        emit({ type: "player.state.changed", payload: song });
-      } catch (error) {
-        console.error("Failed to poll song:", error);
-      }
-    }, POLLING_INTERVALS.SONG_SYNC);
-
-    return () => clearInterval(interval);
-  }, [playerId, isWebSocket, isPlayerReady]);
+  }, [playerId, isPlayerReady]);
 };

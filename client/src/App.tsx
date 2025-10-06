@@ -8,6 +8,7 @@ import { currentArtworkUrlAtom } from "@/atoms/playerAtoms";
 import { initializeEventHandlers } from "@/core/services/eventHandlers";
 import { useEventSync } from "@/adapters/react/useEventSync";
 import { usePlayerSync } from "@/adapters/react/usePlayerSync";
+import { usePlayerControlSync } from "@/adapters/react/usePlayerControlSync";
 import { useLyricsSync } from "@/adapters/react/useLyricsSync";
 import { useArtworkSync } from "@/adapters/react/useArtworkSync";
 
@@ -23,6 +24,7 @@ const AppContent = () => {
 
   // Initialize event-driven architecture
   useEventSync(); // Sync events to atoms
+  usePlayerControlSync(); // Handle player control events
   usePlayerSync(); // Poll/subscribe to player state
   useLyricsSync(); // Fetch lyrics with caching
   useArtworkSync(); // Fetch artwork with caching

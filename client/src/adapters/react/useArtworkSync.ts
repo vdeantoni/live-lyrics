@@ -4,6 +4,7 @@ import {
   playerStateAtom,
   artworkUrlsAtom,
   artworkLoadingAtom,
+  currentArtworkUrlAtom,
 } from "@/atoms/playerAtoms";
 import { enabledArtworkProvidersAtom } from "@/atoms/appState";
 import { artworkService } from "@/core/services/ArtworkService";
@@ -18,22 +19,39 @@ export const useArtworkSync = () => {
   const enabledProviders = useAtomValue(enabledArtworkProvidersAtom);
   const setArtworkUrls = useSetAtom(artworkUrlsAtom);
   const setArtworkLoading = useSetAtom(artworkLoadingAtom);
+  const setCurrentArtworkUrl = useSetAtom(currentArtworkUrlAtom);
 
   // Fetch artwork when song or providers change
   useEffect(() => {
+    console.log("[useArtworkSync] Effect triggered:", {
+      name: playerState.name,
+      artist: playerState.artist,
+      album: playerState.album,
+      enabledProvidersCount: enabledProviders.length,
+    });
+
     if (!playerState.name || !playerState.artist) {
+      console.log("[useArtworkSync] Clearing artwork - no song data");
       setArtworkUrls([]);
+      setCurrentArtworkUrl("");
       setArtworkLoading(false);
       return;
     }
 
     if (enabledProviders.length === 0) {
+      console.log("[useArtworkSync] Clearing artwork - no enabled providers");
       setArtworkUrls([]);
+      setCurrentArtworkUrl("");
       setArtworkLoading(false);
       return;
     }
 
     const providerIds = enabledProviders.map((p) => p.config.id);
+    console.log("[useArtworkSync] Fetching artwork for:", {
+      name: playerState.name,
+      artist: playerState.artist,
+      providerIds,
+    });
 
     setArtworkLoading(true);
     artworkService.fetchArtwork(playerState, providerIds);
@@ -49,6 +67,7 @@ export const useArtworkSync = () => {
     enabledProviders,
     setArtworkUrls,
     setArtworkLoading,
+    setCurrentArtworkUrl,
   ]);
 
   // Listen to artwork events and update atoms
@@ -60,6 +79,7 @@ export const useArtworkSync = () => {
 
     const unsubscribeError = on("artwork.error", () => {
       setArtworkUrls([]);
+      setCurrentArtworkUrl("");
       setArtworkLoading(false);
     });
 
@@ -67,5 +87,5 @@ export const useArtworkSync = () => {
       unsubscribeLoaded();
       unsubscribeError();
     };
-  }, [setArtworkUrls, setArtworkLoading]);
+  }, [setArtworkUrls, setArtworkLoading, setCurrentArtworkUrl]);
 };

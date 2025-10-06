@@ -1,12 +1,11 @@
-import { useSetAtom } from "jotai";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
-import { resetProviderSettingsAtom } from "@/atoms/appState";
 import { clearAppData } from "@/utils/clearAppData";
+import { useSettings } from "@/adapters/react/useSettings";
 
 export const ClearAppDataSection = () => {
-  const resetProviderSettings = useSetAtom(resetProviderSettingsAtom);
+  const settings = useSettings();
   const [isClearing, setIsClearing] = useState(false);
 
   const handleClearAppData = async () => {
@@ -14,8 +13,8 @@ export const ClearAppDataSection = () => {
     try {
       await clearAppData();
 
-      // Reset provider settings to defaults in memory as well
-      resetProviderSettings();
+      // Reset provider settings to defaults
+      settings.clearAllSettings();
 
       // Show success message and reload the page to ensure clean state
       setTimeout(() => {

@@ -1,14 +1,12 @@
-import { useAtomValue, useSetAtom } from "jotai";
+import { useAtomValue } from "jotai";
 import { arrayMove } from "@dnd-kit/sortable";
-import {
-  effectiveLyricsProvidersAtom,
-  updateProviderSettingAtom,
-} from "@/atoms/appState";
+import { effectiveLyricsProvidersAtom } from "@/atoms/appState";
 import { ProviderSection } from "./ProviderSection";
+import { useSettings } from "@/adapters/react/useSettings";
 
 export const LyricsProviderSection = () => {
   const lyricsProviders = useAtomValue(effectiveLyricsProvidersAtom) || [];
-  const updateProviderSetting = useSetAtom(updateProviderSettingAtom);
+  const settings = useSettings();
 
   // Convert new registry format to old ProviderSection format
   const providersForSection = lyricsProviders.map((entry) => ({
@@ -22,7 +20,7 @@ export const LyricsProviderSection = () => {
   }));
 
   const handleToggle = (id: string, enabled: boolean) => {
-    updateProviderSetting("lyrics", id, { disabled: !enabled });
+    settings.setProviderEnabled("lyrics", id, enabled);
   };
 
   const handleReorder = (activeId: string, overId: string) => {
@@ -31,10 +29,8 @@ export const LyricsProviderSection = () => {
     const newIndex = currentIds.indexOf(overId);
     const newOrder = arrayMove(currentIds, oldIndex, newIndex);
 
-    // Update priorities based on new order
-    newOrder.forEach((id, index) => {
-      updateProviderSetting("lyrics", id, { priority: index + 1 });
-    });
+    // Reorder all providers based on new order
+    settings.reorderProviders("lyrics", newOrder);
   };
 
   return (

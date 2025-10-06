@@ -2,35 +2,26 @@
  * Provider Management API for Live Lyrics Application
  *
  * This module provides a comprehensive API for managing music providers (lyrics, artwork, players)
- * using Jotai atoms. It supports both runtime customization and testing scenarios:
+ * using the ProviderService event-driven architecture. It supports both runtime customization and testing scenarios:
  *
  * 1. Full provider registry replacement (ideal for tests)
  * 2. Individual provider add/remove operations (lightweight modifications)
  * 3. Utility functions for checking provider state
  *
- * All operations work with the reactive Jotai atom system, ensuring UI updates
- * automatically when providers change.
+ * All operations work through the ProviderService which emits events that update Jotai atoms,
+ * ensuring UI updates automatically when providers change.
  */
 
 import type { Player, LyricsProvider, ArtworkProvider } from "@/types";
 import type { ProviderConfig, AppProviders } from "@/types/appState";
-import { BUILTIN_PROVIDER_CONFIGS } from "@/config/providers";
-import { getDefaultStore } from "jotai";
-import {
-  appProvidersAtom,
-  updateProvidersAtom,
-  replaceProvidersAtom,
-  resetProviderSettingsAtom,
-} from "@/atoms/appState";
-
-// Get the global Jotai store for provider state management
-const store = getDefaultStore();
+import { providerService } from "@/core/services/ProviderService";
+import { settingsService } from "@/core/services/SettingsService";
 
 /**
  * Main Provider Management API
  *
  * This API provides methods to manage all types of providers (lyrics, artwork, players)
- * in the Live Lyrics application. All operations are reactive through Jotai atoms.
+ * in the Live Lyrics application. All operations are reactive through the event-driven architecture.
  */
 export const providerAPI = {
   /**
@@ -65,17 +56,18 @@ export const providerAPI = {
     artworkProviders?: ProviderConfig<ArtworkProvider>[];
   }) => {
     // Build the new provider registry structure
+    // Use empty arrays for any type not provided to ensure full replacement
     const newProviders: AppProviders = {
       players: providers.players || [],
       lyrics: providers.lyricsProviders || [],
       artwork: providers.artworkProviders || [],
     };
 
-    // Replace the entire provider registry using the unified atom
-    store.set(replaceProvidersAtom, newProviders);
+    // Use service to replace providers (emits event)
+    providerService.replaceProviders(newProviders);
 
     // Clear all user overrides to ensure clean test state
-    store.set(resetProviderSettingsAtom);
+    settingsService.clearAllSettings();
   },
 
   /**
@@ -84,19 +76,13 @@ export const providerAPI = {
    */
   add: {
     lyricsProvider: (config: ProviderConfig<LyricsProvider>) => {
-      const currentProviders = store.get(appProvidersAtom);
-      const updatedLyrics = [...currentProviders.lyrics, config];
-      store.set(updateProvidersAtom, { lyrics: updatedLyrics });
+      providerService.registerProvider("lyrics", config);
     },
     artworkProvider: (config: ProviderConfig<ArtworkProvider>) => {
-      const currentProviders = store.get(appProvidersAtom);
-      const updatedArtwork = [...currentProviders.artwork, config];
-      store.set(updateProvidersAtom, { artwork: updatedArtwork });
+      providerService.registerProvider("artwork", config);
     },
     player: (config: ProviderConfig<Player>) => {
-      const currentProviders = store.get(appProvidersAtom);
-      const updatedPlayers = [...currentProviders.players, config];
-      store.set(updateProvidersAtom, { players: updatedPlayers });
+      providerService.registerProvider("players", config);
     },
   },
 
@@ -106,25 +92,15 @@ export const providerAPI = {
    */
   remove: {
     lyricsProvider: (id: string) => {
-      const currentProviders = store.get(appProvidersAtom);
-      const updatedLyrics = currentProviders.lyrics.filter((p) => p.id !== id);
-      store.set(updateProvidersAtom, { lyrics: updatedLyrics });
+      providerService.unregisterProvider("lyrics", id);
       return true; // Return boolean for backwards compatibility
     },
     artworkProvider: (id: string) => {
-      const currentProviders = store.get(appProvidersAtom);
-      const updatedArtwork = currentProviders.artwork.filter(
-        (p) => p.id !== id,
-      );
-      store.set(updateProvidersAtom, { artwork: updatedArtwork });
+      providerService.unregisterProvider("artwork", id);
       return true;
     },
     player: (id: string) => {
-      const currentProviders = store.get(appProvidersAtom);
-      const updatedPlayers = currentProviders.players.filter(
-        (p) => p.id !== id,
-      );
-      store.set(updateProvidersAtom, { players: updatedPlayers });
+      providerService.unregisterProvider("players", id);
       return true;
     },
   },
@@ -134,15 +110,15 @@ export const providerAPI = {
    */
   has: {
     lyricsProvider: (id: string) => {
-      const providers = store.get(appProvidersAtom);
+      const providers = providerService.getProviders();
       return providers.lyrics.some((p) => p.id === id);
     },
     artworkProvider: (id: string) => {
-      const providers = store.get(appProvidersAtom);
+      const providers = providerService.getProviders();
       return providers.artwork.some((p) => p.id === id);
     },
     player: (id: string) => {
-      const providers = store.get(appProvidersAtom);
+      const providers = providerService.getProviders();
       return providers.players.some((p) => p.id === id);
     },
   },
@@ -152,15 +128,15 @@ export const providerAPI = {
    */
   getAll: {
     lyricsProviders: () => {
-      const providers = store.get(appProvidersAtom);
+      const providers = providerService.getProviders();
       return providers.lyrics;
     },
     artworkProviders: () => {
-      const providers = store.get(appProvidersAtom);
+      const providers = providerService.getProviders();
       return providers.artwork;
     },
     players: () => {
-      const providers = store.get(appProvidersAtom);
+      const providers = providerService.getProviders();
       return providers.players;
     },
   },
@@ -169,17 +145,11 @@ export const providerAPI = {
    * UTILITY: Reset to built-in providers only
    */
   resetToBuiltins: () => {
-    // Reset to builtin providers
-    const builtinProviders: AppProviders = {
-      players: Object.values(BUILTIN_PROVIDER_CONFIGS.players),
-      lyrics: Object.values(BUILTIN_PROVIDER_CONFIGS.lyricsProviders),
-      artwork: Object.values(BUILTIN_PROVIDER_CONFIGS.artworkProviders),
-    };
-
-    store.set(replaceProvidersAtom, builtinProviders);
+    // Use service to reset providers (emits event)
+    providerService.resetProviders();
 
     // Clear all user overrides
-    store.set(resetProviderSettingsAtom);
+    settingsService.clearAllSettings();
   },
 };
 

@@ -41,17 +41,15 @@ describe("PlayerSection", () => {
     // Even with empty custom providers, the built-in remote player is still shown
     // because the component falls back to showing it with config values
     expect(screen.getByText("Server")).toBeInTheDocument();
-    expect(screen.getByText("Remote player")).toBeInTheDocument();
+    expect(screen.getByText("Connect to a remote server")).toBeInTheDocument();
 
-    // Toggle should still be enabled
+    // Toggle should be disabled in fallback mode (no provider available)
     const toggle = screen.getByTestId("remote-player-toggle");
-    expect(toggle).not.toBeDisabled();
+    expect(toggle).toBeDisabled();
 
-    // Should show success icon
+    // Should show loading spinner in fallback mode
     const statusIcon = screen.getByTestId("remote-player-status");
-    expect(statusIcon.querySelector("svg")).toHaveClass(
-      "lucide-circle-check-big",
-    );
+    expect(statusIcon.querySelector("svg")).toHaveClass("lucide-loader-circle");
   });
 
   it("toggles between websocket and local player", async () => {

@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { injectTestRegistry } from "../helpers/injectTestRegistry";
+import { loadTestSong } from "../helpers/testPlayerHelpers";
 
 test.describe("Settings Functionality", () => {
   test.beforeEach(async ({ page }) => {
@@ -13,6 +14,16 @@ test.describe("Settings Functionality", () => {
 
     // Reload the page to apply the cleared storage
     await page.reload();
+
+    // Load test song to populate player state
+    await loadTestSong(page, {
+      name: "Bohemian Rhapsody",
+      artist: "Queen",
+      album: "A Night at the Opera",
+      currentTime: 0,
+      duration: 355,
+      isPlaying: true,
+    });
 
     await page.waitForSelector('[data-testid="player"]');
   });

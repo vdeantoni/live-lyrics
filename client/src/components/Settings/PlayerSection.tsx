@@ -1,16 +1,13 @@
-import { useAtomValue, useSetAtom } from "jotai";
-import {
-  selectedPlayerAtom,
-  effectivePlayersAtom,
-  updateProviderSettingAtom,
-} from "@/atoms/appState";
+import { useAtomValue } from "jotai";
+import { selectedPlayerAtom, effectivePlayersAtom } from "@/atoms/appState";
 import { CheckCircle, Loader2 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
+import { useSettings } from "@/adapters/react/useSettings";
 
 export const PlayerSection = () => {
   const selectedPlayer = useAtomValue(selectedPlayerAtom);
   const playerSources = useAtomValue(effectivePlayersAtom) || [];
-  const updateProviderSetting = useSetAtom(updateProviderSettingAtom);
+  const settings = useSettings();
 
   const currentPlayerId = selectedPlayer?.config.id || "local";
 
@@ -21,22 +18,16 @@ export const PlayerSection = () => {
   const isRemotePlayer = currentPlayerId === "remote";
 
   const handleToggle = (enabled: boolean) => {
-    // Enable the selected player and disable the other
-    const targetPlayerId = enabled ? "remote" : "local";
-
-    playerSources.forEach((player) => {
-      if (player.config.id === targetPlayerId) {
-        // Enable the target player
-        updateProviderSetting("players", player.config.id, {
-          disabled: undefined,
-        });
-      } else {
-        // Disable other players
-        updateProviderSetting("players", player.config.id, {
-          disabled: true,
-        });
-      }
-    });
+    // Toggle between local and remote players with explicit state setting
+    if (enabled) {
+      // Enable remote, disable local
+      settings.setProviderEnabled("players", "remote", true);
+      settings.setProviderEnabled("players", "local", false);
+    } else {
+      // Enable local, disable remote
+      settings.setProviderEnabled("players", "local", true);
+      settings.setProviderEnabled("players", "remote", false);
+    }
   };
 
   // Add defensive check for remotePlayerEntry
