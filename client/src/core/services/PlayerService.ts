@@ -100,6 +100,29 @@ export class PlayerService {
   }
 
   /**
+   * Add songs to the player queue
+   * @param songs - Songs to add to the queue
+   */
+  async add(...songs: Song[]): Promise<void> {
+    if (!this.currentPlayer) {
+      const error = new Error("No player selected");
+      emit({ type: "player.error", payload: { error } });
+      throw error;
+    }
+
+    try {
+      await this.currentPlayer.add(...songs);
+      // Get updated state and emit event
+      const song = await this.currentPlayer.getSong();
+      emit({ type: "player.state.changed", payload: song });
+    } catch (error) {
+      console.error("Failed to add songs:", error);
+      emit({ type: "player.error", payload: { error: error as Error } });
+      throw error;
+    }
+  }
+
+  /**
    * Get the current song information
    */
   async getSong(): Promise<Song> {

@@ -64,7 +64,8 @@ export const clearAll = (): void => {
  * This allows test helpers to trigger events
  */
 if (typeof window !== "undefined") {
-  (window as Window & { __EVENT_BUS__?: { emit: typeof emit } }).__EVENT_BUS__ = {
-    emit,
-  };
+  (window as Window & { __EVENT_BUS__?: { emit: typeof emit } }).__EVENT_BUS__ =
+    {
+      emit,
+    };
 }

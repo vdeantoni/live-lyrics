@@ -28,6 +28,9 @@ export class LocalPlayer implements Player {
   // Settings
   private settings: PlayerSettings = { playOnAdd: false };
 
+  // Subscription listeners for reactive updates
+  private songUpdateListeners: Array<(song: Song) => void> = [];
+
   constructor() {
     // Return existing instance if it exists (singleton pattern)
     if (LocalPlayer.instance) {
@@ -81,6 +84,9 @@ export class LocalPlayer implements Player {
           this.autoAdvance();
         }
         this.lastUpdateTime = Date.now();
+
+        // Emit update to listeners (reactive!)
+        this.notifySongUpdateListeners();
       }
     }, 100);
   }
@@ -147,10 +153,12 @@ export class LocalPlayer implements Player {
 
     this.isPlaying = true;
     this.lastUpdateTime = Date.now();
+    this.notifySongUpdateListeners();
   }
 
   async pause(): Promise<void> {
     this.isPlaying = false;
+    this.notifySongUpdateListeners();
   }
 
   async seek(time: number): Promise<void> {
@@ -161,6 +169,7 @@ export class LocalPlayer implements Player {
 
     this.currentTime = Math.max(0, Math.min(time, this.duration));
     this.lastUpdateTime = Date.now();
+    this.notifySongUpdateListeners();
   }
 
   async next(): Promise<void> {
@@ -170,6 +179,7 @@ export class LocalPlayer implements Player {
       if (this.queue.length > 0) {
         this.shiftQueueToCurrentSong();
       }
+      this.notifySongUpdateListeners();
       return;
     }
 
@@ -185,6 +195,7 @@ export class LocalPlayer implements Player {
       this.isPlaying = false;
     }
     this.lastUpdateTime = Date.now();
+    this.notifySongUpdateListeners();
   }
 
   async previous(): Promise<void> {
@@ -192,6 +203,7 @@ export class LocalPlayer implements Player {
     if (this.currentTime > 3) {
       this.currentTime = 0;
       this.lastUpdateTime = Date.now();
+      this.notifySongUpdateListeners();
       return;
     }
 
@@ -216,6 +228,7 @@ export class LocalPlayer implements Player {
       }
     }
     this.lastUpdateTime = Date.now();
+    this.notifySongUpdateListeners();
   }
 
   async add(...songs: Song[]): Promise<void> {
@@ -227,11 +240,12 @@ export class LocalPlayer implements Player {
     // If no current song, shift first to current
     if (!this.currentSong && this.queue.length > 0) {
       this.shiftQueueToCurrentSong();
+      this.notifySongUpdateListeners(); // Notify after shifting to current
     }
 
     // Auto-play if playOnAdd is enabled and we have a current song
     if (this.settings.playOnAdd && this.currentSong) {
-      await this.play();
+      await this.play(); // play() already notifies
     }
   }
 
@@ -249,6 +263,7 @@ export class LocalPlayer implements Player {
     this.currentTime = 0;
     this.duration = 0;
     this.isPlaying = false;
+    this.notifySongUpdateListeners();
     // Don't clear history - preserve for previous()
   }
 
@@ -273,6 +288,45 @@ export class LocalPlayer implements Player {
   async isAvailable(): Promise<boolean> {
     // Local player is always available
     return true;
+  }
+
+  /**
+   * Subscribe to song updates (reactive pattern like RemotePlayer)
+   * Returns unsubscribe function
+   */
+  onSongUpdate(listener: (song: Song) => void): () => void {
+    this.songUpdateListeners.push(listener);
+
+    // Return unsubscribe function
+    return () => {
+      const index = this.songUpdateListeners.indexOf(listener);
+      if (index > -1) {
+        this.songUpdateListeners.splice(index, 1);
+      }
+    };
+  }
+
+  /**
+   * Notify all song update listeners with current state
+   */
+  private notifySongUpdateListeners(): void {
+    const song: Song = {
+      name: this.currentSong?.name || "",
+      artist: this.currentSong?.artist || "",
+      album: this.currentSong?.album || "",
+      currentTime: this.currentTime,
+      duration: this.duration,
+      isPlaying: this.isPlaying,
+    };
+
+    // Notify all listeners
+    this.songUpdateListeners.forEach((listener) => {
+      try {
+        listener(song);
+      } catch (error) {
+        console.error("[LocalPlayer] Error in song update listener:", error);
+      }
+    });
   }
 
   /**

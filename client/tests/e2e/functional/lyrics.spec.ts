@@ -3,6 +3,7 @@ import {
   injectTestRegistry,
   injectCustomTestRegistry,
 } from "../helpers/injectTestRegistry";
+import { loadTestSong } from "../helpers/testPlayerHelpers";
 
 test.describe("Lyrics Display", () => {
   test.beforeEach(async ({ page }) => {
@@ -10,14 +11,18 @@ test.describe("Lyrics Display", () => {
     await injectTestRegistry(page);
     await page.goto("/");
 
-    // Wait for the app to be ready with more robust checks
-    await page.waitForSelector('[data-testid="lyrics-screen"]');
-
-    // Ensure song information is loaded before proceeding
-    await page.waitForFunction(() => {
-      const songName = document.querySelector('[data-testid="song-name"]');
-      return songName && songName.textContent?.includes("Bohemian Rhapsody");
+    // Load test song to populate player state
+    await loadTestSong(page, {
+      name: "Bohemian Rhapsody",
+      artist: "Queen",
+      album: "A Night at the Opera",
+      currentTime: 0,
+      duration: 355,
+      isPlaying: true,
     });
+
+    // Wait for the lyrics screen to be visible
+    await page.waitForSelector('[data-testid="lyrics-screen"]');
 
     // Also wait for the providers to be set up (check for lack of error state)
     await page.waitForFunction(() => {

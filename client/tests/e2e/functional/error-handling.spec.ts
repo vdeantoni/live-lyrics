@@ -3,6 +3,7 @@ import {
   injectTestRegistry,
   injectCustomTestRegistry,
 } from "../helpers/injectTestRegistry";
+import { loadTestSong } from "../helpers/testPlayerHelpers";
 
 test.describe("Error Handling", () => {
   test("should handle lyrics API failures gracefully", async ({ page }) => {
@@ -29,6 +30,17 @@ test.describe("Error Handling", () => {
     });
 
     await page.goto("/");
+
+    // Load test song to populate player state
+    await loadTestSong(page, {
+      name: "Bohemian Rhapsody",
+      artist: "Queen",
+      album: "A Night at the Opera",
+      currentTime: 0,
+      duration: 355,
+      isPlaying: true,
+    });
+
     await page.setViewportSize({ width: 768, height: 1024 });
     await page.waitForSelector('[data-testid="player"]');
 

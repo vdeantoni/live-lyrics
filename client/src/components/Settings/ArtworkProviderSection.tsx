@@ -1,14 +1,12 @@
-import { useAtomValue, useSetAtom } from "jotai";
+import { useAtomValue } from "jotai";
 import { arrayMove } from "@dnd-kit/sortable";
-import {
-  effectiveArtworkProvidersAtom,
-  updateProviderSettingAtom,
-} from "@/atoms/appState";
+import { effectiveArtworkProvidersAtom } from "@/atoms/appState";
 import { ProviderSection } from "./ProviderSection";
+import { useSettings } from "@/adapters/react/useSettings";
 
 export const ArtworkProviderSection = () => {
   const artworkProviders = useAtomValue(effectiveArtworkProvidersAtom) || [];
-  const updateProviderSetting = useSetAtom(updateProviderSettingAtom);
+  const settings = useSettings();
 
   // Convert new registry format to old ProviderSection format
   const providersForSection = artworkProviders.map((entry) => ({
@@ -22,7 +20,7 @@ export const ArtworkProviderSection = () => {
   }));
 
   const handleToggle = (id: string, enabled: boolean) => {
-    updateProviderSetting("artwork", id, { disabled: !enabled });
+    settings.setProviderEnabled("artwork", id, enabled);
   };
 
   const handleReorder = (activeId: string, overId: string) => {
@@ -31,10 +29,8 @@ export const ArtworkProviderSection = () => {
     const newIndex = currentIds.indexOf(overId);
     const newOrder = arrayMove(currentIds, oldIndex, newIndex);
 
-    // Update priorities based on new order
-    newOrder.forEach((id, index) => {
-      updateProviderSetting("artwork", id, { priority: index + 1 });
-    });
+    // Reorder all providers based on new order
+    settings.reorderProviders("artwork", newOrder);
   };
 
   return (

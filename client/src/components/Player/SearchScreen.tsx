@@ -153,6 +153,7 @@ const SearchScreen = () => {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search for a song..."
+            data-testid="search-input"
             className="focus:border-primary/50 focus:ring-primary/20 w-full rounded-lg border border-white/10 bg-zinc-800/50 py-3 pl-11 pr-10 text-white placeholder-zinc-500 outline-none focus:ring-2"
           />
           {query && (

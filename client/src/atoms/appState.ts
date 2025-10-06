@@ -1,16 +1,13 @@
 import { atom } from "jotai";
-import { atomWithStorage } from "jotai/utils";
 import type {
   CoreAppState,
   AppProviders,
-  AppProviderSettings,
   UserProviderOverride,
   ProviderConfig,
   EffectiveProvider,
 } from "@/types/appState";
-import type { Playlist, PlaylistSong, Song } from "@/types";
+import type { Playlist, Song } from "@/types";
 import { BUILTIN_PROVIDER_CONFIGS } from "@/config/providers";
-import { DEFAULT_PLAYLISTS } from "@/config/playlists";
 
 /**
  * Unified AppState Atoms
@@ -34,143 +31,27 @@ export const appProvidersAtom = atom<AppProviders>({
   artwork: Object.values(BUILTIN_PROVIDER_CONFIGS.artworkProviders),
 });
 
-// 3. User Provider Settings (persistent, sparse overrides only)
+// 3. User Provider Settings (reactive state only)
+// SettingsService handles all localStorage persistence
 // Split into separate atoms to prevent cross-contamination between provider types
 
 /**
- * Factory function to create provider settings atoms with Map<->localStorage serialization
+ * Settings atoms are plain atoms - persistence is handled by SettingsService
+ * useEventSync syncs localStorage → atoms when settings.changed events are emitted
  */
-const createProviderSettingsAtom = (storageKey: string, settingsType: string) =>
-  atomWithStorage<Map<string, UserProviderOverride>>(storageKey, new Map(), {
-    getItem: (key, initialValue) => {
-      try {
-        const storedValue = localStorage.getItem(key);
-        if (storedValue === null) return initialValue;
-        const parsed = JSON.parse(storedValue);
-        return new Map(
-          Object.entries(parsed) as [string, UserProviderOverride][],
-        );
-      } catch {
-        return initialValue;
-      }
-    },
-    setItem: (key, value) => {
-      try {
-        localStorage.setItem(
-          key,
-          JSON.stringify(Object.fromEntries(value.entries())),
-        );
-      } catch (error) {
-        console.error(`Failed to save ${settingsType} settings:`, error);
-      }
-    },
-    removeItem: (key) => localStorage.removeItem(key),
-  });
-
-const playersSettingsAtom = createProviderSettingsAtom(
-  "LIVE_LYRICS_PLAYER_SETTINGS",
-  "player",
+export const playersSettingsAtom = atom<Map<string, UserProviderOverride>>(
+  new Map(),
 );
 
-const lyricsSettingsAtom = createProviderSettingsAtom(
-  "LIVE_LYRICS_LYRICS_SETTINGS",
-  "lyrics",
+export const lyricsSettingsAtom = atom<Map<string, UserProviderOverride>>(
+  new Map(),
 );
 
-const artworkSettingsAtom = createProviderSettingsAtom(
-  "LIVE_LYRICS_ARTWORK_SETTINGS",
-  "artwork",
+export const artworkSettingsAtom = atom<Map<string, UserProviderOverride>>(
+  new Map(),
 );
 
-// 4. Helper Atoms for Easy Updates
-
-/**
- * Update the entire provider registry (useful for tests and runtime changes)
- */
-export const updateProvidersAtom = atom(
-  null,
-  (get, set, providers: Partial<AppProviders>) => {
-    const current = get(appProvidersAtom);
-    set(appProvidersAtom, { ...current, ...providers });
-  },
-);
-
-/**
- * Replace the entire provider registry (for tests)
- */
-export const replaceProvidersAtom = atom(
-  null,
-  (_get, set, providers: AppProviders) => {
-    set(appProvidersAtom, providers);
-  },
-);
-
-/**
- * Update user settings for a specific provider
- */
-export const updateProviderSettingAtom = atom(
-  null,
-  (
-    get,
-    set,
-    providerType: keyof AppProviderSettings,
-    providerId: string,
-    override: Partial<UserProviderOverride>,
-  ) => {
-    // Read the specific settings atom directly for type safety
-    const settingsAtomMap = {
-      players: playersSettingsAtom,
-      lyrics: lyricsSettingsAtom,
-      artwork: artworkSettingsAtom,
-    };
-
-    const targetAtom = settingsAtomMap[providerType];
-    const typeSettings = new Map(get(targetAtom));
-    const existingOverride = typeSettings.get(providerId) || {};
-
-    // Merge with existing override
-    const newOverride = { ...existingOverride, ...override };
-
-    // If the override is now empty (all undefined), remove it entirely
-    if (Object.values(newOverride).every((v) => v === undefined)) {
-      typeSettings.delete(providerId);
-    } else {
-      typeSettings.set(providerId, newOverride);
-    }
-
-    set(targetAtom, typeSettings);
-  },
-);
-
-/**
- * Remove all user overrides for a provider
- */
-export const removeProviderSettingAtom = atom(
-  null,
-  (get, set, providerType: keyof AppProviderSettings, providerId: string) => {
-    // Read the specific settings atom directly for type safety
-    const settingsAtomMap = {
-      players: playersSettingsAtom,
-      lyrics: lyricsSettingsAtom,
-      artwork: artworkSettingsAtom,
-    };
-
-    const targetAtom = settingsAtomMap[providerType];
-    const typeSettings = new Map(get(targetAtom));
-    typeSettings.delete(providerId);
-
-    set(targetAtom, typeSettings);
-  },
-);
-
-/**
- * Reset all provider settings (clear user overrides)
- */
-export const resetProviderSettingsAtom = atom(null, (_get, set) => {
-  set(playersSettingsAtom, new Map());
-  set(lyricsSettingsAtom, new Map());
-  set(artworkSettingsAtom, new Map());
-});
+// 4. Helper Atom for Core App State Updates
 
 /**
  * Update core app state (loading, ready, error)
@@ -292,89 +173,7 @@ export const selectedPlayerAtom = atom((get) => {
   return enabledPlayers[0] || null;
 });
 
-// 6. Convenience Helper Atoms
-
-/**
- * Disable a provider
- */
-export const disableProviderAtom = atom(
-  null,
-  (_get, set, providerType: keyof AppProviderSettings, providerId: string) => {
-    set(updateProviderSettingAtom, providerType, providerId, {
-      disabled: true,
-    });
-  },
-);
-
-/**
- * Enable a provider
- */
-export const enableProviderAtom = atom(
-  null,
-  (_get, set, providerType: keyof AppProviderSettings, providerId: string) => {
-    set(updateProviderSettingAtom, providerType, providerId, {
-      disabled: undefined,
-    });
-  },
-);
-
-/**
- * Set provider priority
- */
-export const setProviderPriorityAtom = atom(
-  null,
-  (
-    _get,
-    set,
-    providerType: keyof AppProviderSettings,
-    providerId: string,
-    priority: number,
-  ) => {
-    set(updateProviderSettingAtom, providerType, providerId, { priority });
-  },
-);
-
-/**
- * Set provider config
- */
-export const setProviderConfigAtom = atom(
-  null,
-  (
-    _get,
-    set,
-    providerType: keyof AppProviderSettings,
-    providerId: string,
-    config: Record<string, string | number | boolean>,
-  ) => {
-    set(updateProviderSettingAtom, providerType, providerId, { config });
-  },
-);
-
-/**
- * Toggle provider enabled/disabled
- */
-export const toggleProviderAtom = atom(
-  null,
-  (get, set, providerType: keyof AppProviderSettings, providerId: string) => {
-    // Read the specific settings atom directly for type safety
-    const settingsAtomMap = {
-      players: playersSettingsAtom,
-      lyrics: lyricsSettingsAtom,
-      artwork: artworkSettingsAtom,
-    };
-
-    const targetAtom = settingsAtomMap[providerType];
-    const settings = get(targetAtom);
-    const currentOverride = settings.get(providerId);
-    const currentlyDisabled = currentOverride?.disabled === true;
-
-    set(updateProviderSettingAtom, providerType, providerId, {
-      disabled: currentlyDisabled ? undefined : true,
-    });
-  },
-);
-
-// 7. Settings UI State
+// 6. Settings UI State
 // Simple settings state - not backward compatibility, just clean architecture
 export const settingsOpenAtom = atom(false);
 export const toggleSettingsAtom = atom(null, (get, set) => {
@@ -417,12 +216,9 @@ export const toggleSearchAtom = atom(null, (get, set) => {
   set(searchOpenAtom, !isSearchOpen);
 });
 
-// 9. Playlists State
-// Pre-installed with default playlists, lazy loads on first access
-export const playlistsAtom = atomWithStorage<Playlist[]>(
-  "LIVE_LYRICS_PLAYLISTS",
-  DEFAULT_PLAYLISTS,
-);
+// 9. Playlists State (reactive state only)
+// PlaylistService handles all localStorage persistence
+export const playlistsAtom = atom<Playlist[]>([]);
 
 export const playlistsOpenAtom = atom(false);
 export const selectedSongForPlaylistAtom = atom<Song | null>(null);
@@ -447,136 +243,7 @@ export const togglePlaylistsAtom = atom(null, (get, set) => {
   set(playlistsOpenAtom, !isPlaylistsOpen);
 });
 
-// Playlist CRUD action atoms
-export const createPlaylistAtom = atom(
-  null,
-  (get, set, name: string, description?: string) => {
-    const playlists = get(playlistsAtom);
-    const newPlaylist: Playlist = {
-      id: `playlist_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
-      name,
-      description,
-      songs: [],
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-    };
-    set(playlistsAtom, [...playlists, newPlaylist]);
-    return newPlaylist;
-  },
-);
-
-export const updatePlaylistAtom = atom(
-  null,
-  (
-    get,
-    set,
-    playlistId: string,
-    updates: Partial<Omit<Playlist, "id" | "createdAt">>,
-  ) => {
-    const playlists = get(playlistsAtom);
-    set(
-      playlistsAtom,
-      playlists.map((playlist) =>
-        playlist.id === playlistId
-          ? { ...playlist, ...updates, updatedAt: Date.now() }
-          : playlist,
-      ),
-    );
-  },
-);
-
-export const deletePlaylistAtom = atom(null, (get, set, playlistId: string) => {
-  const playlists = get(playlistsAtom);
-  set(
-    playlistsAtom,
-    playlists.filter((playlist) => playlist.id !== playlistId),
-  );
-});
-
-export const addSongToPlaylistAtom = atom(
-  null,
-  (get, set, playlistId: string, song: Omit<PlaylistSong, "id" | "order">) => {
-    const playlists = get(playlistsAtom);
-    set(
-      playlistsAtom,
-      playlists.map((playlist) => {
-        if (playlist.id === playlistId) {
-          // Check for duplicates based on name + artist
-          const isDuplicate = playlist.songs.some(
-            (s) => s.name === song.name && s.artist === song.artist,
-          );
-          if (isDuplicate) {
-            return playlist;
-          }
-
-          const newSong: PlaylistSong = {
-            ...song,
-            id: `song_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
-            order: playlist.songs.length,
-          };
-          return {
-            ...playlist,
-            songs: [...playlist.songs, newSong],
-            updatedAt: Date.now(),
-          };
-        }
-        return playlist;
-      }),
-    );
-  },
-);
-
-export const removeSongFromPlaylistAtom = atom(
-  null,
-  (get, set, playlistId: string, songId: string) => {
-    const playlists = get(playlistsAtom);
-    set(
-      playlistsAtom,
-      playlists.map((playlist) => {
-        if (playlist.id === playlistId) {
-          const updatedSongs = playlist.songs
-            .filter((song) => song.id !== songId)
-            .map((song, index) => ({ ...song, order: index })); // Re-index orders
-          return {
-            ...playlist,
-            songs: updatedSongs,
-            updatedAt: Date.now(),
-          };
-        }
-        return playlist;
-      }),
-    );
-  },
-);
-
-export const reorderPlaylistSongsAtom = atom(
-  null,
-  (get, set, playlistId: string, oldIndex: number, newIndex: number) => {
-    const playlists = get(playlistsAtom);
-    set(
-      playlistsAtom,
-      playlists.map((playlist) => {
-        if (playlist.id === playlistId) {
-          const songs = [...playlist.songs];
-          const [movedSong] = songs.splice(oldIndex, 1);
-          songs.splice(newIndex, 0, movedSong);
-          // Re-index all songs
-          const reorderedSongs = songs.map((song, index) => ({
-            ...song,
-            order: index,
-          }));
-          return {
-            ...playlist,
-            songs: reorderedSongs,
-            updatedAt: Date.now(),
-          };
-        }
-        return playlist;
-      }),
-    );
-  },
-);
-
+// Playlist dialog helper atoms
 export const openAddToPlaylistDialogAtom = atom(
   null,
   (_get, set, song: Song) => {

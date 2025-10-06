@@ -5,9 +5,9 @@
  * in both unit tests and E2E tests with the new Jotai-based system.
  *
  * Test Data Configuration:
- * - Players: Local player only (returns Bohemian Rhapsody)
- * - Lyrics: Test provider that only returns lyrics for Bohemian Rhapsody
- * - Artwork: Test provider that returns no artwork but is available
+ * - Players: Local and Remote players (returns Bohemian Rhapsody)
+ * - Lyrics: LrcLib provider that only returns lyrics for Bohemian Rhapsody
+ * - Artwork: iTunes provider that returns no artwork but is available
  */
 
 import type { LyricsProvider, ArtworkProvider, Player } from "@/types";
@@ -29,26 +29,33 @@ export const createTestProviderConfigs = (): {
 } => ({
   lyricsProviders: [
     {
-      id: "test-lyrics",
-      name: "Test Lyrics",
-      description: "Test lyrics provider (Bohemian Rhapsody only)",
-      load: async () => new TestLyricsProvider("test-lyrics", "Test Lyrics"),
+      id: "lrclib",
+      name: "LrcLib",
+      description:
+        "Community-driven lyrics database with synchronized lyrics support",
+      load: async () => new TestLyricsProvider("lrclib", "LrcLib"),
     },
   ],
   artworkProviders: [
     {
-      id: "test-artwork",
-      name: "Test Artwork",
-      description: "Test artwork provider (no artwork)",
-      load: async () => new TestArtworkProvider("test-artwork", "Test Artwork"),
+      id: "itunes",
+      name: "iTunes",
+      description: "Album artwork from iTunes Search API",
+      load: async () => new TestArtworkProvider("itunes", "iTunes"),
     },
   ],
   players: [
     {
       id: "local",
       name: "Local",
-      description: "Local test player",
+      description: "Local player",
       load: async () => new TestPlayer("local", "Local"),
+    },
+    {
+      id: "remote",
+      name: "Server",
+      description: "Remote player",
+      load: async () => new TestPlayer("remote", "Server"),
     },
   ],
 });
@@ -76,19 +83,24 @@ export const testScenarios = {
     lyricsProviders: [],
     artworkProviders: [
       {
-        id: "test-artwork",
-        name: "Test Artwork",
-        description: "Test artwork provider (no artwork)",
-        load: async () =>
-          new TestArtworkProvider("test-artwork", "Test Artwork"),
+        id: "itunes",
+        name: "iTunes",
+        description: "Album artwork from iTunes Search API",
+        load: async () => new TestArtworkProvider("itunes", "iTunes"),
       },
     ],
     players: [
       {
         id: "local",
         name: "Local",
-        description: "Local test player",
+        description: "Local player",
         load: async () => new TestPlayer("local", "Local"),
+      },
+      {
+        id: "remote",
+        name: "Server",
+        description: "Remote player",
+        load: async () => new TestPlayer("remote", "Server"),
       },
     ],
   }),
@@ -104,10 +116,11 @@ export const testScenarios = {
   } => ({
     lyricsProviders: [
       {
-        id: "test-lyrics",
-        name: "Test Lyrics",
-        description: "Test lyrics provider (Bohemian Rhapsody only)",
-        load: async () => new TestLyricsProvider("test-lyrics", "Test Lyrics"),
+        id: "lrclib",
+        name: "LrcLib",
+        description:
+          "Community-driven lyrics database with synchronized lyrics support",
+        load: async () => new TestLyricsProvider("lrclib", "LrcLib"),
       },
     ],
     artworkProviders: [],
@@ -115,8 +128,14 @@ export const testScenarios = {
       {
         id: "local",
         name: "Local",
-        description: "Local test player",
+        description: "Local player",
         load: async () => new TestPlayer("local", "Local"),
+      },
+      {
+        id: "remote",
+        name: "Server",
+        description: "Remote player",
+        load: async () => new TestPlayer("remote", "Server"),
       },
     ],
   }),
@@ -132,19 +151,19 @@ export const testScenarios = {
   } => ({
     lyricsProviders: [
       {
-        id: "test-lyrics",
-        name: "Test Lyrics",
-        description: "Test lyrics provider (Bohemian Rhapsody only)",
-        load: async () => new TestLyricsProvider("test-lyrics", "Test Lyrics"),
+        id: "lrclib",
+        name: "LrcLib",
+        description:
+          "Community-driven lyrics database with synchronized lyrics support",
+        load: async () => new TestLyricsProvider("lrclib", "LrcLib"),
       },
     ],
     artworkProviders: [
       {
-        id: "test-artwork",
-        name: "Test Artwork",
-        description: "Test artwork provider (no artwork)",
-        load: async () =>
-          new TestArtworkProvider("test-artwork", "Test Artwork"),
+        id: "itunes",
+        name: "iTunes",
+        description: "Album artwork from iTunes Search API",
+        load: async () => new TestArtworkProvider("itunes", "iTunes"),
       },
     ],
     players: [],
@@ -161,42 +180,46 @@ export const testScenarios = {
   } => ({
     lyricsProviders: [
       {
-        id: "test-lyrics-1",
-        name: "Test Lyrics Primary",
-        description: "Primary lyrics provider",
-        load: async () =>
-          new TestLyricsProvider("test-lyrics-1", "Test Lyrics Primary"),
+        id: "lrclib",
+        name: "LrcLib",
+        description:
+          "Community-driven lyrics database with synchronized lyrics support",
+        load: async () => new TestLyricsProvider("lrclib", "LrcLib"),
       },
       {
-        id: "test-lyrics-2",
-        name: "Test Lyrics Secondary",
-        description: "Secondary lyrics provider",
+        id: "local-server",
+        name: "Local Server",
+        description: "Local server lyrics provider",
         load: async () =>
-          new TestLyricsProvider("test-lyrics-2", "Test Lyrics Secondary"),
+          new TestLyricsProvider("local-server", "Local Server"),
       },
       {
-        id: "test-lyrics-3",
-        name: "Test Lyrics Tertiary",
-        description: "Tertiary lyrics provider",
-        load: async () =>
-          new TestLyricsProvider("test-lyrics-3", "Test Lyrics Tertiary"),
+        id: "simulated",
+        name: "Simulated",
+        description: "Simulated lyrics provider",
+        load: async () => new TestLyricsProvider("simulated", "Simulated"),
       },
     ],
     artworkProviders: [
       {
-        id: "test-artwork",
-        name: "Test Artwork",
-        description: "Test artwork provider (no artwork)",
-        load: async () =>
-          new TestArtworkProvider("test-artwork", "Test Artwork"),
+        id: "itunes",
+        name: "iTunes",
+        description: "Album artwork from iTunes Search API",
+        load: async () => new TestArtworkProvider("itunes", "iTunes"),
       },
     ],
     players: [
       {
         id: "local",
         name: "Local",
-        description: "Local test player",
+        description: "Local player",
         load: async () => new TestPlayer("local", "Local"),
+      },
+      {
+        id: "remote",
+        name: "Server",
+        description: "Remote player",
+        load: async () => new TestPlayer("remote", "Server"),
       },
     ],
   }),
@@ -212,10 +235,11 @@ export const testScenarios = {
   } => ({
     lyricsProviders: [
       {
-        id: "test-lyrics",
-        name: "Test Lyrics",
-        description: "Test lyrics provider",
-        load: async () => new TestLyricsProvider("test-lyrics", "Test Lyrics"),
+        id: "lrclib",
+        name: "LrcLib",
+        description:
+          "Community-driven lyrics database with synchronized lyrics support",
+        load: async () => new TestLyricsProvider("lrclib", "LrcLib"),
       },
     ],
     artworkProviders: [],
@@ -223,8 +247,14 @@ export const testScenarios = {
       {
         id: "local",
         name: "Local",
-        description: "Local test player",
+        description: "Local player",
         load: async () => new TestPlayer("local", "Local"),
+      },
+      {
+        id: "remote",
+        name: "Server",
+        description: "Remote player",
+        load: async () => new TestPlayer("remote", "Server"),
       },
     ],
   }),

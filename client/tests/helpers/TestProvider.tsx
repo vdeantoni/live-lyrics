@@ -1,6 +1,7 @@
 import React from "react";
 import { Provider as JotaiProvider, useAtomValue } from "jotai";
 import { useBootstrap } from "@/hooks/useBootstrap";
+import { useEventSync } from "@/adapters/react/useEventSync";
 import { coreAppStateAtom } from "@/atoms/appState";
 import { providerAPI } from "@/api/providerAPI";
 import { createJotaiTestProviders } from "./testUtils";
@@ -68,6 +69,8 @@ const BootstrapWrapper: React.FC<{ children: React.ReactNode }> = ({
 }) => {
   // Use the simplified bootstrap hook without passing registry
   useBootstrap();
+  // Set up event synchronization for settings changes
+  useEventSync();
   const appState = useAtomValue(coreAppStateAtom);
 
   // Show loading state until bootstrap is complete

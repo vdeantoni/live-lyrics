@@ -1,4 +1,6 @@
 import type { Song } from "@/types";
+import type { ProviderType as SettingsProviderType } from "@/core/services/SettingsService";
+import type { ProviderType } from "@/core/services/ProviderService";
 
 /**
  * Type-safe event definitions for the application event bus
@@ -9,6 +11,7 @@ export type AppEvent =
   | { type: "player.play" }
   | { type: "player.pause" }
   | { type: "player.seek"; payload: { time: number } }
+  | { type: "player.song.add"; payload: { songs: Song[] } }
 
   // Player state events (emitted by services)
   | { type: "player.state.changed"; payload: Song }
@@ -26,6 +29,34 @@ export type AppEvent =
   | { type: "artwork.fetch"; payload: { song: Song } }
   | { type: "artwork.loaded"; payload: { urls: string[] } }
   | { type: "artwork.error"; payload: { error: Error } }
+
+  // Settings events (emitted by SettingsService)
+  | {
+      type: "settings.changed";
+      payload: { providerType: SettingsProviderType; providerId?: string };
+    }
+
+  // Provider events (emitted by ProviderService)
+  | {
+      type: "providers.changed";
+      payload: { providerType?: ProviderType };
+    }
+
+  // Playlist events (emitted by PlaylistService)
+  | {
+      type: "playlist.changed";
+      payload: {
+        operation:
+          | "create"
+          | "update"
+          | "delete"
+          | "addSong"
+          | "removeSong"
+          | "reorder";
+        playlistId?: string;
+        songId?: string;
+      };
+    }
 
   // UI events
   | { type: "ui.settings.toggle" }

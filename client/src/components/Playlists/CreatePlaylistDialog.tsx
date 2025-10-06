@@ -1,12 +1,11 @@
 import { useState } from "react";
 import { useSetAtom } from "jotai";
 import {
-  createPlaylistAtom,
-  addSongToPlaylistAtom,
   selectedSongForPlaylistAtom,
   closeAddToPlaylistDialogAtom,
 } from "@/atoms/appState";
 import { useAtomValue } from "jotai";
+import { usePlaylists } from "@/adapters/react/usePlaylists";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
@@ -26,8 +25,7 @@ const CreatePlaylistDialog = ({
   const [description, setDescription] = useState("");
   const [isCreating, setIsCreating] = useState(false);
 
-  const createPlaylist = useSetAtom(createPlaylistAtom);
-  const addSongToPlaylist = useSetAtom(addSongToPlaylistAtom);
+  const { createPlaylist, addSongToPlaylist } = usePlaylists();
   const selectedSong = useAtomValue(selectedSongForPlaylistAtom);
   const closeAddToPlaylistDialog = useSetAtom(closeAddToPlaylistDialogAtom);
 
