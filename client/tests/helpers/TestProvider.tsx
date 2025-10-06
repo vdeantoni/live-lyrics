@@ -1,6 +1,5 @@
 import React from "react";
 import { Provider as JotaiProvider, useAtomValue } from "jotai";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useBootstrap } from "@/hooks/useBootstrap";
 import { coreAppStateAtom } from "@/atoms/appState";
 import { providerRegistryAPI } from "@/api/providerAPI";
@@ -16,20 +15,6 @@ interface TestProviderProps {
     players?: ProviderConfig<Player>[];
   };
 }
-
-// Create a test QueryClient that doesn't retry
-const createTestQueryClient = () =>
-  new QueryClient({
-    defaultOptions: {
-      queries: {
-        retry: false,
-        gcTime: 0, // Updated from cacheTime
-      },
-      mutations: {
-        retry: false,
-      },
-    },
-  });
 
 /**
  * Test provider that sets up Jotai atoms directly for testing
@@ -56,17 +41,12 @@ export const TestProvider: React.FC<TestProviderProps> = ({
   children,
   customProviders,
 }) => {
-  // ✅ Memoize QueryClient to avoid creating new instance on every render
-  const queryClient = React.useMemo(() => createTestQueryClient(), []);
-
   return (
-    <QueryClientProvider client={queryClient}>
-      <JotaiProvider>
-        <JotaiTestSetup customProviders={customProviders}>
-          <BootstrapWrapper>{children}</BootstrapWrapper>
-        </JotaiTestSetup>
-      </JotaiProvider>
-    </QueryClientProvider>
+    <JotaiProvider>
+      <JotaiTestSetup customProviders={customProviders}>
+        <BootstrapWrapper>{children}</BootstrapWrapper>
+      </JotaiTestSetup>
+    </JotaiProvider>
   );
 };
 

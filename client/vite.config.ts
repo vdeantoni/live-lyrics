@@ -26,7 +26,7 @@ export default defineConfig({
           // UI libraries
           "vendor-ui": ["framer-motion", "lucide-react"],
           // State management
-          "vendor-state": ["jotai", "@tanstack/react-query"],
+          "vendor-state": ["jotai", "mitt", "idb"],
           // Radix UI primitives
           "vendor-radix": [
             "@radix-ui/react-aspect-ratio",

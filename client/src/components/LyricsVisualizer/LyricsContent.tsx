@@ -1,10 +1,9 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
-import { useAtomValue, useSetAtom } from "jotai";
+import { useAtomValue } from "jotai";
 import {
   lyricsDataAtom,
   activeLineAtom,
   activeWordAtom,
-  playerControlAtom,
   playerStateAtom,
 } from "@/atoms/playerAtoms";
 import LyricsLine from "./LyricsLine";
@@ -14,14 +13,17 @@ import {
   calculateCenteredScrollPosition,
 } from "@/utils/scrollUtils";
 import type { LineData } from "@/types";
+import { usePlayerControls } from "@/adapters/react/usePlayerControls";
 
 const LyricsContent: React.FC = () => {
   // Atom subscriptions
   const lyricsData = useAtomValue(lyricsDataAtom);
   const activeLine = useAtomValue(activeLineAtom);
   const activeWord = useAtomValue(activeWordAtom);
-  const playerControl = useSetAtom(playerControlAtom);
   const playerState = useAtomValue(playerStateAtom);
+
+  // Player controls (event-driven)
+  const { seek } = usePlayerControls();
 
   // Refs and state
   const contentRef = useRef<HTMLDivElement>(null);
@@ -37,10 +39,10 @@ const LyricsContent: React.FC = () => {
   const handleLineClick = useCallback(
     (time: number) => {
       if (time !== undefined) {
-        playerControl({ type: "seek", payload: time });
+        seek(time);
       }
     },
-    [playerControl],
+    [seek],
   );
 
   // Unified scroll function with proper cleanup and coordination
