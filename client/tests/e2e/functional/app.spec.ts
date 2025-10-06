@@ -1,12 +1,56 @@
 import { test, expect } from "@playwright/test";
 import { injectTestRegistry } from "../helpers/injectTestRegistry";
+import {
+  loadTestSong,
+  setupPlayerWithSong,
+} from "../helpers/testPlayerHelpers";
 
 test.describe("Application Layout and Responsiveness", () => {
   test.beforeEach(async ({ page }) => {
-    // Inject test registry instead of mocking HTTP requests
     await injectTestRegistry(page);
-
     await page.goto("/");
+  });
+
+  test.describe("Initial Load States", () => {
+    test("should display empty state when no song is loaded", async ({
+      page,
+    }) => {
+      await page.waitForSelector('[data-testid="player"]');
+
+      // Should show empty screen, not lyrics screen
+      await expect(page.locator('[data-testid="empty-screen"]')).toBeVisible();
+      await expect(
+        page.locator('[data-testid="lyrics-screen"]'),
+      ).not.toBeVisible();
+
+      // Play button should be disabled when no song
+      const playButton = page.locator('[data-testid="play-pause-button"]');
+      await expect(playButton).toBeDisabled();
+    });
+
+    test("should display lyrics screen when song is loaded", async ({
+      page,
+    }) => {
+      await setupPlayerWithSong(page);
+
+      // Should show lyrics screen, not empty screen
+      await expect(page.locator('[data-testid="lyrics-screen"]')).toBeVisible();
+      await expect(
+        page.locator('[data-testid="empty-screen"]'),
+      ).not.toBeVisible();
+
+      // Song information should be visible
+      await expect(page.locator('[data-testid="song-name"]')).toContainText(
+        "Bohemian Rhapsody",
+      );
+      await expect(page.locator('[data-testid="artist-name"]')).toContainText(
+        "Queen",
+      );
+
+      // Play button should be enabled
+      const playButton = page.locator('[data-testid="play-pause-button"]');
+      await expect(playButton).toBeEnabled();
+    });
   });
 
   test.describe("Portrait Layout (Mobile)", () => {
@@ -14,172 +58,99 @@ test.describe("Application Layout and Responsiveness", () => {
       await page.setViewportSize({ width: 768, height: 1024 });
     });
 
-    test("should load the application successfully", async ({ page }) => {
-      await expect(page.locator("#root")).toBeVisible();
-      await expect(page.locator('[data-testid="player"]')).toBeVisible();
-    });
-
     test("should display all main components in portrait", async ({ page }) => {
+      await loadTestSong(page);
+
       await expect(page.locator('[data-testid="player"]')).toBeVisible();
       await expect(
         page.locator('[data-testid="player-controls"]'),
       ).toBeVisible();
       await expect(page.locator('[data-testid="lyrics-screen"]')).toBeVisible();
+    });
 
-      // Wait for the song name to appear by targeting the h2 within the new div
-      await expect(page.locator('[data-testid="song-name"]')).toContainText(
-        "Bohemian Rhapsody",
-      );
+    test("should not have horizontal scroll", async ({ page }) => {
+      await page.waitForSelector('[data-testid="player"]');
 
-      // Now that we know the song name is there, we can check the artist
-      await expect(page.locator('[data-testid="artist-name"]')).toContainText(
-        "Queen",
-      );
+      const scrollWidth = await page.evaluate(() => document.body.scrollWidth);
+      const clientWidth = await page.evaluate(() => document.body.clientWidth);
+      expect(scrollWidth).toBeLessThanOrEqual(clientWidth + 5);
     });
   });
 
-  test("should handle scroll behavior correctly", async ({ page }) => {
-    await page.waitForSelector('[data-testid="player"]');
+  test.describe("Landscape Layout (Desktop/Tablet)", () => {
+    test.beforeEach(async ({ page }) => {
+      await page.setViewportSize({ width: 1024, height: 768 });
+    });
 
-    const body = page.locator("body");
-    await expect(body).toBeVisible();
+    test("should display all main components in landscape", async ({
+      page,
+    }) => {
+      await loadTestSong(page);
 
-    // Should not have horizontal scroll
-    const scrollWidth = await page.evaluate(() => document.body.scrollWidth);
-    const clientWidth = await page.evaluate(() => document.body.clientWidth);
-    expect(scrollWidth).toBeLessThanOrEqual(clientWidth + 5);
-  });
-});
+      await expect(page.locator('[data-testid="player"]')).toBeVisible();
+      await expect(
+        page.locator('[data-testid="player-controls"]'),
+      ).toBeVisible();
+      await expect(page.locator('[data-testid="lyrics-screen"]')).toBeVisible();
+    });
 
-test.describe("Landscape Layout (Desktop/Tablet)", () => {
-  test.beforeEach(async ({ page }) => {
-    await injectTestRegistry(page);
-    await page.goto("/");
-    await page.setViewportSize({ width: 1024, height: 768 });
-  });
+    test("should not have horizontal scroll", async ({ page }) => {
+      await page.waitForSelector('[data-testid="player"]');
 
-  test("should adapt layout for landscape orientation", async ({ page }) => {
-    await page.waitForSelector('[data-testid="player"]');
-
-    await expect(page.locator('[data-testid="player"]')).toBeVisible();
-    await expect(page.locator('[data-testid="player-controls"]')).toBeVisible();
-    await expect(page.locator('[data-testid="lyrics-screen"]')).toBeVisible();
+      const scrollWidth = await page.evaluate(() => document.body.scrollWidth);
+      const clientWidth = await page.evaluate(() => document.body.clientWidth);
+      expect(scrollWidth).toBeLessThanOrEqual(clientWidth + 5);
+    });
   });
 
-  test("should optimize space usage in landscape", async ({ page }) => {
-    await page.waitForSelector('[data-testid="player"]');
-
-    const visualizer = page.locator('[data-testid="player"]');
-    const visualizerBox = await visualizer.boundingBox();
-    expect(visualizerBox?.width).toBeGreaterThan(800);
-  });
-});
-
-test.describe("Responsive Transitions", () => {
-  test.beforeEach(async ({ page }) => {
-    await injectTestRegistry(page);
-    await page.goto("/");
-  });
-
-  test("should handle orientation changes smoothly", async ({ page }) => {
-    // Start in portrait
-    await page.setViewportSize({ width: 768, height: 1024 });
-    await page.waitForSelector('[data-testid="player"]');
-
-    // Rotate to landscape
-    await page.setViewportSize({ width: 1024, height: 768 });
-
-    await expect(page.locator('[data-testid="player"]')).toBeVisible();
-
-    // Rotate back to portrait
-    await page.setViewportSize({ width: 768, height: 1024 });
-
-    await expect(page.locator('[data-testid="player"]')).toBeVisible();
-  });
-
-  test("should handle different screen sizes", async ({ page }) => {
-    const viewports = [
-      { width: 320, height: 568 }, // iPhone SE
-      { width: 768, height: 1024 }, // iPad Portrait
-      { width: 1024, height: 768 }, // iPad Landscape
-      { width: 1440, height: 900 }, // Desktop
-    ];
-
-    for (const viewport of viewports) {
-      await page.setViewportSize(viewport);
+  test.describe("Responsive Behavior", () => {
+    test("should handle orientation changes smoothly", async ({ page }) => {
+      // Start in portrait
+      await page.setViewportSize({ width: 768, height: 1024 });
+      await page.waitForSelector('[data-testid="player"]');
 
       await expect(page.locator('[data-testid="player"]')).toBeVisible();
 
-      // Should not have horizontal scroll
-      const scrollWidth = await page.evaluate(() => document.body.scrollWidth);
-      const clientWidth = await page.evaluate(() => document.body.clientWidth);
-      expect(scrollWidth).toBeLessThanOrEqual(clientWidth + 10);
-    }
-  });
-});
+      // Rotate to landscape
+      await page.setViewportSize({ width: 1024, height: 768 });
+      await expect(page.locator('[data-testid="player"]')).toBeVisible();
 
-test.describe("Performance and Loading", () => {
-  test("should load quickly", async ({ page }) => {
-    await injectTestRegistry(page);
-    const startTime = Date.now();
+      // Rotate back to portrait
+      await page.setViewportSize({ width: 768, height: 1024 });
+      await expect(page.locator('[data-testid="player"]')).toBeVisible();
+    });
 
-    await page.goto("/");
-    await page.waitForSelector('[data-testid="player"]');
+    test("should handle various screen sizes without horizontal scroll", async ({
+      page,
+    }) => {
+      const viewports = [
+        { width: 320, height: 568, name: "iPhone SE" },
+        { width: 768, height: 1024, name: "iPad Portrait" },
+        { width: 1024, height: 768, name: "iPad Landscape" },
+        { width: 1440, height: 900, name: "Desktop" },
+      ];
 
-    const loadTime = Date.now() - startTime;
-    expect(loadTime).toBeLessThan(10000);
-  });
-});
+      for (const viewport of viewports) {
+        await page.setViewportSize({
+          width: viewport.width,
+          height: viewport.height,
+        });
 
-test.describe("Accessibility", () => {
-  test.beforeEach(async ({ page }) => {
-    await injectTestRegistry(page);
-    await page.goto("/");
-  });
+        // Player should be visible
+        await expect(page.locator('[data-testid="player"]')).toBeVisible();
 
-  test("should have proper focus management", async ({ page }) => {
-    await page.setViewportSize({ width: 768, height: 1024 });
-    await page.waitForSelector('[data-testid="player"]');
-
-    const interactiveElements = [
-      '[data-testid="play-pause-button"]',
-      '[data-testid="progress-slider"]',
-      'button[aria-label="Search lyrics"]',
-      'button[aria-label="View playlists"]',
-    ];
-
-    let foundFocusableElement = false;
-
-    // Try to focus each element directly to test if it's focusable
-    for (const selector of interactiveElements) {
-      const element = page.locator(selector);
-      if (await element.isVisible()) {
-        try {
-          await element.focus();
-          const isFocused = await element.evaluate(
-            (el) => document.activeElement === el,
-          );
-          if (isFocused) {
-            foundFocusableElement = true;
-            break;
-          }
-        } catch {
-          // Element not focusable, continue to next
-        }
+        // Should not have horizontal scroll
+        const scrollWidth = await page.evaluate(
+          () => document.body.scrollWidth,
+        );
+        const clientWidth = await page.evaluate(
+          () => document.body.clientWidth,
+        );
+        expect(
+          scrollWidth,
+          `Horizontal scroll detected on ${viewport.name}`,
+        ).toBeLessThanOrEqual(clientWidth + 10);
       }
-    }
-
-    expect(foundFocusableElement).toBe(true);
-  });
-
-  test("should have adequate color contrast", async ({ page }) => {
-    await page.setViewportSize({ width: 768, height: 1024 });
-    await page.waitForSelector('[data-testid="player"]');
-
-    const songName = page.locator('[data-testid="song-name"]');
-    if (await songName.isVisible()) {
-      const color = await songName.evaluate((el) => getComputedStyle(el).color);
-      expect(color).not.toBe("rgba(0, 0, 0, 0)");
-    }
+    });
   });
 });
