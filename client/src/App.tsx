@@ -2,11 +2,9 @@ import { useEffect } from "react";
 import { Provider as JotaiProvider } from "jotai";
 import { useAtomValue } from "jotai";
 import Player from "@/components/Player/Player";
-import LoadingScreen from "@/components/Player/LoadingScreen";
-import EmptyScreen from "@/components/Player/EmptyScreen";
 import { useBootstrap } from "@/hooks/useBootstrap";
 import { coreAppStateAtom } from "@/atoms/appState";
-import { currentArtworkUrlAtom, isPlayerEmptyAtom } from "@/atoms/playerAtoms";
+import { currentArtworkUrlAtom } from "@/atoms/playerAtoms";
 import { initializeEventHandlers } from "@/core/services/eventHandlers";
 import { useEventSync } from "@/adapters/react/useEventSync";
 import { usePlayerSync } from "@/adapters/react/usePlayerSync";
@@ -29,15 +27,9 @@ const AppContent = () => {
   useLyricsSync(); // Fetch lyrics with caching
   useArtworkSync(); // Fetch artwork with caching
 
-  // App and player state
+  // App state
   const appState = useAtomValue(coreAppStateAtom);
-  const isPlayerEmpty = useAtomValue(isPlayerEmptyAtom);
   const currentArtworkUrl = useAtomValue(currentArtworkUrlAtom);
-
-  // Show loading screen during bootstrap
-  if (appState.isLoading) {
-    return <LoadingScreen />;
-  }
 
   // Show error if bootstrap failed
   if (appState.error) {
@@ -46,11 +38,6 @@ const AppContent = () => {
         <div className="text-red-400">Error: {appState.error}</div>
       </div>
     );
-  }
-
-  // Show empty screen when player has no song
-  if (isPlayerEmpty) {
-    return <EmptyScreen />;
   }
 
   return (
