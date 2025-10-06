@@ -1,239 +1,146 @@
 import { test, type Page } from "@playwright/test";
 import { injectTestRegistry } from "../helpers/injectTestRegistry";
+import { setupPlayerWithSong } from "../helpers/testPlayerHelpers";
 
 /**
- * Utility function to wait for app to be ready for screenshots
- * Focuses on essential UI elements being rendered, not API loading states
+ * Helper to take a screenshot with consistent waiting
  */
-const waitForAppReady = async (page: Page) => {
-  // Wait for core UI elements to be present
-  await page.waitForSelector('[data-testid="player"]');
-
-  const lyricsContainer = page
-    .locator('[data-testid="lyrics-container"]')
-    .or(page.locator('[data-testid="no-lyrics"]'));
-
-  await lyricsContainer.waitFor();
-
-  // Small delay for any CSS transitions to complete
-  await page.waitForTimeout(500);
+const takeScreenshot = async (page: Page, filename: string, extraDelay = 0) => {
+  if (extraDelay > 0) {
+    await page.waitForTimeout(extraDelay);
+  }
+  await page.screenshot({
+    path: `lost-pixel/${filename}.png`,
+    fullPage: true,
+  });
 };
 
 /**
- * Utility function to wait for settings screen to be ready
+ * Helper to wait for settings screen to be ready
  */
 const waitForSettingsReady = async (page: Page) => {
   await page.waitForSelector('[data-testid="settings-screen"]');
-
-  // Wait for provider sections to load
   await page.waitForSelector('[data-testid="lyrics-provider-section"]');
   await page.waitForSelector('[data-testid="artwork-provider-section"]');
-
-  // Small delay for animations to complete
   await page.waitForTimeout(800);
 };
 
 test.describe("Visual Regression Tests", () => {
   test.beforeEach(async ({ page }) => {
-    // Use test registry for consistent, reliable mocking (no external API calls)
     await injectTestRegistry(page);
   });
 
-  // ===== Breakpoint Coverage: Mobile, Tablet, Desktop =====
+  // ===== Empty State (No Song) - Key Viewports =====
 
-  test("mobile viewport (320x568)", async ({ page }) => {
-    await page.setViewportSize({ width: 320, height: 568 }); // iPhone SE
+  test("empty state mobile (320x568)", async ({ page }) => {
+    await page.setViewportSize({ width: 320, height: 568 });
     await page.goto("/");
-
-    await waitForAppReady(page);
-
-    await page.screenshot({
-      path: "lost-pixel/mobile.png",
-      fullPage: true,
-    });
+    await page.waitForSelector('[data-testid="empty-screen"]');
+    await takeScreenshot(page, "empty-mobile", 300);
   });
 
-  test("tablet portrait (768x1024)", async ({ page }) => {
+  test("empty state tablet (768x1024)", async ({ page }) => {
     await page.setViewportSize({ width: 768, height: 1024 });
     await page.goto("/");
-
-    await waitForAppReady(page);
-
-    await page.screenshot({
-      path: "lost-pixel/tablet-portrait.png",
-      fullPage: true,
-    });
+    await page.waitForSelector('[data-testid="empty-screen"]');
+    await takeScreenshot(page, "empty-tablet", 300);
   });
 
-  test("tablet landscape (1024x768)", async ({ page }) => {
-    await page.setViewportSize({ width: 1024, height: 768 });
-    await page.goto("/");
-
-    await waitForAppReady(page);
-
-    await page.screenshot({
-      path: "lost-pixel/tablet-landscape.png",
-      fullPage: true,
-    });
-  });
-
-  test("desktop (1440x900)", async ({ page }) => {
+  test("empty state desktop (1440x900)", async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto("/");
-
-    await waitForAppReady(page);
-
-    await page.screenshot({
-      path: "lost-pixel/desktop.png",
-      fullPage: true,
-    });
+    await page.waitForSelector('[data-testid="empty-screen"]');
+    await takeScreenshot(page, "empty-desktop", 300);
   });
 
-  // ===== Player State Coverage =====
+  // ===== Player with Song - Key States =====
 
-  test("player playing state", async ({ page }) => {
+  test("player with song paused (tablet)", async ({ page }) => {
     await page.setViewportSize({ width: 768, height: 1024 });
     await page.goto("/");
+    await setupPlayerWithSong(page);
+    await takeScreenshot(page, "player-paused", 300);
+  });
 
-    await waitForAppReady(page);
+  test("player with song playing (tablet)", async ({ page }) => {
+    await page.setViewportSize({ width: 768, height: 1024 });
+    await page.goto("/");
+    await setupPlayerWithSong(page);
 
     // Click play button to show playing state
     await page.click('[data-testid="play-pause-button"]');
-    await page.waitForTimeout(300);
-
-    await page.screenshot({
-      path: "lost-pixel/player-playing.png",
-      fullPage: true,
-    });
+    await takeScreenshot(page, "player-playing", 300);
   });
 
-  test("lyrics with highlighting", async ({ page }) => {
+  test("lyrics with highlighting (tablet)", async ({ page }) => {
     await page.setViewportSize({ width: 768, height: 1024 });
     await page.goto("/");
-
-    await waitForAppReady(page);
+    await setupPlayerWithSong(page);
 
     // Start playing to trigger highlighting
     await page.click('[data-testid="play-pause-button"]');
 
-    // Wait for highlighting (optional)
-    try {
-      await page.waitForSelector(
-        '[data-testid="lyrics-line"][data-current="true"]',
-        { timeout: 2000 },
-      );
-    } catch {
-      // No highlighting is fine
-    }
+    // Wait for highlighted line
+    await page
+      .waitForSelector('[data-testid="lyrics-line"][data-current="true"]', {
+        timeout: 2000,
+      })
+      .catch(() => {});
 
-    await page.waitForTimeout(500);
-
-    await page.screenshot({
-      path: "lost-pixel/lyrics-highlighted.png",
-      fullPage: true,
-    });
+    await takeScreenshot(page, "lyrics-highlighted", 500);
   });
 
-  // ===== Settings Screen Coverage =====
+  // ===== Settings Screen - Key Viewports =====
 
-  test("settings screen tablet", async ({ page }) => {
-    await page.setViewportSize({ width: 768, height: 1024 });
-    await page.goto("/");
-
-    await waitForAppReady(page);
-
-    // Open settings
-    await page.click('[data-testid="settings-button"]');
-    await waitForSettingsReady(page);
-
-    await page.screenshot({
-      path: "lost-pixel/settings-tablet.png",
-      fullPage: true,
-    });
-  });
-
-  test("settings screen mobile", async ({ page }) => {
+  test("settings screen mobile (320x568)", async ({ page }) => {
     await page.setViewportSize({ width: 320, height: 568 });
     await page.goto("/");
+    await page.waitForSelector('[data-testid="player"]');
 
-    await waitForAppReady(page);
-
-    // Open settings
     await page.click('[data-testid="settings-button"]');
     await waitForSettingsReady(page);
-
-    await page.screenshot({
-      path: "lost-pixel/settings-mobile.png",
-      fullPage: true,
-    });
+    await takeScreenshot(page, "settings-mobile");
   });
 
-  test("settings screen desktop", async ({ page }) => {
-    await page.setViewportSize({ width: 1440, height: 900 });
+  test("settings screen tablet (768x1024)", async ({ page }) => {
+    await page.setViewportSize({ width: 768, height: 1024 });
     await page.goto("/");
+    await page.waitForSelector('[data-testid="player"]');
 
-    await waitForAppReady(page);
-
-    // Open settings
     await page.click('[data-testid="settings-button"]');
     await waitForSettingsReady(page);
-
-    await page.screenshot({
-      path: "lost-pixel/settings-desktop.png",
-      fullPage: true,
-    });
+    await takeScreenshot(page, "settings-tablet");
   });
 
-  // ===== Playlists Screen Coverage =====
+  // ===== Playlists Screen - Key Viewports =====
 
   test("playlists screen mobile (320x568)", async ({ page }) => {
     await page.setViewportSize({ width: 320, height: 568 });
     await page.goto("/");
+    await page.waitForSelector('[data-testid="player"]');
 
-    await waitForAppReady(page);
-
-    // Open playlists screen
     await page.click('[data-testid="playlists-button"]');
     await page.waitForSelector('[data-testid="playlists-screen"]');
-    await page.waitForTimeout(500);
-
-    await page.screenshot({
-      path: "lost-pixel/playlists-mobile.png",
-      fullPage: true,
-    });
+    await takeScreenshot(page, "playlists-mobile", 500);
   });
 
   test("playlists screen tablet (768x1024)", async ({ page }) => {
     await page.setViewportSize({ width: 768, height: 1024 });
     await page.goto("/");
+    await page.waitForSelector('[data-testid="player"]');
 
-    await waitForAppReady(page);
-
-    // Open playlists screen
     await page.click('[data-testid="playlists-button"]');
     await page.waitForSelector('[data-testid="playlists-screen"]');
-    await page.waitForTimeout(500);
-
-    await page.screenshot({
-      path: "lost-pixel/playlists-tablet.png",
-      fullPage: true,
-    });
+    await takeScreenshot(page, "playlists-tablet", 500);
   });
 
   test("playlists screen desktop (1440x900)", async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto("/");
+    await page.waitForSelector('[data-testid="player"]');
 
-    await waitForAppReady(page);
-
-    // Open playlists screen
     await page.click('[data-testid="playlists-button"]');
     await page.waitForSelector('[data-testid="playlists-screen"]');
-    await page.waitForTimeout(500);
-
-    await page.screenshot({
-      path: "lost-pixel/playlists-desktop.png",
-      fullPage: true,
-    });
+    await takeScreenshot(page, "playlists-desktop", 500);
   });
 });
