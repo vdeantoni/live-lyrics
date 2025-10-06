@@ -27,7 +27,7 @@ type AtomMockRenderOptions = Omit<RenderOptions, "wrapper">;
 
 /**
  * Create default test providers for Jotai atoms
- * These are ProviderConfig objects that work with providerRegistryAPI.replaceAll()
+ * These are ProviderConfig objects that work with providerAPI.replaceAll()
  */
 export const createJotaiTestProviders = () => {
   return createTestProviderConfigs();

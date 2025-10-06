@@ -13,7 +13,7 @@ import { useAtomValue } from "jotai";
  * 2. Updates app loading state so components can wait on it
  *
  * Note: Provider setup is now handled by the Jotai atoms directly.
- * Tests can use providerRegistryAPI.replaceAll() before rendering.
+ * Tests can use providerAPI.replaceAll() before rendering.
  */
 export const useBootstrap = () => {
   const setAppState = useSetAtom(updateCoreAppStateAtom);

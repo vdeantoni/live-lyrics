@@ -2,7 +2,7 @@ import React from "react";
 import { Provider as JotaiProvider, useAtomValue } from "jotai";
 import { useBootstrap } from "@/hooks/useBootstrap";
 import { coreAppStateAtom } from "@/atoms/appState";
-import { providerRegistryAPI } from "@/api/providerAPI";
+import { providerAPI } from "@/api/providerAPI";
 import { createJotaiTestProviders } from "./testUtils";
 import type { LyricsProvider, ArtworkProvider, Player } from "@/types";
 import type { ProviderConfig } from "@/types/appState";
@@ -18,7 +18,7 @@ interface TestProviderProps {
 
 /**
  * Test provider that sets up Jotai atoms directly for testing
- * Uses the new providerRegistryAPI.replaceAll approach
+ * Uses providerAPI.replaceAll approach
  *
  * @example
  * ```typescript
@@ -57,7 +57,7 @@ const JotaiTestSetup: React.FC<TestProviderProps> = ({
   // ✅ Use useEffect for side effects (not useMemo)
   React.useEffect(() => {
     const providers = customProviders || createJotaiTestProviders();
-    providerRegistryAPI.replaceAll(providers);
+    providerAPI.replaceAll(providers);
   }, [customProviders]);
 
   return <>{children}</>;
