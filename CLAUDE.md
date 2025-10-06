@@ -212,19 +212,43 @@ The app uses a centralized, well-organized Jotai atom system divided into two ma
 
 **`appState.ts`** - Application-wide state:
 - **Core atoms**: `coreAppStateAtom` (bootstrap state), `appProvidersAtom` (provider registry), `settingsOpenAtom`, `searchOpenAtom` (UI state)
-- **Settings atoms**: Separate private atoms (`playersSettingsAtom`, `lyricsSettingsAtom`, `artworkSettingsAtom`) with custom localStorage serialization for Map types to prevent cross-contamination
+- **Settings atoms**: Separate atoms (`playersSettingsAtom`, `lyricsSettingsAtom`, `artworkSettingsAtom`) with custom localStorage serialization for Map types to prevent cross-contamination
 - **Computed atoms**: `effectiveLyricsProvidersAtom`, `effectiveArtworkProvidersAtom`, `effectivePlayersAtom`, `selectedPlayerAtom`, `enabledLyricsProvidersAtom` (combine configs with user overrides)
-- **Write-only action atoms**: `updateProviderSettingAtom`, `toggleProviderAtom`, `toggleSettingsAtom`, `toggleSearchAtom`, `resetProviderSettingsAtom`, etc.
+- **UI control atoms**: `toggleSettingsAtom`, `toggleSearchAtom`, `togglePlaylistsAtom` for managing UI state
 - **Helper factory**: `createProviderSettingsAtom()` eliminates duplicate localStorage serialization code
 
 **`playerAtoms.ts`** - Music player state:
 - **Read atoms**: `playerStateAtom` (current song), `lyricsContentAtom`, `lyricsDataAtom`, `activeLineAtom`, `activeWordAtom`, `artworkUrlsAtom`, loading states
 - **UI state atom**: `playerUIStateAtom` (isDragging, isUserSeeking)
 
+**Event-Driven Services** (`client/src/core/services/`):
+
+The app follows an event-driven architecture pattern for state mutations:
+
+**SettingsService** (`SettingsService.ts`):
+- Singleton service handling all settings-related business logic
+- Methods: `setProviderEnabled()`, `toggleProvider()`, `reorderProviders()`, `resetProviderSettings()`, `clearAllSettings()`
+- Each method updates localStorage and emits `settings.changed` events
+- Events are handled by `useEventSync()` which updates Jotai atoms
+- Components use `useSettings()` hook to access service methods
+
+**PlayerService** (`PlayerService.ts`):
+- Singleton service for player control (play, pause, seek)
+- Emits `player.state.changed` events after each action
+- Components use `usePlayerControls()` hook
+
+**Event Synchronization**:
+- `useEventSync()` hook bridges events → Jotai atoms
+- Listens to `settings.changed`, `player.state.changed` events
+- Updates appropriate atoms when events are emitted
+- Ensures components reactively update via atom subscriptions
+
 **Design Patterns**:
 - **Separation of concerns**: App-wide state vs player state
+- **Event-driven architecture**: Services emit events → useEventSync updates atoms → components react
 - **Computed atoms**: Efficient derived state with granular subscriptions
-- **Write-only atoms**: Action dispatchers instead of setters for better encapsulation
+- **Service layer**: Business logic centralized in services, not in atoms
+- **React hooks**: Clean component interface via `useSettings()`, `usePlayerControls()`
 - **Factory functions**: DRY code for repeated patterns (storage serialization)
 
 **Timing Constants** (`client/src/constants/timing.ts`):
