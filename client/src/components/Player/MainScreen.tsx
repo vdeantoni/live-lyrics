@@ -8,6 +8,7 @@ import {
   toggleSearchAtom,
   togglePlaylistsAtom,
 } from "@/atoms/appState";
+import { isPlayerEmptyAtom } from "@/atoms/playerAtoms";
 import { Settings, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
@@ -16,6 +17,7 @@ import SettingsScreen from "./SettingsScreen";
 import SearchScreen from "./SearchScreen";
 import PlaylistsScreen from "./PlaylistsScreen";
 import LoadingScreen from "./LoadingScreen";
+import EmptyScreen from "./EmptyScreen";
 import AddToPlaylistDialog from "../Playlists/AddToPlaylistDialog";
 
 const MainScreen = () => {
@@ -23,6 +25,7 @@ const MainScreen = () => {
   const isSearchOpen = useAtomValue(searchOpenAtom);
   const isPlaylistsOpen = useAtomValue(playlistsOpenAtom);
   const appState = useAtomValue(coreAppStateAtom);
+  const isPlayerEmpty = useAtomValue(isPlayerEmptyAtom);
   const toggleSettings = useSetAtom(toggleSettingsAtom);
   const toggleSearch = useSetAtom(toggleSearchAtom);
   const togglePlaylists = useSetAtom(togglePlaylistsAtom);
@@ -92,7 +95,7 @@ const MainScreen = () => {
         </Button>
       </div>
 
-      {/* Lyrics Screen - Shows when app is ready */}
+      {/* Main Content Area - Shows when app is ready */}
       <AnimatePresence>
         {appState.isReady && (
           <motion.div
@@ -102,7 +105,8 @@ const MainScreen = () => {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.5, ease: "easeInOut" }}
           >
-            <LyricsScreen />
+            {/* Show EmptyScreen or LyricsScreen based on player state */}
+            {isPlayerEmpty ? <EmptyScreen /> : <LyricsScreen />}
           </motion.div>
         )}
       </AnimatePresence>
