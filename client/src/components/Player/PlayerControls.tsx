@@ -121,6 +121,7 @@ const PlayerControls = () => {
       <div className="flex items-center justify-center gap-3">
         {/* Search Button */}
         <Button
+          data-testid="search-button"
           size="sm"
           variant="ghost"
           className={`dark:hover:bg-accent/0 hover:text-primary h-10 w-10 transform rounded-full p-2 transition-colors ${

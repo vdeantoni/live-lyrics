@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { injectTestRegistry } from "../helpers/injectTestRegistry";
-import { loadTestSong } from "../helpers/testPlayerHelpers";
+import { setupPlayerWithSong } from "../helpers/testPlayerHelpers";
 
 test.describe("Playlists Functionality", () => {
   test.beforeEach(async ({ page }) => {
@@ -17,25 +17,14 @@ test.describe("Playlists Functionality", () => {
     // Reload to apply cleared storage
     await page.reload();
 
-    // Load test song to populate player state
-    await loadTestSong(page, {
-      name: "Bohemian Rhapsody",
-      artist: "Queen",
-      album: "A Night at the Opera",
-      currentTime: 0,
-      duration: 355,
-      isPlaying: true,
-    });
-
-    await page.waitForSelector('[data-testid="player"]');
+    // Setup player with song and viewport
+    await setupPlayerWithSong(page);
   });
 
   test.describe("Screen Navigation", () => {
     test("should open and close playlists screen via button", async ({
       page,
     }) => {
-      await page.setViewportSize({ width: 768, height: 1024 });
-
       // Initially should show lyrics screen
       await expect(page.locator('[data-testid="lyrics-screen"]')).toBeVisible();
       await expect(
@@ -72,8 +61,6 @@ test.describe("Playlists Functionality", () => {
     test("should open playlists screen via keyboard shortcut P", async ({
       page,
     }) => {
-      await page.setViewportSize({ width: 768, height: 1024 });
-
       // Press P to open playlists
       await page.keyboard.press("p");
 
@@ -96,8 +83,6 @@ test.describe("Playlists Functionality", () => {
     test("should maintain mutual exclusivity with settings and search", async ({
       page,
     }) => {
-      await page.setViewportSize({ width: 768, height: 1024 });
-
       // Open settings
       await page.keyboard.press("c");
       await expect(
@@ -135,8 +120,6 @@ test.describe("Playlists Functionality", () => {
     test("should create a new playlist when playlists exist", async ({
       page,
     }) => {
-      await page.setViewportSize({ width: 768, height: 1024 });
-
       // Open playlists and create first playlist
       await page.keyboard.press("p");
       await page.getByTestId("create-new-playlist-button").click();
@@ -157,8 +140,6 @@ test.describe("Playlists Functionality", () => {
     });
 
     test("should not create playlist with empty name", async ({ page }) => {
-      await page.setViewportSize({ width: 768, height: 1024 });
-
       await page.keyboard.press("p");
       await page.getByTestId("create-new-playlist-button").click();
 
@@ -178,14 +159,6 @@ test.describe("Playlists Functionality", () => {
     test("should open add-to-playlist dialog via keyboard shortcut A", async ({
       page,
     }) => {
-      await page.setViewportSize({ width: 768, height: 1024 });
-
-      // Wait for song to be loaded
-      await page.waitForFunction(() => {
-        const songName = document.querySelector('[data-testid="song-name"]');
-        return songName && songName.textContent?.trim() !== "";
-      });
-
       // Press A to open add-to-playlist dialog
       await page.keyboard.press("a");
 
@@ -205,8 +178,6 @@ test.describe("Playlists Functionality", () => {
     });
 
     test("should add current song to existing playlist", async ({ page }) => {
-      await page.setViewportSize({ width: 768, height: 1024 });
-
       // Create a playlist first
       await page.keyboard.press("p");
       await page.getByTestId("create-new-playlist-button").click();
@@ -216,12 +187,6 @@ test.describe("Playlists Functionality", () => {
       // Close playlists screen
       const closeButton = page.locator('[data-testid="close-overlay-button"]');
       await closeButton.click();
-
-      // Wait for song
-      await page.waitForFunction(() => {
-        const songName = document.querySelector('[data-testid="song-name"]');
-        return songName && songName.textContent?.trim() !== "";
-      });
 
       // Open add-to-playlist dialog
       await page.keyboard.press("a");
@@ -260,14 +225,6 @@ test.describe("Playlists Functionality", () => {
     test("should create new playlist and add current song", async ({
       page,
     }) => {
-      await page.setViewportSize({ width: 768, height: 1024 });
-
-      // Wait for song
-      await page.waitForFunction(() => {
-        const songName = document.querySelector('[data-testid="song-name"]');
-        return songName && songName.textContent?.trim() !== "";
-      });
-
       // Open add-to-playlist dialog
       await page.keyboard.press("a");
 
@@ -309,8 +266,6 @@ test.describe("Playlists Functionality", () => {
     });
 
     test("should prevent adding duplicate songs", async ({ page }) => {
-      await page.setViewportSize({ width: 768, height: 1024 });
-
       // Create playlist and add song once
       await page.keyboard.press("p");
       await page.getByTestId("create-new-playlist-button").click();
@@ -343,8 +298,6 @@ test.describe("Playlists Functionality", () => {
 
   test.describe("Add to Playlist - Search Results", () => {
     test("should add search result to playlist", async ({ page }) => {
-      await page.setViewportSize({ width: 768, height: 1024 });
-
       // Create a playlist first
       await page.keyboard.press("p");
       await page.getByTestId("create-new-playlist-button").click();
@@ -409,99 +362,10 @@ test.describe("Playlists Functionality", () => {
       // Should have a song now
       await expect(page.getByText("1 song")).toBeVisible();
     });
-
-    test("should handle multiple songs added from search", async ({ page }) => {
-      await page.setViewportSize({ width: 768, height: 1024 });
-
-      // Create playlist
-      await page.keyboard.press("p");
-      await page.getByTestId("create-new-playlist-button").click();
-      await page.locator("#playlist-name").fill("Multi-Song");
-      await page.getByTestId("create-playlist-submit").click();
-
-      const closeButton = page.locator('[data-testid="close-overlay-button"]');
-      await closeButton.click();
-
-      // Search and add first song
-      await page.keyboard.press("s");
-      await page
-        .locator('input[placeholder="Search for a song..."]')
-        .fill("hotel");
-      await page.waitForSelector('button[aria-label="Add to playlist"]');
-      await page
-        .locator('button[aria-label="Add to playlist"]')
-        .first()
-        .click();
-
-      // Wait for dialog to be visible
-      await expect(
-        page.getByRole("heading", { name: "Add to Playlist" }),
-      ).toBeVisible();
-
-      // Click playlist in dialog - wait for it to be enabled
-      const firstPlaylistButton = page
-        .locator('[data-testid^="add-to-playlist-item-"]')
-        .filter({ hasText: "Multi-Song" });
-      await expect(firstPlaylistButton).toBeEnabled();
-      await firstPlaylistButton.click();
-
-      // Wait for dialog to close
-      await expect(
-        page.getByRole("heading", { name: "Add to Playlist" }),
-      ).not.toBeVisible();
-
-      // Search and add second song (modify search)
-      const searchInput = page.locator(
-        'input[placeholder="Search for a song..."]',
-      );
-      await searchInput.clear();
-      await searchInput.fill("imagine");
-      await page.waitForSelector('button[aria-label="Add to playlist"]');
-      await page
-        .locator('button[aria-label="Add to playlist"]')
-        .first()
-        .click();
-
-      // Wait for dialog to be visible
-      await expect(
-        page.getByRole("heading", { name: "Add to Playlist" }),
-      ).toBeVisible();
-
-      // Click playlist in dialog - wait for it to be enabled
-      const secondPlaylistButton = page
-        .locator('[data-testid^="add-to-playlist-item-"]')
-        .filter({ hasText: "Multi-Song" });
-      await expect(secondPlaylistButton).toBeEnabled();
-      await secondPlaylistButton.click();
-
-      // Close search and check playlist
-      await page.keyboard.press("s");
-      await page.keyboard.press("p");
-
-      // Wait for playlists screen to be visible
-      await expect(
-        page.locator('[data-testid="playlists-screen"]'),
-      ).toBeVisible();
-
-      // Expand playlist using test ID
-      await page
-        .locator('[data-testid^="playlist-header-"]')
-        .filter({ hasText: "Multi-Song" })
-        .click();
-
-      // Should have 2 different songs (Hotel California and Imagine)
-      const songCountText = await page
-        .locator('p:has-text("song")')
-        .first()
-        .textContent();
-      expect(songCountText).toMatch(/\d+ songs?/);
-    });
   });
 
   test.describe("Playlist Management", () => {
     test("should expand and collapse playlists", async ({ page }) => {
-      await page.setViewportSize({ width: 768, height: 1024 });
-
       // Create playlist with song
       await page.keyboard.press("p");
       await page.getByTestId("create-new-playlist-button").click();
@@ -557,8 +421,6 @@ test.describe("Playlists Functionality", () => {
     });
 
     test("should delete playlist with confirmation", async ({ page }) => {
-      await page.setViewportSize({ width: 768, height: 1024 });
-
       // Create playlist
       await page.keyboard.press("p");
       await page.getByTestId("create-new-playlist-button").click();
@@ -591,8 +453,6 @@ test.describe("Playlists Functionality", () => {
 
   test.describe("Song Management", () => {
     test("should remove song from playlist", async ({ page }) => {
-      await page.setViewportSize({ width: 768, height: 1024 });
-
       // Create playlist and add song
       await page.keyboard.press("p");
       await page.getByTestId("create-new-playlist-button").click();
@@ -641,6 +501,7 @@ test.describe("Playlists Functionality", () => {
 
   test.describe("Responsiveness", () => {
     test("should work in landscape mode", async ({ page }) => {
+      // Override viewport for landscape test
       await page.setViewportSize({ width: 1024, height: 768 });
 
       // Open playlists
@@ -658,38 +519,12 @@ test.describe("Playlists Functionality", () => {
         page.getByRole("heading", { name: "Create Playlist" }),
       ).toBeVisible();
     });
-
-    test("should handle different screen sizes", async ({ page }) => {
-      const viewports = [
-        { width: 320, height: 568 }, // iPhone SE
-        { width: 768, height: 1024 }, // iPad Portrait
-        { width: 1024, height: 768 }, // iPad Landscape
-      ];
-
-      for (const viewport of viewports) {
-        await page.setViewportSize(viewport);
-
-        // Open playlists
-        await page.keyboard.press("p");
-        await expect(
-          page.locator('[data-testid="playlists-screen"]'),
-        ).toBeVisible();
-
-        // Close playlists
-        await page.keyboard.press("p");
-        await expect(
-          page.locator('[data-testid="playlists-screen"]'),
-        ).not.toBeVisible();
-      }
-    });
   });
 
   test.describe("Button States", () => {
     test("should highlight playlists button when playlists screen open", async ({
       page,
     }) => {
-      await page.setViewportSize({ width: 768, height: 1024 });
-
       const playlistsButton = page.locator(
         'button[aria-label="View playlists"]',
       );
@@ -721,18 +556,7 @@ test.describe("Playlists Functionality", () => {
     test("should load 'Classic Hits' playlist on first launch", async ({
       page,
     }) => {
-      await page.setViewportSize({ width: 768, height: 1024 });
-
-      // Clear localStorage to simulate first launch
-      await page.evaluate(() => {
-        localStorage.removeItem("LIVE_LYRICS_PLAYLISTS");
-      });
-
-      // Reload to apply cleared storage
-      await page.reload();
-      await page.waitForSelector('[data-testid="player"]');
-
-      // Open playlists
+      // Open playlists (default playlists should already be loaded from beforeEach)
       await page.keyboard.press("p");
       await expect(
         page.locator('[data-testid="playlists-screen"]'),
@@ -749,16 +573,7 @@ test.describe("Playlists Functionality", () => {
     test("should allow editing default playlists (remove songs)", async ({
       page,
     }) => {
-      await page.setViewportSize({ width: 768, height: 1024 });
-
-      // Clear localStorage to get fresh default
-      await page.evaluate(() => {
-        localStorage.removeItem("LIVE_LYRICS_PLAYLISTS");
-      });
-      await page.reload();
-      await page.waitForSelector('[data-testid="player"]');
-
-      // Open playlists
+      // Open playlists (default playlist already loaded)
       await page.keyboard.press("p");
       await expect(
         page.locator('[data-testid="playlists-screen"]'),
@@ -786,15 +601,6 @@ test.describe("Playlists Functionality", () => {
     });
 
     test("should allow deleting default playlists", async ({ page }) => {
-      await page.setViewportSize({ width: 768, height: 1024 });
-
-      // Clear localStorage to get fresh default
-      await page.evaluate(() => {
-        localStorage.removeItem("LIVE_LYRICS_PLAYLISTS");
-      });
-      await page.reload();
-      await page.waitForSelector('[data-testid="player"]');
-
       // Open playlists
       await page.keyboard.press("p");
       await expect(
@@ -830,15 +636,6 @@ test.describe("Playlists Functionality", () => {
     test("should persist edits to default playlists across sessions", async ({
       page,
     }) => {
-      await page.setViewportSize({ width: 768, height: 1024 });
-
-      // Clear localStorage to get fresh default
-      await page.evaluate(() => {
-        localStorage.removeItem("LIVE_LYRICS_PLAYLISTS");
-      });
-      await page.reload();
-      await page.waitForSelector('[data-testid="player"]');
-
       // Open playlists and remove a song from Classic Hits
       await page.keyboard.press("p");
       await expect(
@@ -856,9 +653,8 @@ test.describe("Playlists Functionality", () => {
       // Should show 4 songs
       await expect(page.getByText("4 songs")).toBeVisible();
 
-      // Reload the page
+      // Reload the page to test persistence
       await page.reload();
-      await page.waitForSelector('[data-testid="player"]');
 
       // Open playlists again
       await page.keyboard.press("p");

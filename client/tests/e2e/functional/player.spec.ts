@@ -1,39 +1,16 @@
 import { test, expect } from "@playwright/test";
 import { injectTestRegistry } from "../helpers/injectTestRegistry";
-import { loadTestSong } from "../helpers/testPlayerHelpers";
+import { setupPlayerWithSong } from "../helpers/testPlayerHelpers";
 
 test.describe("Player Component", () => {
   test.beforeEach(async ({ page }) => {
-    // Inject test registry instead of mocking HTTP requests
     await injectTestRegistry(page);
-
     await page.goto("/");
-
-    // Load test song to populate player state
-    await loadTestSong(page, {
-      name: "Bohemian Rhapsody",
-      artist: "Queen",
-      album: "A Night at the Opera",
-      currentTime: 0,
-      duration: 355,
-      isPlaying: true,
-    });
-
-    // Wait for the player to load
-    await page.waitForSelector('[data-testid="player-controls"]');
   });
 
-  test.describe("Portrait Mode", () => {
-    test.beforeEach(async ({ page }) => {
-      await page.setViewportSize({ width: 768, height: 1024 });
-    });
-
-    test("should display song information correctly", async ({ page }) => {
-      // Wait specifically for song data to load
-      await page.waitForFunction(() => {
-        const songName = document.querySelector('[data-testid="song-name"]');
-        return songName && songName.textContent?.includes("Bohemian Rhapsody");
-      });
+  test.describe("Song Information Display", () => {
+    test("should display song name and artist", async ({ page }) => {
+      await setupPlayerWithSong(page);
 
       await expect(page.locator('[data-testid="song-name"]')).toContainText(
         "Bohemian Rhapsody",
@@ -43,167 +20,42 @@ test.describe("Player Component", () => {
       );
     });
 
-    test("should show play/pause button and be clickable", async ({ page }) => {
-      const playPauseButton = page.locator('[data-testid="play-pause-button"]');
-      await expect(playPauseButton).toBeVisible();
+    test("should display current time and total duration", async ({ page }) => {
+      await setupPlayerWithSong(page);
 
-      // Simulated player starts paused, so should show play icon initially
-      await expect(
-        playPauseButton.locator('[data-testid="play-icon"]'),
-      ).toBeVisible();
-
-      // Click to play
-      await playPauseButton.click();
-
-      // Should show pause icon when playing
-      await expect(
-        playPauseButton.locator('[data-testid="pause-icon"]'),
-      ).toBeVisible();
-
-      // Click to pause again
-      await playPauseButton.click();
-
-      // Should show play icon when paused
-      await expect(
-        playPauseButton.locator('[data-testid="play-icon"]'),
-      ).toBeVisible();
-    });
-
-    test("should display progress slider and be interactive", async ({
-      page,
-    }) => {
-      const progressSlider = page.locator('[data-testid="progress-slider"]');
-      await expect(progressSlider).toBeVisible();
-
-      // Check if slider shows initial progress (should be 0 at start)
-      const sliderValue = await progressSlider.getAttribute("aria-valuenow");
-      expect(parseInt(sliderValue || "0")).toBe(0);
-
-      // Verify slider is interactive by checking it's not disabled
-      await expect(progressSlider).not.toBeDisabled();
-    });
-
-    test("should show current time and duration", async ({ page }) => {
+      // Initial time should be 0:00
       await expect(page.locator('[data-testid="current-time"]')).toContainText(
         "0:00",
       );
-      await expect(page.locator('[data-testid="duration"]')).toContainText(
-        "5:55",
-      ); // Bohemian Rhapsody duration
-    });
 
-    test("should have animated song name", async ({ page }) => {
-      const songName = page.locator('[data-testid="song-name"]');
-      await expect(songName).toBeVisible();
-      await expect(songName).toContainText("Bohemian Rhapsody");
+      // Duration should be 5:55 (355 seconds)
+      await expect(page.locator('[data-testid="total-time"]')).toContainText(
+        "5:55",
+      );
     });
   });
 
-  test.describe("Landscape Mode", () => {
-    test.beforeEach(async ({ page }) => {
-      await page.setViewportSize({ width: 1024, height: 768 });
-    });
+  test.describe("Play/Pause Controls", () => {
+    test("should toggle between play and pause icons", async ({ page }) => {
+      await setupPlayerWithSong(page);
 
-    test("should display song information correctly in landscape", async ({
-      page,
-    }) => {
-      // Wait specifically for song data to load
-      await page.waitForFunction(() => {
-        const songName = document.querySelector('[data-testid="song-name"]');
-        return songName && songName.textContent?.includes("Bohemian Rhapsody");
-      });
-
-      await expect(page.locator('[data-testid="song-name"]')).toContainText(
-        "Bohemian Rhapsody",
-      );
-      await expect(page.locator('[data-testid="artist-name"]')).toContainText(
-        "Queen",
-      );
-    });
-
-    test("should maintain play/pause functionality in landscape", async ({
-      page,
-    }) => {
       const playPauseButton = page.locator('[data-testid="play-pause-button"]');
       await expect(playPauseButton).toBeVisible();
 
-      // Simulated player starts paused, so should show play icon initially
-      await expect(
-        playPauseButton.locator('[data-testid="play-icon"]'),
-      ).toBeVisible();
+      // Player starts paused, should show play icon
+      await expect(page.locator('[data-testid="play-icon"]')).toBeVisible();
 
       // Click to play
       await playPauseButton.click();
+      await expect(page.locator('[data-testid="pause-icon"]')).toBeVisible();
 
-      // Should show pause icon when playing
-      await expect(
-        playPauseButton.locator('[data-testid="pause-icon"]'),
-      ).toBeVisible();
+      // Click to pause
+      await playPauseButton.click();
+      await expect(page.locator('[data-testid="play-icon"]')).toBeVisible();
     });
 
-    test("should adapt layout for landscape orientation", async ({ page }) => {
-      const player = page.locator('[data-testid="player-controls"]');
-      await expect(player).toBeVisible();
-
-      const progressSlider = page.locator('[data-testid="progress-slider"]');
-      await expect(progressSlider).toBeVisible();
-    });
-  });
-
-  test.describe("Player Interactions", () => {
-    test("should handle progress slider interaction", async ({ page }) => {
-      await page.setViewportSize({ width: 768, height: 1024 });
-
-      const progressSlider = page.locator(
-        '[data-testid="progress-slider"] [role="slider"]',
-      );
-      const currentTimeDisplay = page.locator('[data-testid="current-time"]');
-
-      // Get initial time (should be 0:00)
-      const initialTime = await currentTimeDisplay.textContent();
-      expect(initialTime).toBe("0:00");
-
-      // Focus the slider and use keyboard to seek
-      await progressSlider.focus();
-
-      // Press ArrowRight multiple times to seek forward significantly
-      // Each press seeks a small amount, so we need multiple presses
-      for (let i = 0; i < 20; i++) {
-        await progressSlider.press("ArrowRight");
-      }
-
-      // Wait for the player to update by asserting the time is no longer the initial value.
-      await expect(currentTimeDisplay).not.toHaveText(initialTime!);
-
-      // Now that we know the time has updated, we can safely get the new value.
-      const newTime = await currentTimeDisplay.textContent();
-
-      // The displayed time should have changed from initial
-      expect(newTime).not.toBe("0:00");
-    });
-
-    test("should display player controls", async ({ page }) => {
-      const player = page.locator('[data-testid="player-controls"]');
-      await expect(player).toBeVisible();
-
-      // Wait specifically for song data to load
-      await page.waitForFunction(() => {
-        const songName = document.querySelector('[data-testid="song-name"]');
-        return songName && songName.textContent?.includes("Bohemian Rhapsody");
-      });
-
-      await expect(page.locator('[data-testid="song-name"]')).toContainText(
-        "Bohemian Rhapsody",
-      );
-      await expect(page.locator('[data-testid="artist-name"]')).toContainText(
-        "Queen",
-      );
-    });
-
-    test("should handle playback time progression when playing", async ({
-      page,
-    }) => {
-      await page.setViewportSize({ width: 768, height: 1024 });
+    test("should update time when playing", async ({ page }) => {
+      await setupPlayerWithSong(page);
 
       const playButton = page.locator('[data-testid="play-pause-button"]');
       const currentTimeDisplay = page.locator('[data-testid="current-time"]');
@@ -211,39 +63,158 @@ test.describe("Player Component", () => {
       // Start playing
       await playButton.click();
 
-      // Wait for time to actually progress (use waitForFunction instead of timeout)
-      await page.waitForFunction(() => {
-        const timeElement = document.querySelector(
-          '[data-testid="current-time"]',
-        );
-        return timeElement && timeElement.textContent !== "0:00";
+      // Wait for time to progress
+      await expect(currentTimeDisplay).not.toHaveText("0:00", {
+        timeout: 3000,
       });
 
-      // Time should have progressed from 0:00
+      // Verify time has progressed
       const currentTime = await currentTimeDisplay.textContent();
+      expect(currentTime).toMatch(/0:\d{2}/);
       expect(currentTime).not.toBe("0:00");
-
-      // Should show seconds have passed
-      const timeMatch = currentTime?.match(/(\d+):(\d+)/);
-      if (timeMatch) {
-        const totalSeconds =
-          parseInt(timeMatch[1]) * 60 + parseInt(timeMatch[2]);
-        expect(totalSeconds).toBeGreaterThan(0);
-      }
     });
   });
 
-  test.describe("Error Handling", () => {
-    test("should show player even without external dependencies", async ({
+  test.describe("Progress Slider", () => {
+    test("should display progress slider", async ({ page }) => {
+      await setupPlayerWithSong(page);
+
+      const progressSlider = page.locator('[data-testid="progress-slider"]');
+      await expect(progressSlider).toBeVisible();
+
+      // Slider should be interactive (not disabled)
+      await expect(progressSlider).not.toBeDisabled();
+    });
+
+    test("should start at position 0", async ({ page }) => {
+      await setupPlayerWithSong(page);
+
+      const progressSlider = page.locator('[data-testid="progress-slider"]');
+      const sliderValue = await progressSlider.getAttribute("aria-valuenow");
+      expect(parseInt(sliderValue || "0")).toBe(0);
+    });
+
+    test("should seek when slider is moved with keyboard", async ({ page }) => {
+      await setupPlayerWithSong(page);
+
+      const progressSlider = page.locator(
+        '[data-testid="progress-slider"] [role="slider"]',
+      );
+      const currentTimeDisplay = page.locator('[data-testid="current-time"]');
+
+      // Initial time should be 0:00
+      await expect(currentTimeDisplay).toHaveText("0:00");
+
+      // Focus the slider and use keyboard to seek forward
+      await progressSlider.focus();
+
+      // Press ArrowRight multiple times to seek forward
+      for (let i = 0; i < 20; i++) {
+        await progressSlider.press("ArrowRight");
+      }
+
+      // Time should have updated
+      await expect(currentTimeDisplay).not.toHaveText("0:00");
+
+      const newTime = await currentTimeDisplay.textContent();
+      expect(newTime).toMatch(/\d+:\d{2}/);
+    });
+
+    test("should seek when using keyboard shortcuts", async ({ page }) => {
+      await setupPlayerWithSong(page);
+
+      const currentTimeDisplay = page.locator('[data-testid="current-time"]');
+
+      // Initial time
+      await expect(currentTimeDisplay).toHaveText("0:00");
+
+      // Use global ArrowRight shortcut to seek forward (5 seconds)
+      await page.keyboard.press("ArrowRight");
+
+      // Time should update to around 5 seconds
+      await expect(currentTimeDisplay).not.toHaveText("0:00");
+      const newTime = await currentTimeDisplay.textContent();
+      expect(newTime).toMatch(/0:0[5-9]|0:1[0-5]/); // Allow some variance
+    });
+  });
+
+  test.describe("Quick Action Buttons", () => {
+    test("should display search lyrics button", async ({ page }) => {
+      await setupPlayerWithSong(page);
+
+      const searchButton = page.locator('[data-testid="search-button"]');
+      await expect(searchButton).toBeVisible();
+    });
+
+    test("should display view playlists button", async ({ page }) => {
+      await setupPlayerWithSong(page);
+
+      const playlistsButton = page.locator('[data-testid="playlists-button"]');
+      await expect(playlistsButton).toBeVisible();
+    });
+
+    test("should open search screen when search button clicked", async ({
       page,
     }) => {
-      // The simulated player should work without external API calls
-      const player = page.locator('[data-testid="player-controls"]');
-      await expect(player).toBeVisible();
+      await setupPlayerWithSong(page);
 
-      // Should show play/pause button
-      const playPauseButton = page.locator('[data-testid="play-pause-button"]');
-      await expect(playPauseButton).toBeVisible();
+      const searchButton = page.locator('[data-testid="search-button"]');
+      await searchButton.click();
+
+      await expect(page.locator('[data-testid="search-screen"]')).toBeVisible();
+    });
+
+    test("should open playlists screen when playlists button clicked", async ({
+      page,
+    }) => {
+      await setupPlayerWithSong(page);
+
+      const playlistsButton = page.locator('[data-testid="playlists-button"]');
+      await playlistsButton.click();
+
+      await expect(
+        page.locator('[data-testid="playlists-screen"]'),
+      ).toBeVisible();
+    });
+  });
+
+  test.describe("Responsive Layout", () => {
+    test("should display correctly in portrait orientation", async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width: 768, height: 1024 });
+      await setupPlayerWithSong(page);
+
+      // All controls should be visible
+      await expect(
+        page.locator('[data-testid="player-controls"]'),
+      ).toBeVisible();
+      await expect(page.locator('[data-testid="song-name"]')).toBeVisible();
+      await expect(
+        page.locator('[data-testid="play-pause-button"]'),
+      ).toBeVisible();
+      await expect(
+        page.locator('[data-testid="progress-slider"]'),
+      ).toBeVisible();
+    });
+
+    test("should display correctly in landscape orientation", async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width: 1024, height: 768 });
+      await setupPlayerWithSong(page);
+
+      // All controls should be visible
+      await expect(
+        page.locator('[data-testid="player-controls"]'),
+      ).toBeVisible();
+      await expect(page.locator('[data-testid="song-name"]')).toBeVisible();
+      await expect(
+        page.locator('[data-testid="play-pause-button"]'),
+      ).toBeVisible();
+      await expect(
+        page.locator('[data-testid="progress-slider"]'),
+      ).toBeVisible();
     });
   });
 });
