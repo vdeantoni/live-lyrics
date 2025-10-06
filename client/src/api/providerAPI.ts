@@ -39,7 +39,7 @@ export const providerAPI = {
    *
    * @example
    * ```typescript
-   * providerRegistryAPI.replaceAll({
+   * providerAPI.replaceAll({
    *   lyricsProviders: [
    *     {
    *       id: "test-provider",
@@ -288,12 +288,6 @@ export const registerPlayerFactory = (
     load: factory,
   });
 };
-
-/**
- * Backward compatibility alias for existing code
- * This maintains the same API surface without deprecation warnings
- */
-export const providerRegistryAPI = providerAPI;
 
 /**
  * Re-export types for convenience

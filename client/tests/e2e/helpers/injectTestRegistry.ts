@@ -516,24 +516,22 @@ To me`;
             Promise.resolve().then(async () => {
               try {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const providerRegistryAPI = (window as any)[
-                  "providerRegistryAPI"
-                ];
-                if (!providerRegistryAPI) {
-                  throw new Error("providerRegistryAPI is undefined");
+                const providerAPI = (window as any)["providerAPI"];
+                if (!providerAPI) {
+                  throw new Error("providerAPI is undefined");
                 }
 
-                debugLog("providerRegistryAPI found, setting up test registry");
+                debugLog("providerAPI found, setting up test registry");
 
                 // Build and register providers
                 const { lyricsProviders, artworkProviders, players } =
                   buildProviderConfigs();
 
-                debugLog("Replacing all providers via providerRegistryAPI");
+                debugLog("Replacing all providers via providerAPI");
                 debugLog(
                   `Registry config: ${lyricsProviders.length} lyrics, ${artworkProviders.length} artwork, ${players.length} players`,
                 );
-                providerRegistryAPI.replaceAll({
+                providerAPI.replaceAll({
                   players:
                     players.length > 0
                       ? players
@@ -557,8 +555,7 @@ To me`;
                 });
 
                 // Verify replacement succeeded
-                const verifyProviders =
-                  providerRegistryAPI.getAll.lyricsProviders();
+                const verifyProviders = providerAPI.getAll.lyricsProviders();
                 debugLog(
                   `After replaceAll: ${verifyProviders.length} lyrics providers registered`,
                 );
