@@ -1,6 +1,7 @@
-import type { Song } from "@/types";
+import type { Song, Player, LyricsProvider, ArtworkProvider } from "@/types";
 import type { ProviderType as SettingsProviderType } from "@/core/services/SettingsService";
 import type { ProviderType } from "@/core/services/ProviderService";
+import type { ProviderConfig } from "@/types/appState";
 
 /**
  * Type-safe event definitions for the application event bus
@@ -40,6 +41,14 @@ export type AppEvent =
   | {
       type: "providers.changed";
       payload: { providerType?: ProviderType };
+    }
+  | {
+      type: "providers.replaceAll";
+      payload: {
+        players?: ProviderConfig<Player>[];
+        lyricsProviders?: ProviderConfig<LyricsProvider>[];
+        artworkProviders?: ProviderConfig<ArtworkProvider>[];
+      };
     }
 
   // Playlist events (emitted by PlaylistService)

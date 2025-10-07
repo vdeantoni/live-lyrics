@@ -494,203 +494,191 @@ const injectProviderRegistry = async (
       return { lyricsProviders, artworkProviders, players };
     };
 
-    // Wait for the provider API to be available
-    const waitForProviderAPI = () => {
+    // Wait for the event bus to be available
+    const waitForEventBus = () => {
       return new Promise<void>((resolve, reject) => {
         let attempts = 0;
         const maxAttempts = 50;
 
-        const checkForAPI = () => {
+        const checkForEventBus = () => {
           attempts++;
           debugLog(
-            `Attempting to load provider API (attempt ${attempts}/${maxAttempts})`,
+            `Attempting to load event bus (attempt ${attempts}/${maxAttempts})`,
           );
 
           if (typeof window !== "undefined") {
-            Promise.resolve().then(async () => {
-              try {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const providerAPI = (window as any)["providerAPI"];
-                if (!providerAPI) {
-                  throw new Error("providerAPI is undefined");
-                }
+            const eventBus = (
+              window as Window & {
+                __EVENT_BUS__?: { emit?: (event: unknown) => void };
+              }
+            ).__EVENT_BUS__;
 
-                debugLog("providerAPI found, setting up test registry");
-
-                // Build and register providers
-                const { lyricsProviders, artworkProviders, players } =
-                  buildProviderConfigs();
-
-                debugLog("Replacing all providers via providerAPI");
-                debugLog(
-                  `Registry config: ${lyricsProviders.length} lyrics, ${artworkProviders.length} artwork, ${players.length} players`,
+            if (!eventBus?.emit) {
+              if (attempts < maxAttempts) {
+                setTimeout(checkForEventBus, 100);
+              } else {
+                reject(
+                  new Error(
+                    `Failed to load event bus after ${maxAttempts} attempts`,
+                  ),
                 );
-                providerAPI.replaceAll({
-                  players:
-                    players.length > 0
-                      ? players
-                      : [
-                          {
-                            id: "local",
-                            name: "Local",
-                            description: "Local test player",
-                            load: async () =>
-                              createPlayerProvider({
-                                id: "local",
-                                name: "Local",
-                                description: "Local test player",
-                                isEnabled: true,
-                                isAvailable: true,
-                              }),
-                          },
-                        ],
-                  lyricsProviders: lyricsProviders, // Respect empty array for testing no-lyrics scenario
-                  artworkProviders: artworkProviders, // Respect empty array for testing no-artwork scenario
+              }
+              return;
+            }
+
+            debugLog("Event bus found, setting up test registry");
+
+            // Build and register providers
+            const { lyricsProviders, artworkProviders, players } =
+              buildProviderConfigs();
+
+            debugLog("Emitting providers.replaceAll event");
+            debugLog(
+              `Registry config: ${lyricsProviders.length} lyrics, ${artworkProviders.length} artwork, ${players.length} players`,
+            );
+
+            // Emit event to replace providers
+            eventBus.emit({
+              type: "providers.replaceAll",
+              payload: {
+                players:
+                  players.length > 0
+                    ? players
+                    : [
+                        {
+                          id: "local",
+                          name: "Local",
+                          description: "Local test player",
+                          load: async () =>
+                            createPlayerProvider({
+                              id: "local",
+                              name: "Local",
+                              description: "Local test player",
+                              isEnabled: true,
+                              isAvailable: true,
+                            }),
+                        },
+                      ],
+                lyricsProviders: lyricsProviders, // Respect empty array for testing no-lyrics scenario
+                artworkProviders: artworkProviders, // Respect empty array for testing no-artwork scenario
+              },
+            });
+
+            // Set up provider settings based on config
+            try {
+              debugLog(
+                "Clearing persisted app state for clean test environment",
+              );
+
+              // Clear the new split provider settings atoms (current architecture)
+              localStorage.removeItem("LIVE_LYRICS_PLAYER_SETTINGS");
+              localStorage.removeItem("LIVE_LYRICS_LYRICS_SETTINGS");
+              localStorage.removeItem("LIVE_LYRICS_ARTWORK_SETTINGS");
+
+              // Clear legacy settings
+              const legacySettingsKeys = [
+                "LIVE_LYRICS_APP_PROVIDER_SETTINGS", // Old unified settings
+                "LIVE_LYRICS_PROVIDER_OVERRIDES",
+                "LIVE_LYRICS_SETTINGS",
+                "enabledLyricsProviders",
+                "enabledArtworkProviders",
+                "enabledPlayers",
+                "lyricsProviderOrder",
+                "artworkProviderOrder",
+              ];
+
+              legacySettingsKeys.forEach((key) => {
+                localStorage.removeItem(key);
+              });
+
+              // Set provider settings in the new split atom format
+              // Each provider type has its own localStorage key with Map<string, UserProviderOverride> structure
+              // Note: Providers are enabled by default, we only need to set disabled=true or custom priority
+              if (config.lyricsProviders && config.lyricsProviders.length > 0) {
+                const lyricsSettings: Record<
+                  string,
+                  { disabled?: boolean; priority?: number }
+                > = {};
+                config.lyricsProviders.forEach((provider, index) => {
+                  // Only store settings if provider is disabled or has custom priority
+                  if (!provider.isEnabled) {
+                    lyricsSettings[provider.id] = { disabled: true };
+                  } else if (index !== 0) {
+                    // Set priority for non-first providers (first provider gets default priority 1)
+                    lyricsSettings[provider.id] = { priority: index + 1 };
+                  }
                 });
-
-                // Verify replacement succeeded
-                const verifyProviders = providerAPI.getAll.lyricsProviders();
-                debugLog(
-                  `After replaceAll: ${verifyProviders.length} lyrics providers registered`,
-                );
-                verifyProviders.forEach((p: { name: string; id: string }) => {
-                  debugLog(`  - ${p.name} (${p.id})`);
-                });
-
-                // Set up provider settings based on config
-                try {
-                  debugLog(
-                    "Clearing persisted app state for clean test environment",
+                if (Object.keys(lyricsSettings).length > 0) {
+                  localStorage.setItem(
+                    "LIVE_LYRICS_LYRICS_SETTINGS",
+                    JSON.stringify(lyricsSettings),
                   );
-
-                  // Clear the new split provider settings atoms (current architecture)
-                  localStorage.removeItem("LIVE_LYRICS_PLAYER_SETTINGS");
-                  localStorage.removeItem("LIVE_LYRICS_LYRICS_SETTINGS");
-                  localStorage.removeItem("LIVE_LYRICS_ARTWORK_SETTINGS");
-
-                  // Clear legacy settings
-                  const legacySettingsKeys = [
-                    "LIVE_LYRICS_APP_PROVIDER_SETTINGS", // Old unified settings
-                    "LIVE_LYRICS_PROVIDER_OVERRIDES",
-                    "LIVE_LYRICS_SETTINGS",
-                    "enabledLyricsProviders",
-                    "enabledArtworkProviders",
-                    "enabledPlayers",
-                    "lyricsProviderOrder",
-                    "artworkProviderOrder",
-                  ];
-
-                  legacySettingsKeys.forEach((key) => {
-                    localStorage.removeItem(key);
-                  });
-
-                  // Set provider settings in the new split atom format
-                  // Each provider type has its own localStorage key with Map<string, UserProviderOverride> structure
-                  // Note: Providers are enabled by default, we only need to set disabled=true or custom priority
-                  if (
-                    config.lyricsProviders &&
-                    config.lyricsProviders.length > 0
-                  ) {
-                    const lyricsSettings: Record<
-                      string,
-                      { disabled?: boolean; priority?: number }
-                    > = {};
-                    config.lyricsProviders.forEach((provider, index) => {
-                      // Only store settings if provider is disabled or has custom priority
-                      if (!provider.isEnabled) {
-                        lyricsSettings[provider.id] = { disabled: true };
-                      } else if (index !== 0) {
-                        // Set priority for non-first providers (first provider gets default priority 1)
-                        lyricsSettings[provider.id] = { priority: index + 1 };
-                      }
-                    });
-                    if (Object.keys(lyricsSettings).length > 0) {
-                      localStorage.setItem(
-                        "LIVE_LYRICS_LYRICS_SETTINGS",
-                        JSON.stringify(lyricsSettings),
-                      );
-                      debugLog("Set lyrics provider settings", lyricsSettings);
-                    }
-                  }
-
-                  if (
-                    config.artworkProviders &&
-                    config.artworkProviders.length > 0
-                  ) {
-                    const artworkSettings: Record<
-                      string,
-                      { disabled?: boolean; priority?: number }
-                    > = {};
-                    config.artworkProviders.forEach((provider, index) => {
-                      if (!provider.isEnabled) {
-                        artworkSettings[provider.id] = { disabled: true };
-                      } else if (index !== 0) {
-                        artworkSettings[provider.id] = {
-                          priority: index + 1,
-                        };
-                      }
-                    });
-                    if (Object.keys(artworkSettings).length > 0) {
-                      localStorage.setItem(
-                        "LIVE_LYRICS_ARTWORK_SETTINGS",
-                        JSON.stringify(artworkSettings),
-                      );
-                      debugLog(
-                        "Set artwork provider settings",
-                        artworkSettings,
-                      );
-                    }
-                  }
-
-                  if (config.players && config.players.length > 0) {
-                    const playerSettings: Record<
-                      string,
-                      { disabled?: boolean; priority?: number }
-                    > = {};
-                    config.players.forEach((provider, index) => {
-                      if (!provider.isEnabled) {
-                        playerSettings[provider.id] = { disabled: true };
-                      } else if (index !== 0) {
-                        playerSettings[provider.id] = { priority: index + 1 };
-                      }
-                    });
-                    if (Object.keys(playerSettings).length > 0) {
-                      localStorage.setItem(
-                        "LIVE_LYRICS_PLAYER_SETTINGS",
-                        JSON.stringify(playerSettings),
-                      );
-                      debugLog("Set player provider settings", playerSettings);
-                    }
-                  }
-
-                  debugLog(
-                    "App state cleared - providers use default enabled state unless explicitly configured",
-                  );
-                } catch (settingsError) {
-                  debugLog(
-                    "Warning: Could not clear/set app state:",
-                    settingsError,
-                  );
-                }
-
-                debugLog("Test registry setup completed successfully");
-                resolve();
-              } catch (error) {
-                debugLog("Error loading provider API:", error);
-                if (attempts < maxAttempts) {
-                  setTimeout(checkForAPI, 100);
-                } else {
-                  reject(
-                    new Error(
-                      `Failed to load provider API after ${maxAttempts} attempts: ${error}`,
-                    ),
-                  );
+                  debugLog("Set lyrics provider settings", lyricsSettings);
                 }
               }
-            });
+
+              if (
+                config.artworkProviders &&
+                config.artworkProviders.length > 0
+              ) {
+                const artworkSettings: Record<
+                  string,
+                  { disabled?: boolean; priority?: number }
+                > = {};
+                config.artworkProviders.forEach((provider, index) => {
+                  if (!provider.isEnabled) {
+                    artworkSettings[provider.id] = { disabled: true };
+                  } else if (index !== 0) {
+                    artworkSettings[provider.id] = {
+                      priority: index + 1,
+                    };
+                  }
+                });
+                if (Object.keys(artworkSettings).length > 0) {
+                  localStorage.setItem(
+                    "LIVE_LYRICS_ARTWORK_SETTINGS",
+                    JSON.stringify(artworkSettings),
+                  );
+                  debugLog("Set artwork provider settings", artworkSettings);
+                }
+              }
+
+              if (config.players && config.players.length > 0) {
+                const playerSettings: Record<
+                  string,
+                  { disabled?: boolean; priority?: number }
+                > = {};
+                config.players.forEach((provider, index) => {
+                  if (!provider.isEnabled) {
+                    playerSettings[provider.id] = { disabled: true };
+                  } else if (index !== 0) {
+                    playerSettings[provider.id] = { priority: index + 1 };
+                  }
+                });
+                if (Object.keys(playerSettings).length > 0) {
+                  localStorage.setItem(
+                    "LIVE_LYRICS_PLAYER_SETTINGS",
+                    JSON.stringify(playerSettings),
+                  );
+                  debugLog("Set player provider settings", playerSettings);
+                }
+              }
+
+              debugLog(
+                "App state cleared - providers use default enabled state unless explicitly configured",
+              );
+            } catch (settingsError) {
+              debugLog(
+                "Warning: Could not clear/set app state:",
+                settingsError,
+              );
+            }
+
+            debugLog("Test registry setup completed successfully");
+            resolve();
           } else {
             if (attempts < maxAttempts) {
-              setTimeout(checkForAPI, 100);
+              setTimeout(checkForEventBus, 100);
             } else {
               reject(
                 new Error("Window object not available after max attempts"),
@@ -699,12 +687,12 @@ const injectProviderRegistry = async (
           }
         };
 
-        checkForAPI();
+        checkForEventBus();
       });
     };
 
     // Execute the injection with error handling
-    waitForProviderAPI().catch((error) => {
+    waitForEventBus().catch((error) => {
       console.error("[TestRegistry] Failed to inject test registry:", error);
       (window as unknown as Record<string, unknown>).__TEST_REGISTRY_FAILED__ =
         true;
