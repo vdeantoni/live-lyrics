@@ -12,6 +12,8 @@ export type AppEvent =
   | { type: "player.play" }
   | { type: "player.pause" }
   | { type: "player.seek"; payload: { time: number } }
+  | { type: "player.next" }
+  | { type: "player.previous" }
   | { type: "player.song.add"; payload: { songs: Song[] } }
 
   // Player state events (emitted by services)

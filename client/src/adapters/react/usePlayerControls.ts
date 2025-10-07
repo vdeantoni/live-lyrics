@@ -6,9 +6,11 @@ import { emit } from "@/core/events/bus";
  * Replaces the old playerControlAtom
  *
  * @example
- * const { play, pause, seek } = usePlayerControls();
+ * const { play, pause, seek, next, previous } = usePlayerControls();
  * <button onClick={play}>Play</button>
  * <button onClick={() => seek(30)}>Seek to 30s</button>
+ * <button onClick={next}>Next</button>
+ * <button onClick={previous}>Previous</button>
  */
 export const usePlayerControls = () => {
   const play = useCallback(() => {
@@ -23,5 +25,13 @@ export const usePlayerControls = () => {
     emit({ type: "player.seek", payload: { time } });
   }, []);
 
-  return { play, pause, seek };
+  const next = useCallback(() => {
+    emit({ type: "player.next" });
+  }, []);
+
+  const previous = useCallback(() => {
+    emit({ type: "player.previous" });
+  }, []);
+
+  return { play, pause, seek, next, previous };
 };

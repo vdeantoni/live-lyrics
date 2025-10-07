@@ -1,7 +1,15 @@
 import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
 import { formatTime } from "@/lib/utils";
-import { ListMusic, ListPlus, Pause, Play, Search } from "lucide-react";
+import {
+  ListMusic,
+  ListPlus,
+  Pause,
+  Play,
+  Search,
+  SkipBack,
+  SkipForward,
+} from "lucide-react";
 import { useAtomValue, useSetAtom } from "jotai";
 import { playerStateAtom, playerUIStateAtom } from "@/atoms/playerAtoms";
 import {
@@ -23,7 +31,7 @@ const PlayerControls = () => {
   const isPlaylistsOpen = useAtomValue(playlistsOpenAtom);
 
   // Player controls (event-driven)
-  const { play, pause, seek } = usePlayerControls();
+  const { play, pause, seek, next, previous } = usePlayerControls();
 
   // Action atoms
   const setPlayerUIState = useSetAtom(playerUIStateAtom);
@@ -144,7 +152,31 @@ const PlayerControls = () => {
           </motion.div>
         </Button>
 
-        <div className="flex flex-1 items-center justify-center">
+        <div className="flex flex-1 items-center justify-center gap-3">
+          {/* Previous Button */}
+          <Button
+            data-testid="previous-button"
+            size="sm"
+            variant="ghost"
+            className="dark:hover:bg-accent/0 hover:text-primary h-10 w-10 rounded-full p-2"
+            aria-label="Previous song"
+            onClick={previous}
+            disabled={!name}
+          >
+            <motion.div
+              whileTap={{
+                scale: [1, 0.85, 1],
+                rotate: [-5, 5, 0],
+              }}
+              transition={{
+                duration: 0.2,
+                ease: "easeInOut",
+              }}
+            >
+              <SkipBack data-testid="previous-icon" className="h-6 w-6" />
+            </motion.div>
+          </Button>
+
           {/* Play/Pause Button - Centered */}
           <Button
             data-testid="play-pause-button"
@@ -158,6 +190,30 @@ const PlayerControls = () => {
             ) : (
               <Play data-testid="play-icon" className="h-6 w-6" />
             )}
+          </Button>
+
+          {/* Next Button */}
+          <Button
+            data-testid="next-button"
+            size="sm"
+            variant="ghost"
+            className="dark:hover:bg-accent/0 hover:text-primary h-10 w-10 rounded-full p-2"
+            aria-label="Next song"
+            onClick={next}
+            disabled={!name}
+          >
+            <motion.div
+              whileTap={{
+                scale: [1, 0.85, 1],
+                rotate: [5, -5, 0],
+              }}
+              transition={{
+                duration: 0.2,
+                ease: "easeInOut",
+              }}
+            >
+              <SkipForward data-testid="next-icon" className="h-6 w-6" />
+            </motion.div>
           </Button>
         </div>
 

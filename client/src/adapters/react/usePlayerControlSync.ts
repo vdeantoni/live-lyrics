@@ -46,11 +46,31 @@ export const usePlayerControlSync = () => {
       }
     });
 
+    // Handle next song events
+    const unsubscribeNext = on("player.next", async () => {
+      try {
+        await playerService.next();
+      } catch (error) {
+        console.error("Failed to handle player.next event:", error);
+      }
+    });
+
+    // Handle previous song events
+    const unsubscribePrevious = on("player.previous", async () => {
+      try {
+        await playerService.previous();
+      } catch (error) {
+        console.error("Failed to handle player.previous event:", error);
+      }
+    });
+
     return () => {
       unsubscribePlay();
       unsubscribePause();
       unsubscribeSeek();
       unsubscribeAdd();
+      unsubscribeNext();
+      unsubscribePrevious();
     };
   }, []);
 };

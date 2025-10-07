@@ -100,6 +100,50 @@ export class PlayerService {
   }
 
   /**
+   * Skip to next song
+   */
+  async next(): Promise<void> {
+    if (!this.currentPlayer) {
+      const error = new Error("No player selected");
+      emit({ type: "player.error", payload: { error } });
+      throw error;
+    }
+
+    try {
+      await this.currentPlayer.next();
+      // Get updated state and emit event
+      const song = await this.currentPlayer.getSong();
+      emit({ type: "player.state.changed", payload: song });
+    } catch (error) {
+      console.error("Failed to skip to next:", error);
+      emit({ type: "player.error", payload: { error: error as Error } });
+      throw error;
+    }
+  }
+
+  /**
+   * Go to previous song
+   */
+  async previous(): Promise<void> {
+    if (!this.currentPlayer) {
+      const error = new Error("No player selected");
+      emit({ type: "player.error", payload: { error } });
+      throw error;
+    }
+
+    try {
+      await this.currentPlayer.previous();
+      // Get updated state and emit event
+      const song = await this.currentPlayer.getSong();
+      emit({ type: "player.state.changed", payload: song });
+    } catch (error) {
+      console.error("Failed to go to previous:", error);
+      emit({ type: "player.error", payload: { error: error as Error } });
+      throw error;
+    }
+  }
+
+  /**
    * Add songs to the player queue
    * @param songs - Songs to add to the queue
    */
