@@ -4,7 +4,7 @@ import { useBootstrap } from "@/hooks/useBootstrap";
 import { useEventSync } from "@/adapters/react/useEventSync";
 import { coreAppStateAtom } from "@/atoms/appState";
 import { providerAPI } from "@/api/providerAPI";
-import { createJotaiTestProviders } from "./testUtils";
+import { createTestProviderConfigs } from "./testRegistryFactory";
 import type { LyricsProvider, ArtworkProvider, Player } from "@/types";
 import type { ProviderConfig } from "@/types/appState";
 
@@ -24,7 +24,7 @@ interface TestProviderProps {
  * @example
  * ```typescript
  * import { TestProvider } from "./TestProvider";
- * import { createJotaiTestProviders } from "./testUtils";
+ * import { createTestProviderConfigs } from "./testRegistryFactory";
  *
  * // Basic usage with default test providers
  * <TestProvider>
@@ -32,7 +32,7 @@ interface TestProviderProps {
  * </TestProvider>
  *
  * // With custom providers
- * const customProviders = createJotaiTestProviders();
+ * const customProviders = createTestProviderConfigs();
  * <TestProvider customProviders={customProviders}>
  *   <YourComponent />
  * </TestProvider>
@@ -57,7 +57,7 @@ const JotaiTestSetup: React.FC<TestProviderProps> = ({
 }) => {
   // ✅ Use useEffect for side effects (not useMemo)
   React.useEffect(() => {
-    const providers = customProviders || createJotaiTestProviders();
+    const providers = customProviders || createTestProviderConfigs();
     providerAPI.replaceAll(providers);
   }, [customProviders]);
 

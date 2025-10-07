@@ -1,5 +1,10 @@
 import type { Page } from "@playwright/test";
 import type { Song } from "@/types";
+import {
+  BOHEMIAN_RHAPSODY_ENHANCED_LRC,
+  BOHEMIAN_RHAPSODY_NORMAL_LRC,
+  BOHEMIAN_RHAPSODY_PLAIN_TEXT,
+} from "../../helpers/testData";
 
 /**
  * Custom provider configuration for error handling tests
@@ -24,6 +29,15 @@ interface CustomTestRegistryConfig {
  * Lyrics format types for testing different scenarios
  */
 export type LyricsFormat = "enhanced" | "normal" | "plain";
+
+/**
+ * Lyrics data to be injected into the browser
+ */
+interface LyricsData {
+  enhanced: string;
+  normal: string;
+  plain: string;
+}
 
 /**
  * Default test registry configuration
@@ -73,8 +87,24 @@ const injectProviderRegistry = async (
   page: Page,
   config: CustomTestRegistryConfig,
 ) => {
-  await page.addInitScript((configStr: string) => {
-    const config = JSON.parse(configStr) as CustomTestRegistryConfig;
+  // Prepare lyrics data to inject into the browser
+  const lyricsData: LyricsData = {
+    enhanced: BOHEMIAN_RHAPSODY_ENHANCED_LRC,
+    normal: BOHEMIAN_RHAPSODY_NORMAL_LRC,
+    plain: BOHEMIAN_RHAPSODY_PLAIN_TEXT,
+  };
+
+  // Combine config and lyrics data into a single payload
+  const payload = {
+    config,
+    lyricsData,
+  };
+
+  await page.addInitScript((payloadStr: string) => {
+    const { config, lyricsData } = JSON.parse(payloadStr) as {
+      config: CustomTestRegistryConfig;
+      lyricsData: LyricsData;
+    };
 
     const debugLog = (message: string, data?: unknown) => {
       console.log(`[TestRegistry] ${message}`, data || "");
@@ -82,57 +112,18 @@ const injectProviderRegistry = async (
 
     /**
      * Get lyrics content based on format type
-     * This function must be defined inside the injected script
+     * Uses the lyrics data passed from Node.js context
      */
     const getLyricsForFormat = (format: string): string => {
-      // Enhanced LRC with word-level timing for Bohemian Rhapsody
-      const enhancedLrc = `[00:00.00]<00:00.00>Is <00:00.20>this <00:00.40>the <00:00.60>real <00:00.90>life?
-[00:06.00]<00:06.00>Is <00:06.20>this <00:06.40>just <00:06.70>fantasy?
-[00:12.00]<00:12.00>Caught <00:12.30>in <00:12.50>a <00:12.70>landslide
-[00:16.00]<00:16.00>No <00:16.30>escape <00:16.70>from <00:17.00>reality
-[00:22.00]<00:22.00>Open <00:22.30>your <00:22.60>eyes
-[00:26.00]<00:26.00>Look <00:26.30>up <00:26.50>to <00:26.70>the <00:27.00>skies <00:27.40>and <00:27.70>see
-[00:32.00]<00:32.00>I'm <00:32.30>just <00:32.60>a <00:32.80>poor <00:33.10>boy
-[00:36.00]<00:36.00>I <00:36.20>need <00:36.50>no <00:36.80>sympathy
-[00:42.00]<00:42.00>Because <00:42.40>I'm <00:42.70>easy <00:43.00>come, <00:43.40>easy <00:43.70>go
-[01:30.00]<01:30.00>Mama, <01:30.50>just <01:30.80>killed <01:31.20>a <01:31.40>man
-[02:30.00]<02:30.00>To <02:30.50>me`;
-
-      // Normal LRC with line-level timing only
-      const normalLrc = `[00:00.00]Is this the real life?
-[00:06.00]Is this just fantasy?
-[00:12.00]Caught in a landslide
-[00:16.00]No escape from reality
-[00:22.00]Open your eyes
-[00:26.00]Look up to the skies and see
-[00:32.00]I'm just a poor boy
-[00:36.00]I need no sympathy
-[00:42.00]Because I'm easy come, easy go
-[01:30.00]Mama, just killed a man
-[02:30.00]To me`;
-
-      // Plain text with no timing
-      const plainText = `Is this the real life?
-Is this just fantasy?
-Caught in a landslide
-No escape from reality
-Open your eyes
-Look up to the skies and see
-I'm just a poor boy
-I need no sympathy
-Because I'm easy come, easy go
-Mama, just killed a man
-To me`;
-
       switch (format) {
         case "enhanced":
-          return enhancedLrc;
+          return lyricsData.enhanced;
         case "normal":
-          return normalLrc;
+          return lyricsData.normal;
         case "plain":
-          return plainText;
+          return lyricsData.plain;
         default:
-          return enhancedLrc;
+          return lyricsData.enhanced;
       }
     };
 
@@ -440,7 +431,10 @@ To me`;
       },
       setSettings: async (settings: { playOnAdd?: boolean }) => {
         debugLog(`${providerConfig.name} setSettings() called`, settings);
-        testPlayerState.settings = { ...testPlayerState.settings, ...settings };
+        testPlayerState.settings = {
+          ...testPlayerState.settings,
+          ...settings,
+        };
       },
       setQueue: async (songs: Song[]) => {
         debugLog(`${providerConfig.name} setQueue() called`, songs.length);
@@ -631,7 +625,9 @@ To me`;
                       if (!provider.isEnabled) {
                         artworkSettings[provider.id] = { disabled: true };
                       } else if (index !== 0) {
-                        artworkSettings[provider.id] = { priority: index + 1 };
+                        artworkSettings[provider.id] = {
+                          priority: index + 1,
+                        };
                       }
                     });
                     if (Object.keys(artworkSettings).length > 0) {
@@ -713,7 +709,7 @@ To me`;
       (window as unknown as Record<string, unknown>).__TEST_REGISTRY_FAILED__ =
         true;
     });
-  }, JSON.stringify(config));
+  }, JSON.stringify(payload));
 };
 
 /**

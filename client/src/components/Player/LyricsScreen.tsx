@@ -1,6 +1,11 @@
 import { useEffect, useCallback } from "react";
 import { useAtomValue, useSetAtom } from "jotai";
-import { artworkUrlsAtom, currentArtworkUrlAtom } from "@/atoms/playerAtoms";
+import {
+  artworkUrlsAtom,
+  currentArtworkUrlAtom,
+  artworkLoadingAtom,
+  lyricsLoadingAtom,
+} from "@/atoms/playerAtoms";
 import LyricsManager from "../LyricsVisualizer/LyricsManager";
 
 const LyricsScreen = () => {
@@ -8,6 +13,10 @@ const LyricsScreen = () => {
   const artworkUrls = useAtomValue(artworkUrlsAtom);
   const currentArtworkUrl = useAtomValue(currentArtworkUrlAtom);
   const setCurrentArtworkUrl = useSetAtom(currentArtworkUrlAtom);
+
+  // Get loading states for E2E testing
+  const artworkLoading = useAtomValue(artworkLoadingAtom);
+  const lyricsLoading = useAtomValue(lyricsLoadingAtom);
 
   // Helper function to preload image before setting as background
   const preloadImage = (url: string): Promise<void> => {
@@ -56,6 +65,8 @@ const LyricsScreen = () => {
   return (
     <div
       data-testid="lyrics-screen"
+      data-artwork-loading={artworkLoading}
+      data-lyrics-loading={lyricsLoading}
       className="relative h-full w-full overflow-hidden rounded-xl"
     >
       {/* Background Image Layer with Effects - Only render when we have an image */}

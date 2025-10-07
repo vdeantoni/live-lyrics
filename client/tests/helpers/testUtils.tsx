@@ -5,7 +5,6 @@ import { Provider as JotaiProvider, useSetAtom } from "jotai";
 import { TestProvider } from "./TestProvider";
 import type { LyricsProvider, ArtworkProvider, Player } from "@/types";
 import type { ProviderConfig } from "@/types/appState";
-import { createTestProviderConfigs } from "./testRegistryFactory";
 import type { Atom } from "jotai";
 
 interface CustomRenderOptions extends Omit<RenderOptions, "wrapper"> {
@@ -24,14 +23,6 @@ interface CustomRenderOptions extends Omit<RenderOptions, "wrapper"> {
 type LightweightRenderOptions = Omit<RenderOptions, "wrapper">;
 
 type AtomMockRenderOptions = Omit<RenderOptions, "wrapper">;
-
-/**
- * Create default test providers for Jotai atoms
- * These are ProviderConfig objects that work with providerAPI.replaceAll()
- */
-export const createJotaiTestProviders = () => {
-  return createTestProviderConfigs();
-};
 
 /**
  * ⚡ LIGHTWEIGHT: Simple render with minimal providers
