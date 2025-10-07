@@ -1,5 +1,4 @@
 import { on } from "@/core/events/bus";
-import { playerService } from "./PlayerService";
 import { providerService } from "./ProviderService";
 import { settingsService } from "./SettingsService";
 
@@ -10,31 +9,6 @@ import { settingsService } from "./SettingsService";
  * Should be called once at app initialization
  */
 export const initializeEventHandlers = () => {
-  // Player control events → PlayerService
-  on("player.play", async () => {
-    try {
-      await playerService.play();
-    } catch (error) {
-      console.error("Failed to handle player.play event:", error);
-    }
-  });
-
-  on("player.pause", async () => {
-    try {
-      await playerService.pause();
-    } catch (error) {
-      console.error("Failed to handle player.pause event:", error);
-    }
-  });
-
-  on("player.seek", async (event) => {
-    try {
-      await playerService.seek(event.payload.time);
-    } catch (error) {
-      console.error("Failed to handle player.seek event:", error);
-    }
-  });
-
   // Provider management events → ProviderService
   on("providers.replaceAll", (event) => {
     try {

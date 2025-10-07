@@ -178,6 +178,43 @@ test.describe("Player Component", () => {
     });
   });
 
+  test.describe("Navigation Controls", () => {
+    test("should display previous and next buttons", async ({ page }) => {
+      await setupPlayerWithSong(page);
+
+      const previousButton = page.locator('[data-testid="previous-button"]');
+      const nextButton = page.locator('[data-testid="next-button"]');
+
+      await expect(previousButton).toBeVisible();
+      await expect(nextButton).toBeVisible();
+    });
+
+    test("should have previous and next buttons with proper icons", async ({
+      page,
+    }) => {
+      await setupPlayerWithSong(page);
+
+      // Check for icon elements within buttons
+      const previousIcon = page.locator('[data-testid="previous-icon"]');
+      const nextIcon = page.locator('[data-testid="next-icon"]');
+
+      await expect(previousIcon).toBeVisible();
+      await expect(nextIcon).toBeVisible();
+    });
+
+    test("should enable previous and next buttons when song is loaded", async ({
+      page,
+    }) => {
+      await setupPlayerWithSong(page);
+
+      const previousButton = page.locator('[data-testid="previous-button"]');
+      const nextButton = page.locator('[data-testid="next-button"]');
+
+      await expect(previousButton).toBeEnabled();
+      await expect(nextButton).toBeEnabled();
+    });
+  });
+
   test.describe("Responsive Layout", () => {
     test("should display correctly in portrait orientation", async ({
       page,

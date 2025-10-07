@@ -140,6 +140,8 @@ describe("Player Components", () => {
     expect(screen.getByTestId("player-controls")).toBeInTheDocument();
     expect(screen.getByTestId("play-pause-button")).toBeInTheDocument();
     expect(screen.getByTestId("progress-slider")).toBeInTheDocument();
+    expect(screen.getByTestId("previous-button")).toBeInTheDocument();
+    expect(screen.getByTestId("next-button")).toBeInTheDocument();
   });
 
   it("should render SettingsScreen component", () => {
