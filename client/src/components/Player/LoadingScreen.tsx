@@ -1,65 +1,15 @@
 import { motion } from "framer-motion";
-import { Music, Radio } from "lucide-react";
+import { Radio } from "lucide-react";
 
 const LoadingScreen = () => {
-  // Floating music notes animation
-  const musicNotes = Array.from({ length: 6 }, (_, i) => (
-    <motion.div
-      key={i}
-      className="absolute"
-      initial={{
-        x: Math.random() * 300,
-        y: Math.random() * 200 + 100,
-        opacity: 0.6,
-        scale: 0.8 + Math.random() * 0.4,
-      }}
-      animate={{
-        y: [null, -50, null],
-        x: [null, Math.random() * 50 - 25, null],
-        opacity: [0.6, 1, 0.4, 1],
-        rotate: [0, 15, -10, 0],
-      }}
-      transition={{
-        duration: 3 + Math.random() * 2,
-        repeat: Infinity,
-        ease: "easeInOut",
-        delay: Math.random() * 2,
-      }}
-    >
-      <Music className="h-6 w-6 text-white/70" />
-    </motion.div>
-  ));
-
-  // Soundwave bars animation
-  const soundwaveBars = Array.from({ length: 12 }, (_, i) => (
-    <motion.div
-      key={i}
-      className="rounded-full bg-gradient-to-t from-blue-500/60 to-purple-500/60"
-      style={{
-        width: "4px",
-        height: "20px",
-      }}
-      animate={{
-        scaleY: [1, 0.3, 1.8, 0.5, 2, 0.8, 1],
-        opacity: [0.4, 1, 0.6, 1, 0.7, 1, 0.5],
-      }}
-      transition={{
-        duration: 1.2 + Math.random() * 0.8,
-        repeat: Infinity,
-        ease: "easeInOut",
-        delay: i * 0.1,
-      }}
-    />
-  ));
-
   return (
     <div
       data-testid="loading-screen"
-      className="absolute inset-0 flex items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-slate-900 via-blue-900/20 to-purple-900/20"
+      className="to-background/20 absolute inset-0 flex items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-slate-900 via-blue-900/20"
     >
       {/* Animated background gradient */}
       <motion.div
-        className="absolute inset-0 bg-gradient-to-r from-blue-600/10 via-purple-600/10 to-pink-600/10"
+        className="to-primary/10 via-secondary/10 absolute inset-0 bg-gradient-to-r from-blue-600/10"
         animate={{
           background: [
             "linear-gradient(45deg, rgba(59, 130, 246, 0.1), rgba(147, 51, 234, 0.1), rgba(236, 72, 153, 0.1))",
@@ -74,9 +24,6 @@ const LoadingScreen = () => {
           ease: "easeInOut",
         }}
       />
-
-      {/* Floating music notes */}
-      <div className="absolute inset-0">{musicNotes}</div>
 
       {/* Central content */}
       <div className="relative z-10 flex flex-col items-center space-y-8">
@@ -126,16 +73,6 @@ const LoadingScreen = () => {
           >
             Preparing your music experience...
           </motion.p>
-        </motion.div>
-
-        {/* Soundwave visualization */}
-        <motion.div
-          className="flex items-end space-x-1"
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 1, duration: 0.6 }}
-        >
-          {soundwaveBars}
         </motion.div>
       </div>
 
