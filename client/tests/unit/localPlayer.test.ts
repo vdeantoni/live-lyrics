@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { LocalPlayer } from "@/services/localPlayer";
+import { LocalPlayer } from "@/providers/players/localPlayer";
 
 describe("LocalPlayer - Queue System", () => {
   let player: LocalPlayer;
