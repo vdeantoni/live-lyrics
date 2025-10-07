@@ -6,14 +6,21 @@ import {
   effectiveArtworkProvidersAtom,
 } from "@/atoms/appState";
 import { useAtomValue } from "jotai";
+import { initializeEventHandlers } from "@/core/services/eventHandlers";
+import { useEventSync } from "@/adapters/react/useEventSync";
+import { usePlayerControlSync } from "@/adapters/react/usePlayerControlSync";
+import { usePlayerSync } from "@/adapters/react/usePlayerSync";
+import { useLyricsSync } from "@/adapters/react/useLyricsSync";
+import { useArtworkSync } from "@/adapters/react/useArtworkSync";
 
 /**
- * Simple bootstrap hook that:
- * 1. Initializes the app state
- * 2. Updates app loading state so components can wait on it
+ * Central bootstrap hook that orchestrates all app initialization:
+ * 1. Initializes event handlers
+ * 2. Sets up event-to-atom synchronization
+ * 3. Initializes player, lyrics, and artwork sync
+ * 4. Manages app loading state
  *
- * Note: Provider setup is now handled by the Jotai atoms directly.
- * Tests can use providerAPI.replaceAll() before rendering.
+ * This hook centralizes all initialization logic, keeping App.tsx simple and focused on rendering.
  */
 export const useBootstrap = () => {
   const setAppState = useSetAtom(updateCoreAppStateAtom);
@@ -21,6 +28,19 @@ export const useBootstrap = () => {
   const artworkProviders = useAtomValue(effectiveArtworkProvidersAtom);
   const hasBootstrapped = useRef(false);
 
+  // Initialize event handlers once
+  useEffect(() => {
+    initializeEventHandlers();
+  }, []);
+
+  // Initialize event-driven architecture
+  useEventSync(); // Sync events to atoms
+  usePlayerControlSync(); // Handle player control events
+  usePlayerSync(); // Poll/subscribe to player state
+  useLyricsSync(); // Fetch lyrics with caching
+  useArtworkSync(); // Fetch artwork with caching
+
+  // Bootstrap app state
   useEffect(() => {
     if (hasBootstrapped.current) return;
     hasBootstrapped.current = true;

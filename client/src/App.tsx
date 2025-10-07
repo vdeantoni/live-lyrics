@@ -1,33 +1,14 @@
-import { useEffect } from "react";
 import { Provider as JotaiProvider } from "jotai";
 import { useAtomValue } from "jotai";
 import Player from "@/components/Player/Player";
 import { useBootstrap } from "@/hooks/useBootstrap";
 import { coreAppStateAtom } from "@/atoms/appState";
 import { currentArtworkUrlAtom } from "@/atoms/playerAtoms";
-import { initializeEventHandlers } from "@/core/services/eventHandlers";
-import { useEventSync } from "@/adapters/react/useEventSync";
-import { usePlayerSync } from "@/adapters/react/usePlayerSync";
-import { usePlayerControlSync } from "@/adapters/react/usePlayerControlSync";
-import { useLyricsSync } from "@/adapters/react/useLyricsSync";
-import { useArtworkSync } from "@/adapters/react/useArtworkSync";
 
 // Inner component to use hooks inside Jotai Provider
 const AppContent = () => {
-  // Initialize event handlers once
-  useEffect(() => {
-    initializeEventHandlers();
-  }, []);
-
-  // Bootstrap the app (initializes registry + checks availability)
+  // Bootstrap the app (handles all initialization)
   useBootstrap();
-
-  // Initialize event-driven architecture
-  useEventSync(); // Sync events to atoms
-  usePlayerControlSync(); // Handle player control events
-  usePlayerSync(); // Poll/subscribe to player state
-  useLyricsSync(); // Fetch lyrics with caching
-  useArtworkSync(); // Fetch artwork with caching
 
   // App state
   const appState = useAtomValue(coreAppStateAtom);
