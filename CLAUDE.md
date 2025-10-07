@@ -142,7 +142,7 @@ Both client and server compile to `dist/` directories:
   - `NoLyricsFound.tsx`: Empty state component for missing lyrics
 - **Player/**: Main application screens and loading states
   - `MainScreen.tsx`: Root screen component with overlay management and universal close button
-  - `LoadingScreen.tsx`: Animated loading screen with floating music notes, rotating vinyl record, and soundwave bars
+  - `LoadingScreen.tsx`: Animated loading screen with rotating vinyl record and gradient background
   - `LyricsScreen.tsx`: Main lyrics display screen
   - `SearchScreen.tsx`: Lyrics search interface with debounced multi-provider search, result deduplication, and song selection
   - `PlaylistsScreen.tsx`: Responsive playlists/queue/history screen with conditional rendering (3 layouts: mobile tabs, tablet 2-column, desktop 3-column) using `useMediaQuery` for optimal DOM performance
