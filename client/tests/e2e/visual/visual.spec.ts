@@ -58,14 +58,14 @@ test.describe("Visual Regression Tests", () => {
   test("player with song paused (tablet)", async ({ page }) => {
     await page.setViewportSize({ width: 768, height: 1024 });
     await page.goto("/");
-    await setupPlayerWithSong(page);
+    await setupPlayerWithSong(page, true);
     await takeScreenshot(page, "player-paused", 300);
   });
 
   test("player with song playing (tablet)", async ({ page }) => {
     await page.setViewportSize({ width: 768, height: 1024 });
     await page.goto("/");
-    await setupPlayerWithSong(page);
+    await setupPlayerWithSong(page, true);
 
     // Click play button to show playing state
     await page.click('[data-testid="play-pause-button"]');
@@ -75,7 +75,7 @@ test.describe("Visual Regression Tests", () => {
   test("lyrics with highlighting (tablet)", async ({ page }) => {
     await page.setViewportSize({ width: 768, height: 1024 });
     await page.goto("/");
-    await setupPlayerWithSong(page);
+    await setupPlayerWithSong(page, true);
 
     // Start playing to trigger highlighting
     await page.click('[data-testid="play-pause-button"]');
