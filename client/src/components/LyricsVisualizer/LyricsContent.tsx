@@ -13,7 +13,7 @@ import {
   calculateCenteredScrollPosition,
 } from "@/utils/scrollUtils";
 import type { LineData } from "@/types";
-import { usePlayerControls } from "@/adapters/react/usePlayerControls";
+import { usePlayerControls } from "@/adapters/react";
 
 const LyricsContent: React.FC = () => {
   // Atom subscriptions

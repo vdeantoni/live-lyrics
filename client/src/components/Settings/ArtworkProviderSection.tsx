@@ -3,7 +3,7 @@ import { arrayMove } from "@dnd-kit/sortable";
 import { effectiveArtworkProvidersAtom } from "@/atoms/appState";
 import { artworkProviderStatusAtom } from "@/atoms/providerStatusAtoms";
 import { ProviderSection } from "./ProviderSection";
-import { useSettings } from "@/adapters/react/useSettings";
+import { useSettings } from "@/adapters/react";
 
 export const ArtworkProviderSection = () => {
   const artworkProviders = useAtomValue(effectiveArtworkProvidersAtom) || [];

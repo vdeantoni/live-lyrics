@@ -3,7 +3,7 @@ import { arrayMove } from "@dnd-kit/sortable";
 import { effectiveLyricsProvidersAtom } from "@/atoms/appState";
 import { lyricsProviderStatusAtom } from "@/atoms/providerStatusAtoms";
 import { ProviderSection } from "./ProviderSection";
-import { useSettings } from "@/adapters/react/useSettings";
+import { useSettings } from "@/adapters/react";
 
 export const LyricsProviderSection = () => {
   const lyricsProviders = useAtomValue(effectiveLyricsProvidersAtom) || [];

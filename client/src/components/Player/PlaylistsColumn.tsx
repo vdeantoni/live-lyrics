@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useAtom, useAtomValue } from "jotai";
 import { playlistsAtom, selectedPlayerAtom } from "@/atoms/appState";
 import { loadPlayer } from "@/config/providers";
-import { usePlaylists } from "@/adapters/react/usePlaylists";
+import { usePlaylists } from "@/adapters/react";
 import {
   ListMusic,
   Plus,

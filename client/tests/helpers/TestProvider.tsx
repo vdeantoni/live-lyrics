@@ -1,7 +1,7 @@
 import React from "react";
 import { Provider as JotaiProvider, useAtomValue } from "jotai";
 import { useBootstrap } from "@/hooks/useBootstrap";
-import { useEventSync } from "@/adapters/react/useEventSync";
+import { useEventSync } from "@/adapters/react";
 import { coreAppStateAtom } from "@/atoms/appState";
 import { providerAPI } from "@/api/providerAPI";
 import { createTestProviderConfigs } from "./testRegistryFactory";
