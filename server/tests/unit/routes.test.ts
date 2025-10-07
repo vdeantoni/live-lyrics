@@ -217,90 +217,6 @@ describe("Server Routes", () => {
       expect(childProcess.execFile).toHaveBeenCalled();
     });
 
-    it("should handle legacy format with playing=true", async () => {
-      vi.mocked(childProcess.execFile).mockImplementation(
-        (
-          file: string,
-          args: any,
-          callback: (
-            error: Error | null,
-            stdout: string,
-            stderr: string,
-          ) => void,
-        ) => {
-          callback(null, "", "");
-          return {} as any;
-        },
-      );
-
-      const res = await app.request("/music", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ playing: true }),
-      });
-
-      expect(res.status).toBe(200);
-      const data = await res.json();
-      expect(data).toEqual({ message: "Music app command received" });
-      expect(childProcess.execFile).toHaveBeenCalled();
-    });
-
-    it("should handle legacy format with playing=false", async () => {
-      vi.mocked(childProcess.execFile).mockImplementation(
-        (
-          file: string,
-          args: any,
-          callback: (
-            error: Error | null,
-            stdout: string,
-            stderr: string,
-          ) => void,
-        ) => {
-          callback(null, "", "");
-          return {} as any;
-        },
-      );
-
-      const res = await app.request("/music", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ playing: false }),
-      });
-
-      expect(res.status).toBe(200);
-      const data = await res.json();
-      expect(data).toEqual({ message: "Music app command received" });
-      expect(childProcess.execFile).toHaveBeenCalled();
-    });
-
-    it("should handle legacy format with currentTime", async () => {
-      vi.mocked(childProcess.execFile).mockImplementation(
-        (
-          file: string,
-          args: any,
-          callback: (
-            error: Error | null,
-            stdout: string,
-            stderr: string,
-          ) => void,
-        ) => {
-          callback(null, "", "");
-          return {} as any;
-        },
-      );
-
-      const res = await app.request("/music", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ currentTime: 120.5 }),
-      });
-
-      expect(res.status).toBe(200);
-      const data = await res.json();
-      expect(data).toEqual({ message: "Music app command received" });
-      expect(childProcess.execFile).toHaveBeenCalled();
-    });
-
     it("should not execute commands when body is empty", async () => {
       const res = await app.request("/music", {
         method: "POST",
@@ -312,34 +228,6 @@ describe("Server Routes", () => {
       const data = await res.json();
       expect(data).toEqual({ message: "Music app command received" });
       expect(childProcess.execFile).not.toHaveBeenCalled();
-    });
-
-    it("should handle multiple commands at once", async () => {
-      vi.mocked(childProcess.execFile).mockImplementation(
-        (
-          file: string,
-          args: any,
-          callback: (
-            error: Error | null,
-            stdout: string,
-            stderr: string,
-          ) => void,
-        ) => {
-          callback(null, "", "");
-          return {} as any;
-        },
-      );
-
-      const res = await app.request("/music", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ playing: true, currentTime: 60.0 }),
-      });
-
-      expect(res.status).toBe(200);
-      const data = await res.json();
-      expect(data).toEqual({ message: "Music app command received" });
-      expect(childProcess.execFile).toHaveBeenCalled();
     });
   });
 

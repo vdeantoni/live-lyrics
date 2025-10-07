@@ -72,7 +72,6 @@ app.post("/music", async (c) => {
   const body = await c.req.json();
   const commands: string[] = [];
 
-  // Handle new action-based format
   if (body.action) {
     switch (body.action) {
       case "play":
@@ -86,20 +85,6 @@ app.post("/music", async (c) => {
           commands.push(`set player position to ${body.time}`);
         }
         break;
-    }
-  }
-  // Handle old format for backward compatibility
-  else {
-    const { playing, currentTime } = body;
-
-    if (playing === true) {
-      commands.push("play");
-    } else if (playing === false) {
-      commands.push("pause");
-    }
-
-    if (currentTime !== undefined) {
-      commands.push(`set player position to ${currentTime}`);
     }
   }
 
