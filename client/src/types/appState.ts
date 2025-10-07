@@ -84,3 +84,13 @@ export interface EffectiveProvider<T = unknown> {
   effectivePriority: number;
   effectiveConfig: Record<string, unknown>;
 }
+
+/**
+ * Provider availability status
+ */
+export interface ProviderAvailability {
+  isAvailable: boolean;
+  isLoading: boolean;
+  lastChecked?: number;
+  error?: string;
+}
