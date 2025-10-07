@@ -70,7 +70,12 @@ export type PlayerMethod =
   | "player.next"
   | "player.previous";
 
-export type ServerMethod = "server.ping" | "song.update" | "server.error";
+export type ServerMethod =
+  | "server.ping"
+  | "song.update"
+  | "server.error"
+  | "queue.changed"
+  | "history.changed";
 
 // Parameter types for specific methods
 export interface PlayerSeekParams {
@@ -85,4 +90,12 @@ export interface ServerPingParams {
 
 export interface ServerErrorParams {
   message: string;
+}
+
+export interface QueueChangedParams {
+  queue: Song[];
+}
+
+export interface HistoryChangedParams {
+  history: Song[];
 }

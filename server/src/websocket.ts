@@ -10,6 +10,7 @@ import type {
   Song,
 } from "./types";
 import { getSongInfo } from "./index";
+import { getQueueFromPlaylist, getCurrentPlaylistId } from "./utils/queue";
 
 const JSON_RPC_VERSION = "2.0" as const;
 
@@ -233,7 +234,40 @@ function broadcastSongUpdate(wss: WebSocketServer, song: Song): void {
  */
 export function setupWebSocket(wss: WebSocketServer): void {
   let lastSong: Song | null = null;
+  let lastPlaylistId: string | null = null;
+  let currentQueue: Song[] = [];
+  let historyList: Song[] = [];
   let pollInterval: NodeJS.Timeout | null = null;
+
+  // Helper: Add song to history (max 50 items)
+  const addToHistory = (song: Song) => {
+    // Check if song is already the last item in history
+    const lastHistoryItem = historyList[historyList.length - 1];
+    if (
+      lastHistoryItem &&
+      lastHistoryItem.name === song.name &&
+      lastHistoryItem.artist === song.artist
+    ) {
+      return; // Don't add duplicates
+    }
+
+    historyList.push(song);
+
+    // Limit history to 50 items
+    if (historyList.length > 50) {
+      historyList.shift();
+    }
+
+    // Broadcast history change
+    const notification = createNotification("history.changed", {
+      history: historyList,
+    });
+    wss.clients.forEach((client) => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(JSON.stringify(notification));
+      }
+    });
+  };
 
   // Start polling AppleScript for song updates
   const startPolling = () => {
@@ -250,15 +284,43 @@ export function setupWebSocket(wss: WebSocketServer): void {
           return;
         }
 
-        // Only broadcast if song changed
+        // Check for playlist changes
+        const playlistId = await getCurrentPlaylistId();
+        if (playlistId !== lastPlaylistId) {
+          lastPlaylistId = playlistId;
+          currentQueue = await getQueueFromPlaylist();
+
+          // Broadcast queue change
+          const queueNotification = createNotification("queue.changed", {
+            queue: currentQueue,
+          });
+          wss.clients.forEach((client) => {
+            if (client.readyState === WebSocket.OPEN) {
+              client.send(JSON.stringify(queueNotification));
+            }
+          });
+        }
+
+        // Detect song completion (track changed)
         const songChanged =
+          lastSong &&
+          (lastSong.name !== songInfo.name ||
+            lastSong.artist !== songInfo.artist);
+
+        if (songChanged && lastSong) {
+          // Add previous song to history
+          addToHistory(lastSong);
+        }
+
+        // Check if song update should be broadcast
+        const shouldBroadcast =
           !lastSong ||
           lastSong.name !== songInfo.name ||
           lastSong.artist !== songInfo.artist ||
           Math.abs(lastSong.currentTime - songInfo.currentTime) > 1 ||
           lastSong.isPlaying !== songInfo.isPlaying;
 
-        if (songChanged) {
+        if (shouldBroadcast) {
           lastSong = songInfo;
           broadcastSongUpdate(wss, songInfo);
         }
@@ -290,6 +352,18 @@ export function setupWebSocket(wss: WebSocketServer): void {
       const notification = createNotification("song.update", lastSong);
       ws.send(JSON.stringify(notification));
     }
+
+    // Send current queue immediately on connection
+    const queueNotification = createNotification("queue.changed", {
+      queue: currentQueue,
+    });
+    ws.send(JSON.stringify(queueNotification));
+
+    // Send current history immediately on connection
+    const historyNotification = createNotification("history.changed", {
+      history: historyList,
+    });
+    ws.send(JSON.stringify(historyNotification));
 
     // Handle incoming messages
     ws.on("message", async (data) => {

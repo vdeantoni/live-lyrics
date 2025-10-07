@@ -13,7 +13,7 @@ describe("Players", () => {
   });
 
   it("should create remote player instance", () => {
-    const player = new RemotePlayer();
+    const player = RemotePlayer.getInstance();
     expect(player.getId()).toBe("remote");
     expect(player.getName()).toBe("Remote");
     expect(player.getDescription()).toBe("Remote player");

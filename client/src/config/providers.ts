@@ -22,7 +22,7 @@ export const BUILTIN_PROVIDER_CONFIGS = {
       description: "Remote player",
       load: async (): Promise<Player> => {
         const { RemotePlayer } = await import("@/services/remotePlayer");
-        return new RemotePlayer();
+        return RemotePlayer.getInstance();
       },
     },
   },
