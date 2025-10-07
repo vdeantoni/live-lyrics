@@ -7,6 +7,8 @@ import { JsonRpcWebSocketClient } from "./jsonRpcWebSocket";
  * Replaces the old HTTP polling approach with real-time updates
  */
 export class RemotePlayer implements Player {
+  private static instance: RemotePlayer | null = null;
+
   private wsUrl: string;
   private rpcClient: JsonRpcWebSocketClient | null = null;
   private currentSong: Song = {
@@ -17,12 +19,21 @@ export class RemotePlayer implements Player {
     duration: 0,
     isPlaying: false,
   };
+  private queue: Song[] = [];
+  private history: Song[] = [];
   private songUpdateListeners: Array<(song: Song) => void> = [];
   private connectionStateListeners: Array<(connected: boolean) => void> = [];
   private isInitialized = false;
 
-  constructor(wsUrl: string = "ws://127.0.0.1:4000/ws") {
+  private constructor(wsUrl: string = "ws://127.0.0.1:4000/ws") {
     this.wsUrl = wsUrl;
+  }
+
+  static getInstance(): RemotePlayer {
+    if (!RemotePlayer.instance) {
+      RemotePlayer.instance = new RemotePlayer();
+    }
+    return RemotePlayer.instance;
   }
 
   /**
@@ -38,6 +49,10 @@ export class RemotePlayer implements Player {
       if (method === "song.update") {
         this.currentSong = params as Song;
         this.notifySongUpdateListeners(params as Song);
+      } else if (method === "queue.changed") {
+        this.queue = (params as { queue: Song[] }).queue;
+      } else if (method === "history.changed") {
+        this.history = (params as { history: Song[] }).history;
       }
     });
 
@@ -121,11 +136,13 @@ export class RemotePlayer implements Player {
   }
 
   async getQueue(): Promise<Song[]> {
-    throw new Error("Remote player does not support queue management");
+    await this.ensureInitialized();
+    return [...this.queue];
   }
 
   async getHistory(): Promise<Song[]> {
-    throw new Error("Remote player does not support history tracking");
+    await this.ensureInitialized();
+    return [...this.history];
   }
 
   async clear(): Promise<void> {
