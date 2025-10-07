@@ -104,11 +104,16 @@ Both client and server compile to `dist/` directories:
 - **Framework**: Hono (lightweight web framework)
 - **Runtime**: Node.js with TypeScript
 - **Apple Music Integration**: Uses AppleScript via `osascript` to query macOS Music app
+- **WebSocket Server**: Real-time communication using JSON-RPC 2.0 protocol
+  - `song.update`: Broadcasts current song info to all connected clients (300ms polling)
+  - `queue.changed`: Notifies clients when playlist queue changes
+  - `history.changed`: Notifies clients when playback history updates
+  - Player control methods: `player.play`, `player.pause`, `player.seek`, `player.next`, `player.previous`
+  - Server method: `server.ping` for health checks
 - **API Endpoints**:
-  - `GET /music`: Returns current song info (name, artist, album, currentTime, duration, playerState)
-  - `POST /music`: Controls playback (play/pause, seek)
+  - `GET /`: Health check endpoint (used by isAvailable())
 - **Build**: TypeScript compiles `src/` → `dist/` with `rootDir` and `outDir` configuration
-- **Testing**: Vitest with mocked `execFile` for unit testing routes and utilities
+- **Testing**: Vitest with mocked `execFile` for unit testing WebSocket logic and utilities
 
 ### Client (client/)
 
@@ -149,7 +154,7 @@ Both client and server compile to `dist/` directories:
   - `PlaylistsColumn.tsx`: Playlist management UI with expand/collapse, play all, and delete functionality
   - `QueueColumn.tsx`: Player queue display with song list
   - `HistoryColumn.tsx`: Playback history display
-  - `PlayerControls.tsx`: Playback controls with progress slider, play/pause button, and quick action buttons
+  - `PlayerControls.tsx`: Playback controls with progress slider, play/pause button, previous/next navigation buttons, and quick action buttons
 - **Settings/**: Comprehensive settings system with drag-and-drop provider management
   - `SettingsScreen.tsx`: Main settings panel with smooth slide animations
   - `PlayerSection.tsx`: Music player selection (Local/Remote)
@@ -287,8 +292,8 @@ The application uses a centralized normalization layer to ensure all lyrics are 
 The app uses a centralized configuration-based architecture with multiple providers:
 
 **Available Players**:
-- **Remote Player** (`RemotePlayer`): Connects to local server for real Apple Music integration
-- **Local Player** (`LocalPlayer`): In-memory player with classic songs playlist
+- **Remote Player** (`RemotePlayer`): Singleton instance that connects to local server via WebSocket for real Apple Music integration, with queue and history tracking
+- **Local Player** (`LocalPlayer`): Singleton instance with in-memory player and classic songs playlist
 
 **Provider Management**:
 - Centralized configuration via `/src/config/providers.ts` with lazy loading
@@ -379,9 +384,8 @@ Tests are organized in structured directories:
 - Uses node environment (not jsdom like client)
 - Mocks `child_process.execFile` to avoid calling real AppleScript
 - Tests cover:
-  - GET /music endpoint (song data retrieval)
-  - POST /music endpoint (playback controls with action-based API)
   - getSongInfo parsing logic
+  - Queue utilities (getQueueFromPlaylist, getCurrentPlaylistId)
   - Error handling and edge cases
 
 **Client Unit & Integration Tests (Vitest)**:
