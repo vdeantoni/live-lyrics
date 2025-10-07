@@ -10,7 +10,6 @@
       "dependsOn": [],
       "inputs": [
         "src/**",
-        "tests/**",
         "public/**",
         "*.{json,ts,html}"
       ],
