@@ -12,13 +12,15 @@ import { usePlayerControlSync } from "@/adapters/react/usePlayerControlSync";
 import { usePlayerSync } from "@/adapters/react/usePlayerSync";
 import { useLyricsSync } from "@/adapters/react/useLyricsSync";
 import { useArtworkSync } from "@/adapters/react/useArtworkSync";
+import { useProviderStatus } from "@/adapters/react/useProviderStatus";
 
 /**
  * Central bootstrap hook that orchestrates all app initialization:
  * 1. Initializes event handlers
  * 2. Sets up event-to-atom synchronization
  * 3. Initializes player, lyrics, and artwork sync
- * 4. Manages app loading state
+ * 4. Checks provider availability
+ * 5. Manages app loading state
  *
  * This hook centralizes all initialization logic, keeping App.tsx simple and focused on rendering.
  */
@@ -39,6 +41,7 @@ export const useBootstrap = () => {
   usePlayerSync(); // Poll/subscribe to player state
   useLyricsSync(); // Fetch lyrics with caching
   useArtworkSync(); // Fetch artwork with caching
+  useProviderStatus(); // Check provider availability
 
   // Bootstrap app state
   useEffect(() => {

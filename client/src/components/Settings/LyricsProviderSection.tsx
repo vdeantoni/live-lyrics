@@ -1,23 +1,32 @@
 import { useAtomValue } from "jotai";
 import { arrayMove } from "@dnd-kit/sortable";
 import { effectiveLyricsProvidersAtom } from "@/atoms/appState";
+import { lyricsProviderStatusAtom } from "@/atoms/providerStatusAtoms";
 import { ProviderSection } from "./ProviderSection";
 import { useSettings } from "@/adapters/react/useSettings";
 
 export const LyricsProviderSection = () => {
   const lyricsProviders = useAtomValue(effectiveLyricsProvidersAtom) || [];
+  const providerStatuses = useAtomValue(lyricsProviderStatusAtom);
   const settings = useSettings();
 
-  // Convert new registry format to old ProviderSection format
-  const providersForSection = lyricsProviders.map((entry) => ({
-    id: entry.config.id,
-    name: entry.config.name,
-    description: entry.config.description,
-    isAvailable: true, // TODO: Implement status checking in new system
-    isEnabled: entry.isEffectivelyEnabled,
-    priority: entry.effectivePriority,
-    isLoading: false, // TODO: Implement loading states in new system
-  }));
+  // Convert new registry format to ProviderSection format with real status
+  const providersForSection = lyricsProviders.map((entry) => {
+    const status = providerStatuses.get(entry.config.id) || {
+      isAvailable: false,
+      isLoading: true,
+    };
+
+    return {
+      id: entry.config.id,
+      name: entry.config.name,
+      description: entry.config.description,
+      isAvailable: status.isAvailable,
+      isEnabled: entry.isEffectivelyEnabled,
+      priority: entry.effectivePriority,
+      isLoading: status.isLoading,
+    };
+  });
 
   const handleToggle = (id: string, enabled: boolean) => {
     settings.setProviderEnabled("lyrics", id, enabled);
