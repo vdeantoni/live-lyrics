@@ -5,7 +5,7 @@ import {
   closeAddToPlaylistDialogAtom,
 } from "@/atoms/appState";
 import { useAtomValue } from "jotai";
-import { usePlaylists } from "@/adapters/react/usePlaylists";
+import { usePlaylists } from "@/adapters/react";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";

@@ -2,7 +2,7 @@ import { useAtomValue } from "jotai";
 import { selectedPlayerAtom, effectivePlayersAtom } from "@/atoms/appState";
 import { CheckCircle, Loader2 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
-import { useSettings } from "@/adapters/react/useSettings";
+import { useSettings } from "@/adapters/react";
 
 export const PlayerSection = () => {
   const selectedPlayer = useAtomValue(selectedPlayerAtom);

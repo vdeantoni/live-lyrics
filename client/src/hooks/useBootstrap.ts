@@ -7,12 +7,14 @@ import {
 } from "@/atoms/appState";
 import { useAtomValue } from "jotai";
 import { initializeEventHandlers } from "@/core/services/eventHandlers";
-import { useEventSync } from "@/adapters/react/useEventSync";
-import { usePlayerControlSync } from "@/adapters/react/usePlayerControlSync";
-import { usePlayerSync } from "@/adapters/react/usePlayerSync";
-import { useLyricsSync } from "@/adapters/react/useLyricsSync";
-import { useArtworkSync } from "@/adapters/react/useArtworkSync";
-import { useProviderStatus } from "@/adapters/react/useProviderStatus";
+import {
+  useEventSync,
+  usePlayerControlSync,
+  usePlayerSync,
+  useLyricsSync,
+  useArtworkSync,
+  useProviderStatus,
+} from "@/adapters/react";
 
 /**
  * Central bootstrap hook that orchestrates all app initialization:

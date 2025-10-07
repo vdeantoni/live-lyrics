@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
 import { clearAppData } from "@/utils/clearAppData";
-import { useSettings } from "@/adapters/react/useSettings";
+import { useSettings } from "@/adapters/react";
 
 export const ClearAppDataSection = () => {
   const settings = useSettings();

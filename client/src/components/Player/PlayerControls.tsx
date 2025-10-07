@@ -21,7 +21,7 @@ import {
 } from "@/atoms/appState";
 import AnimatedSongName from "../LyricsVisualizer/AnimatedSongName";
 import { motion } from "framer-motion";
-import { usePlayerControls } from "@/adapters/react/usePlayerControls";
+import { usePlayerControls } from "@/adapters/react";
 
 const PlayerControls = () => {
   // Read unified atoms
