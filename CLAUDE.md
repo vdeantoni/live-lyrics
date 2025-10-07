@@ -380,8 +380,7 @@ Tests are organized in structured directories:
 - Mocks `child_process.execFile` to avoid calling real AppleScript
 - Tests cover:
   - GET /music endpoint (song data retrieval)
-  - POST /music endpoint (playback controls)
-  - Both new action-based and legacy API formats
+  - POST /music endpoint (playback controls with action-based API)
   - getSongInfo parsing logic
   - Error handling and edge cases
 
