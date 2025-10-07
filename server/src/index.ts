@@ -10,6 +10,7 @@ const app = new Hono();
 
 app.use(cors());
 
+// AppleScript for getting song info (used by WebSocket polling)
 const scriptLines = [
   'tell application "Music"',
   "    set playerState to player state",
@@ -25,6 +26,7 @@ const scriptLines = [
 
 const osascriptArgs = scriptLines.flatMap((line) => ["-e", line]);
 
+// Function used by WebSocket polling to get current song info
 export function getSongInfo(): Promise<SongResponse | ErrorResponse> {
   return new Promise((resolve) => {
     execFile("osascript", osascriptArgs, (error, stdout, stderr) => {
@@ -58,56 +60,8 @@ export function getSongInfo(): Promise<SongResponse | ErrorResponse> {
   });
 }
 
+// Health check endpoint (used by isAvailable())
 app.get("/", (c) => c.text("Hello World"));
-
-app.get("/music", async (c) => {
-  const songInfo = await getSongInfo();
-  if ("error" in songInfo) {
-    return c.json(songInfo, 404);
-  }
-  return c.json(songInfo);
-});
-
-app.post("/music", async (c) => {
-  const body = await c.req.json();
-  const commands: string[] = [];
-
-  if (body.action) {
-    switch (body.action) {
-      case "play":
-        commands.push("play");
-        break;
-      case "pause":
-        commands.push("pause");
-        break;
-      case "seek":
-        if (body.time !== undefined) {
-          commands.push(`set player position to ${body.time}`);
-        }
-        break;
-    }
-  }
-
-  if (commands.length > 0) {
-    const scriptLines = [
-      'tell application "Music"',
-      ...commands.map((cmd) => `    ${cmd}`),
-      "end tell",
-    ];
-
-    const osascriptArgs = scriptLines.flatMap((line) => ["-e", line]);
-
-    execFile("osascript", osascriptArgs, (error, _stdout, stderr) => {
-      if (error || stderr) {
-        console.error(
-          `[Server] Error executing AppleScript: ${error || stderr}`,
-        );
-      }
-    });
-  }
-
-  return c.json({ message: "Music app command received" });
-});
 
 export { app };
 
