@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useAtomValue } from "jotai";
+import { useAtom, useAtomValue } from "jotai";
 import { playlistsAtom, selectedPlayerAtom } from "@/atoms/appState";
 import { loadPlayer } from "@/config/providers";
 import { usePlaylists } from "@/adapters/react/usePlaylists";
@@ -20,7 +20,7 @@ interface PlaylistsColumnProps {
 }
 
 const PlaylistsColumn = ({ showHeader = false }: PlaylistsColumnProps) => {
-  const playlists = useAtomValue(playlistsAtom);
+  const [playlists] = useAtom(playlistsAtom);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [expandedPlaylistId, setExpandedPlaylistId] = useState<string | null>(
     null,
@@ -79,11 +79,9 @@ const PlaylistsColumn = ({ showHeader = false }: PlaylistsColumnProps) => {
   };
 
   const handleDeletePlaylist = (playlistId: string) => {
-    if (confirm("Are you sure you want to delete this playlist?")) {
-      deletePlaylist(playlistId);
-      if (expandedPlaylistId === playlistId) {
-        setExpandedPlaylistId(null);
-      }
+    deletePlaylist(playlistId);
+    if (expandedPlaylistId === playlistId) {
+      setExpandedPlaylistId(null);
     }
   };
 
