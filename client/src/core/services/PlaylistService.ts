@@ -71,7 +71,8 @@ export class PlaylistService {
       updatedAt: Date.now(),
     };
 
-    this.playlists.push(newPlaylist);
+    // Create new playlists array
+    this.playlists = [...this.playlists, newPlaylist];
     this.savePlaylists();
 
     emit({
@@ -97,11 +98,19 @@ export class PlaylistService {
       return;
     }
 
-    this.playlists[index] = {
+    // Create updated playlist object
+    const updatedPlaylist: Playlist = {
       ...this.playlists[index],
       ...updates,
       updatedAt: Date.now(),
     };
+
+    // Create new playlists array
+    this.playlists = [
+      ...this.playlists.slice(0, index),
+      updatedPlaylist,
+      ...this.playlists.slice(index + 1),
+    ];
 
     this.savePlaylists();
 
@@ -122,7 +131,8 @@ export class PlaylistService {
       return;
     }
 
-    this.playlists.splice(index, 1);
+    // Create new playlists array without the deleted playlist
+    this.playlists = this.playlists.filter((p) => p.id !== playlistId);
     this.savePlaylists();
 
     emit({
@@ -140,11 +150,13 @@ export class PlaylistService {
     playlistId: string,
     song: Omit<PlaylistSong, "id" | "order">,
   ): void {
-    const playlist = this.playlists.find((p) => p.id === playlistId);
-    if (!playlist) {
+    const playlistIndex = this.playlists.findIndex((p) => p.id === playlistId);
+    if (playlistIndex === -1) {
       console.warn(`Playlist ${playlistId} not found`);
       return;
     }
+
+    const playlist = this.playlists[playlistIndex];
 
     // Check for duplicates based on name + artist
     const isDuplicate = playlist.songs.some(
@@ -161,8 +173,19 @@ export class PlaylistService {
       order: playlist.songs.length,
     };
 
-    playlist.songs.push(newSong);
-    playlist.updatedAt = Date.now();
+    // Create updated playlist with new song
+    const updatedPlaylist: Playlist = {
+      ...playlist,
+      songs: [...playlist.songs, newSong],
+      updatedAt: Date.now(),
+    };
+
+    // Create new playlists array
+    this.playlists = [
+      ...this.playlists.slice(0, playlistIndex),
+      updatedPlaylist,
+      ...this.playlists.slice(playlistIndex + 1),
+    ];
 
     this.savePlaylists();
 
@@ -178,26 +201,37 @@ export class PlaylistService {
    * @param songId - Song ID to remove
    */
   removeSongFromPlaylist(playlistId: string, songId: string): void {
-    const playlist = this.playlists.find((p) => p.id === playlistId);
-    if (!playlist) {
+    const playlistIndex = this.playlists.findIndex((p) => p.id === playlistId);
+    if (playlistIndex === -1) {
       console.warn(`Playlist ${playlistId} not found`);
       return;
     }
 
+    const playlist = this.playlists[playlistIndex];
     const songIndex = playlist.songs.findIndex((s) => s.id === songId);
     if (songIndex === -1) {
       console.warn(`Song ${songId} not found in playlist ${playlistId}`);
       return;
     }
 
-    playlist.songs.splice(songIndex, 1);
+    // Create new songs array without the removed song and re-index
+    const newSongs = playlist.songs
+      .filter((s) => s.id !== songId)
+      .map((song, index) => ({ ...song, order: index }));
 
-    // Re-index orders
-    playlist.songs.forEach((s, index) => {
-      s.order = index;
-    });
+    // Create new playlist object
+    const updatedPlaylist: Playlist = {
+      ...playlist,
+      songs: newSongs,
+      updatedAt: Date.now(),
+    };
 
-    playlist.updatedAt = Date.now();
+    // Create new playlists array with updated playlist
+    this.playlists = [
+      ...this.playlists.slice(0, playlistIndex),
+      updatedPlaylist,
+      ...this.playlists.slice(playlistIndex + 1),
+    ];
 
     this.savePlaylists();
 
@@ -218,23 +252,36 @@ export class PlaylistService {
     oldIndex: number,
     newIndex: number,
   ): void {
-    const playlist = this.playlists.find((p) => p.id === playlistId);
-    if (!playlist) {
+    const playlistIndex = this.playlists.findIndex((p) => p.id === playlistId);
+    if (playlistIndex === -1) {
       console.warn(`Playlist ${playlistId} not found`);
       return;
     }
 
+    const playlist = this.playlists[playlistIndex];
     const songs = [...playlist.songs];
     const [movedSong] = songs.splice(oldIndex, 1);
     songs.splice(newIndex, 0, movedSong);
 
-    // Re-index all songs
-    playlist.songs = songs.map((song, index) => ({
+    // Re-index all songs and create new song objects
+    const reorderedSongs = songs.map((song, index) => ({
       ...song,
       order: index,
     }));
 
-    playlist.updatedAt = Date.now();
+    // Create updated playlist
+    const updatedPlaylist: Playlist = {
+      ...playlist,
+      songs: reorderedSongs,
+      updatedAt: Date.now(),
+    };
+
+    // Create new playlists array
+    this.playlists = [
+      ...this.playlists.slice(0, playlistIndex),
+      updatedPlaylist,
+      ...this.playlists.slice(playlistIndex + 1),
+    ];
 
     this.savePlaylists();
 
