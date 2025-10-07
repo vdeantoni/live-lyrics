@@ -30,7 +30,11 @@ export const useKeyboardShortcuts = () => {
   const openAddToPlaylistDialog = useSetAtom(openAddToPlaylistDialogAtom);
   const lyricsData = useAtomValue(lyricsDataAtom);
   const playerState = useAtomValue(playerStateAtom);
-  const { currentTime, duration, isPlaying } = playerState;
+  const {
+    currentTime = 0,
+    duration = 0,
+    isPlaying = false,
+  } = playerState || {};
 
   const playerId = selectedPlayer?.config.id;
 
@@ -81,10 +85,14 @@ export const useKeyboardShortcuts = () => {
           if (playerId && playerState) {
             const player = await getPlayer();
             if (player) {
-              if (isPlaying) {
-                await player.pause();
-              } else {
-                await player.play();
+              try {
+                if (isPlaying) {
+                  await player.pause();
+                } else {
+                  await player.play();
+                }
+              } catch (error) {
+                console.error("Playback control failed:", error);
               }
             }
           }
@@ -111,7 +119,7 @@ export const useKeyboardShortcuts = () => {
         case "a": // A - Open Add to Playlist Dialog
           if (hasModifier) return; // Don't trigger if modifier keys are pressed (fixes Cmd+A issue)
           event.preventDefault();
-          if (playerState.name) {
+          if (playerState?.name) {
             // Only open if there's a song playing
             openAddToPlaylistDialog(playerState);
           }
@@ -122,9 +130,13 @@ export const useKeyboardShortcuts = () => {
           if (playerId) {
             const player = await getPlayer();
             if (player) {
-              const seekAmount = event.shiftKey ? 15 : 5; // Fast seek with Shift
-              const newTime = Math.max(0, currentTime - seekAmount);
-              await player.seek(newTime);
+              try {
+                const seekAmount = event.shiftKey ? 15 : 5; // Fast seek with Shift
+                const newTime = Math.max(0, currentTime - seekAmount);
+                await player.seek(newTime);
+              } catch (error) {
+                console.error("Seek failed:", error);
+              }
             }
           }
           break;
@@ -134,9 +146,13 @@ export const useKeyboardShortcuts = () => {
           if (playerId) {
             const player = await getPlayer();
             if (player) {
-              const seekAmount = event.shiftKey ? 15 : 5; // Fast seek with Shift
-              const newTime = Math.min(duration, currentTime + seekAmount);
-              await player.seek(newTime);
+              try {
+                const seekAmount = event.shiftKey ? 15 : 5; // Fast seek with Shift
+                const newTime = Math.min(duration, currentTime + seekAmount);
+                await player.seek(newTime);
+              } catch (error) {
+                console.error("Seek failed:", error);
+              }
             }
           }
           break;
@@ -147,11 +163,15 @@ export const useKeyboardShortcuts = () => {
           if (playerId && lyricsData && lyricsData.lines.length > 0) {
             const player = await getPlayer();
             if (player) {
-              const currentIndex = getCurrentLineIndex();
-              const prevIndex = Math.max(0, currentIndex - 1);
-              const prevLine = lyricsData.lines[prevIndex];
-              if (prevLine) {
-                await player.seek(prevLine.time);
+              try {
+                const currentIndex = getCurrentLineIndex();
+                const prevIndex = Math.max(0, currentIndex - 1);
+                const prevLine = lyricsData.lines[prevIndex];
+                if (prevLine) {
+                  await player.seek(prevLine.time);
+                }
+              } catch (error) {
+                console.error("Seek failed:", error);
               }
             }
           }
@@ -163,14 +183,18 @@ export const useKeyboardShortcuts = () => {
           if (playerId && lyricsData && lyricsData.lines.length > 0) {
             const player = await getPlayer();
             if (player) {
-              const currentIndex = getCurrentLineIndex();
-              const nextIndex = Math.min(
-                lyricsData.lines.length - 1,
-                currentIndex + 1,
-              );
-              const nextLine = lyricsData.lines[nextIndex];
-              if (nextLine) {
-                await player.seek(nextLine.time);
+              try {
+                const currentIndex = getCurrentLineIndex();
+                const nextIndex = Math.min(
+                  lyricsData.lines.length - 1,
+                  currentIndex + 1,
+                );
+                const nextLine = lyricsData.lines[nextIndex];
+                if (nextLine) {
+                  await player.seek(nextLine.time);
+                }
+              } catch (error) {
+                console.error("Seek failed:", error);
               }
             }
           }
