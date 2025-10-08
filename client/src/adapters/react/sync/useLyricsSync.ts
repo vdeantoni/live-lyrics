@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useAtomValue, useSetAtom } from "jotai";
 import {
   playerStateAtom,
@@ -9,7 +9,7 @@ import {
 import { enabledLyricsProvidersAtom } from "@/atoms/appState";
 import { lyricsService } from "@/core/services/LyricsService";
 import { on } from "@/core/events/bus";
-import { normalizeLyricsToEnhanced } from "@/utils/lyricsNormalizer";
+import { useMemoizedLyricsNormalizer } from "@/hooks/useMemoizedLyricsNormalizer";
 
 /**
  * Hook that fetches lyrics using LyricsService
@@ -22,6 +22,18 @@ export const useLyricsSync = () => {
   const setLyricsLoading = useSetAtom(lyricsLoadingAtom);
   const setCurrentProvider = useSetAtom(currentLyricsProviderAtom);
 
+  // Memoized lyrics normalizer with LRU cache
+  const normalizeLyrics = useMemoizedLyricsNormalizer();
+
+  // Stabilize provider IDs array to prevent unnecessary effect re-runs
+  // Only changes when provider IDs actually change, not when array reference changes
+  const providerIds = useMemo(
+    () => enabledProviders.map((p) => p.config.id),
+    // Use stringified IDs as dependency to detect actual changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [enabledProviders.map((p) => p.config.id).join(",")],
+  );
+
   // Fetch lyrics when song or providers change
   useEffect(() => {
     if (!playerState.name || !playerState.artist) {
@@ -31,14 +43,12 @@ export const useLyricsSync = () => {
       return;
     }
 
-    if (enabledProviders.length === 0) {
+    if (providerIds.length === 0) {
       setLyricsContent(null);
       setLyricsLoading(false);
       setCurrentProvider(null);
       return;
     }
-
-    const providerIds = enabledProviders.map((p) => p.config.id);
 
     setLyricsLoading(true);
     lyricsService.fetchLyrics(playerState, providerIds);
@@ -51,7 +61,7 @@ export const useLyricsSync = () => {
     playerState.name,
     playerState.artist,
     playerState.album,
-    enabledProviders,
+    providerIds,
     setLyricsContent,
     setLyricsLoading,
     setCurrentProvider,
@@ -61,8 +71,8 @@ export const useLyricsSync = () => {
   useEffect(() => {
     const unsubscribeLoaded = on("lyrics.loaded", (event) => {
       if (event.payload.content) {
-        // Normalize lyrics to enhanced LRC format
-        const normalized = normalizeLyricsToEnhanced(event.payload.content);
+        // Normalize lyrics to enhanced LRC format with memoization
+        const normalized = normalizeLyrics(event.payload.content);
         setLyricsContent(normalized);
       } else {
         setLyricsContent(null);
@@ -81,5 +91,5 @@ export const useLyricsSync = () => {
       unsubscribeLoaded();
       unsubscribeError();
     };
-  }, [setLyricsContent, setLyricsLoading, setCurrentProvider]);
+  }, [setLyricsContent, setLyricsLoading, setCurrentProvider, normalizeLyrics]);
 };
