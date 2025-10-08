@@ -3,6 +3,7 @@ import { useAtom, useAtomValue } from "jotai";
 import { playlistsAtom, selectedPlayerAtom } from "@/atoms/appState";
 import { loadPlayer } from "@/config/providers";
 import { usePlaylists } from "@/adapters/react";
+import { useLogger } from "@/adapters/react/hooks/useLogger";
 import {
   ListMusic,
   Plus,
@@ -27,6 +28,7 @@ const PlaylistsColumn = ({ showHeader = false }: PlaylistsColumnProps) => {
   );
   const { removeSongFromPlaylist, deletePlaylist } = usePlaylists();
   const selectedPlayer = useAtomValue(selectedPlayerAtom);
+  const logger = useLogger("PlaylistsColumn");
 
   const handlePlaySong = async (song: {
     name: string;
@@ -46,7 +48,7 @@ const PlaylistsColumn = ({ showHeader = false }: PlaylistsColumnProps) => {
         isPlaying: false,
       });
     } catch (error) {
-      console.error("Failed to add song to queue:", error);
+      logger.error("Failed to add song to queue", { song: song.name, error });
     }
   };
 
@@ -57,20 +59,25 @@ const PlaylistsColumn = ({ showHeader = false }: PlaylistsColumnProps) => {
     const playerId = selectedPlayer?.config.id;
     if (!playerId) return;
 
+    const songsToAdd = playlist.songs
+      .sort((a, b) => a.order - b.order)
+      .map((song) => ({
+        ...song,
+        currentTime: 0,
+        isPlaying: false,
+      }));
+
     try {
       const player = await loadPlayer(playerId);
       // Clear queue and add all songs
       await player.clear();
-      const songsToAdd = playlist.songs
-        .sort((a, b) => a.order - b.order)
-        .map((song) => ({
-          ...song,
-          currentTime: 0,
-          isPlaying: false,
-        }));
       await player.add(...songsToAdd);
     } catch (error) {
-      console.error("Failed to play all songs:", error);
+      logger.error("Failed to play all songs", {
+        playlistId,
+        count: songsToAdd.length,
+        error,
+      });
     }
   };
 

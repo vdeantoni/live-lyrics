@@ -1,6 +1,7 @@
 import type { Song, Player } from "@/types";
 import { loadPlayer } from "@/config/providers";
 import { emit } from "@/core/events/bus";
+import { logService } from "@/core/services/LogService";
 
 /**
  * Player service that handles all player-related business logic
@@ -19,7 +20,10 @@ export class PlayerService {
       this.currentPlayerId = playerId;
       this.currentPlayer = await loadPlayer(playerId);
     } catch (error) {
-      console.error(`Failed to load player "${playerId}":`, error);
+      logService.error("Failed to load player", "PlayerService", {
+        playerId,
+        error,
+      });
       emit({ type: "player.error", payload: { error: error as Error } });
       throw error;
     }
@@ -48,7 +52,7 @@ export class PlayerService {
       const song = await this.currentPlayer.getSong();
       emit({ type: "player.state.changed", payload: song });
     } catch (error) {
-      console.error("Failed to play:", error);
+      logService.error("Failed to play", "PlayerService", { error });
       emit({ type: "player.error", payload: { error: error as Error } });
       throw error;
     }
@@ -70,7 +74,7 @@ export class PlayerService {
       const song = await this.currentPlayer.getSong();
       emit({ type: "player.state.changed", payload: song });
     } catch (error) {
-      console.error("Failed to pause:", error);
+      logService.error("Failed to pause", "PlayerService", { error });
       emit({ type: "player.error", payload: { error: error as Error } });
       throw error;
     }
@@ -93,7 +97,7 @@ export class PlayerService {
       const song = await this.currentPlayer.getSong();
       emit({ type: "player.state.changed", payload: song });
     } catch (error) {
-      console.error("Failed to seek:", error);
+      logService.error("Failed to seek", "PlayerService", { time, error });
       emit({ type: "player.error", payload: { error: error as Error } });
       throw error;
     }
@@ -115,7 +119,7 @@ export class PlayerService {
       const song = await this.currentPlayer.getSong();
       emit({ type: "player.state.changed", payload: song });
     } catch (error) {
-      console.error("Failed to skip to next:", error);
+      logService.error("Failed to skip to next", "PlayerService", { error });
       emit({ type: "player.error", payload: { error: error as Error } });
       throw error;
     }
@@ -137,7 +141,7 @@ export class PlayerService {
       const song = await this.currentPlayer.getSong();
       emit({ type: "player.state.changed", payload: song });
     } catch (error) {
-      console.error("Failed to go to previous:", error);
+      logService.error("Failed to go to previous", "PlayerService", { error });
       emit({ type: "player.error", payload: { error: error as Error } });
       throw error;
     }
@@ -160,7 +164,10 @@ export class PlayerService {
       const song = await this.currentPlayer.getSong();
       emit({ type: "player.state.changed", payload: song });
     } catch (error) {
-      console.error("Failed to add songs:", error);
+      logService.error("Failed to add songs", "PlayerService", {
+        count: songs.length,
+        error,
+      });
       emit({ type: "player.error", payload: { error: error as Error } });
       throw error;
     }
@@ -184,13 +191,19 @@ export class PlayerService {
    */
   onSongUpdate(callback: (song: Song) => void): () => void {
     if (!this.currentPlayer) {
-      console.warn("No player selected for song update subscription");
+      logService.warn(
+        "No player selected for song update subscription",
+        "PlayerService",
+      );
       return () => {};
     }
 
     // Check if player supports WebSocket updates
     if (!("onSongUpdate" in this.currentPlayer)) {
-      console.warn("Player does not support WebSocket updates");
+      logService.warn(
+        "Player does not support WebSocket updates",
+        "PlayerService",
+      );
       return () => {};
     }
 

@@ -208,8 +208,9 @@ describe("IndexedDBCache", () => {
     });
 
     it("should handle errors gracefully", async () => {
-      const consoleErrorSpy = vi
-        .spyOn(console, "error")
+      const { logService } = await import("@/core/services/LogService");
+      const logErrorSpy = vi
+        .spyOn(logService, "error")
         .mockImplementation(() => {});
 
       mockDB.get.mockRejectedValue(new Error("DB error"));
@@ -217,12 +218,17 @@ describe("IndexedDBCache", () => {
       const result = await cache.get(mockSong, "test-provider", "lyrics");
 
       expect(result).toBeNull();
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        "Failed to get from cache:",
-        expect.any(Error),
+      expect(logErrorSpy).toHaveBeenCalledWith(
+        "Failed to get from cache",
+        "IndexedDBCache",
+        expect.objectContaining({
+          providerId: "test-provider",
+          type: "lyrics",
+          error: expect.any(Error),
+        }),
       );
 
-      consoleErrorSpy.mockRestore();
+      logErrorSpy.mockRestore();
     });
   });
 
@@ -294,8 +300,9 @@ describe("IndexedDBCache", () => {
     });
 
     it("should return empty array on error", async () => {
-      const consoleErrorSpy = vi
-        .spyOn(console, "error")
+      const { logService } = await import("@/core/services/LogService");
+      const logErrorSpy = vi
+        .spyOn(logService, "error")
         .mockImplementation(() => {});
 
       mockIndex.getAll.mockRejectedValue(new Error("Query failed"));
@@ -303,12 +310,17 @@ describe("IndexedDBCache", () => {
       const result = await cache.getAll(mockSong, "test-provider", "lyrics");
 
       expect(result).toEqual([]);
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        "Failed to get all from cache:",
-        expect.any(Error),
+      expect(logErrorSpy).toHaveBeenCalledWith(
+        "Failed to get all from cache",
+        "IndexedDBCache",
+        expect.objectContaining({
+          providerId: "test-provider",
+          type: "lyrics",
+          error: expect.any(Error),
+        }),
       );
 
-      consoleErrorSpy.mockRestore();
+      logErrorSpy.mockRestore();
     });
   });
 
@@ -354,20 +366,26 @@ describe("IndexedDBCache", () => {
     });
 
     it("should handle errors gracefully", async () => {
-      const consoleErrorSpy = vi
-        .spyOn(console, "error")
+      const { logService } = await import("@/core/services/LogService");
+      const logErrorSpy = vi
+        .spyOn(logService, "error")
         .mockImplementation(() => {});
 
       mockDB.put.mockRejectedValue(new Error("Write failed"));
 
       await cache.set(mockSong, "test-provider", "lyrics", "cached lyrics");
 
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        "Failed to set cache:",
-        expect.any(Error),
+      expect(logErrorSpy).toHaveBeenCalledWith(
+        "Failed to set cache",
+        "IndexedDBCache",
+        expect.objectContaining({
+          providerId: "test-provider",
+          type: "lyrics",
+          error: expect.any(Error),
+        }),
       );
 
-      consoleErrorSpy.mockRestore();
+      logErrorSpy.mockRestore();
     });
   });
 
@@ -417,8 +435,9 @@ describe("IndexedDBCache", () => {
     });
 
     it("should handle transaction errors", async () => {
-      const consoleErrorSpy = vi
-        .spyOn(console, "error")
+      const { logService } = await import("@/core/services/LogService");
+      const logErrorSpy = vi
+        .spyOn(logService, "error")
         .mockImplementation(() => {});
 
       mockStore.put.mockRejectedValue(new Error("Transaction failed"));
@@ -427,12 +446,18 @@ describe("IndexedDBCache", () => {
         { data: "lyrics" },
       ]);
 
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        "Failed to set many cache entries:",
-        expect.any(Error),
+      expect(logErrorSpy).toHaveBeenCalledWith(
+        "Failed to set many cache entries",
+        "IndexedDBCache",
+        expect.objectContaining({
+          providerId: "test-provider",
+          type: "lyrics",
+          count: 1,
+          error: expect.any(Error),
+        }),
       );
 
-      consoleErrorSpy.mockRestore();
+      logErrorSpy.mockRestore();
     });
 
     it("should wait for transaction to complete", async () => {
@@ -453,20 +478,24 @@ describe("IndexedDBCache", () => {
     });
 
     it("should handle errors gracefully", async () => {
-      const consoleErrorSpy = vi
-        .spyOn(console, "error")
+      const { logService } = await import("@/core/services/LogService");
+      const logErrorSpy = vi
+        .spyOn(logService, "error")
         .mockImplementation(() => {});
 
       mockDB.clear.mockRejectedValue(new Error("Clear failed"));
 
       await cache.clear();
 
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        "Failed to clear cache:",
-        expect.any(Error),
+      expect(logErrorSpy).toHaveBeenCalledWith(
+        "Failed to clear cache",
+        "IndexedDBCache",
+        expect.objectContaining({
+          error: expect.any(Error),
+        }),
       );
 
-      consoleErrorSpy.mockRestore();
+      logErrorSpy.mockRestore();
     });
   });
 
@@ -543,8 +572,9 @@ describe("IndexedDBCache", () => {
     });
 
     it("should return 0 on error", async () => {
-      const consoleErrorSpy = vi
-        .spyOn(console, "error")
+      const { logService } = await import("@/core/services/LogService");
+      const logErrorSpy = vi
+        .spyOn(logService, "error")
         .mockImplementation(() => {});
 
       mockDB.transaction.mockImplementation(() => {
@@ -554,12 +584,15 @@ describe("IndexedDBCache", () => {
       const deleted = await cache.cleanup();
 
       expect(deleted).toBe(0);
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        "Failed to cleanup cache:",
-        expect.any(Error),
+      expect(logErrorSpy).toHaveBeenCalledWith(
+        "Failed to cleanup cache",
+        "IndexedDBCache",
+        expect.objectContaining({
+          error: expect.any(Error),
+        }),
       );
 
-      consoleErrorSpy.mockRestore();
+      logErrorSpy.mockRestore();
     });
   });
 

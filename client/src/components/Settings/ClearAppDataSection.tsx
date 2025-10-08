@@ -3,10 +3,12 @@ import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
 import { clearAppData } from "@/utils/clearAppData";
 import { useSettings } from "@/adapters/react";
+import { useLogger } from "@/adapters/react/hooks/useLogger";
 
 export const ClearAppDataSection = () => {
   const settings = useSettings();
   const [isClearing, setIsClearing] = useState(false);
+  const logger = useLogger("ClearAppDataSection");
 
   const handleClearAppData = async () => {
     setIsClearing(true);
@@ -21,7 +23,7 @@ export const ClearAppDataSection = () => {
         window.location.reload();
       }, 1000);
     } catch (error) {
-      console.error("Failed to clear app data:", error);
+      logger.error("Failed to clear app data", { error });
       alert(
         "Failed to clear app data. Please try again or refresh the page manually.",
       );

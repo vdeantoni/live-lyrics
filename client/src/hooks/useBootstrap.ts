@@ -7,6 +7,7 @@ import {
 } from "@/atoms/appState";
 import { useAtomValue } from "jotai";
 import { initializeEventHandlers } from "@/core/services/eventHandlers";
+import { useLogger } from "@/adapters/react/hooks/useLogger";
 import {
   useEventSync,
   usePlayerControlSync,
@@ -27,6 +28,7 @@ import {
  * This hook centralizes all initialization logic, keeping App.tsx simple and focused on rendering.
  */
 export const useBootstrap = () => {
+  const logger = useLogger("useBootstrap");
   const setAppState = useSetAtom(updateCoreAppStateAtom);
   const lyricsProviders = useAtomValue(effectiveLyricsProvidersAtom);
   const artworkProviders = useAtomValue(effectiveArtworkProvidersAtom);
@@ -60,7 +62,7 @@ export const useBootstrap = () => {
         // Mark app as ready
         setAppState({ isLoading: false, isReady: true });
       } catch (error) {
-        console.error("Bootstrap failed:", error);
+        logger.error("Bootstrap failed", { error });
         setAppState({
           isLoading: false,
           isReady: false,
@@ -70,5 +72,5 @@ export const useBootstrap = () => {
     };
 
     bootstrap();
-  }, [setAppState, lyricsProviders, artworkProviders]);
+  }, [setAppState, lyricsProviders, artworkProviders, logger]);
 };

@@ -2,6 +2,7 @@ import { useAtomValue } from "jotai";
 import { selectedPlayerAtom } from "@/atoms/appState";
 import { loadPlayer } from "@/config/providers";
 import { POLLING_INTERVALS } from "@/constants/timing";
+import { useLogger } from "@/adapters/react/hooks/useLogger";
 import type { Song } from "@/types";
 import { useCallback, useEffect, useState } from "react";
 
@@ -11,6 +12,7 @@ import { useCallback, useEffect, useState } from "react";
  * Provides helper methods for queue manipulation
  */
 export const usePlayerQueue = () => {
+  const logger = useLogger("usePlayerQueue");
   const selectedPlayer = useAtomValue(selectedPlayerAtom);
   const playerId = selectedPlayer?.config.id;
 
@@ -31,11 +33,11 @@ export const usePlayerQueue = () => {
       setQueue(queueData);
       setError(null);
     } catch (err) {
-      console.error(`Failed to fetch queue from "${playerId}":`, err);
+      logger.error("Failed to fetch queue", { playerId, error: err });
       setError(err as Error);
       setQueue([]); // Return empty array on error to prevent UI crashes
     }
-  }, [playerId]);
+  }, [playerId, logger]);
 
   // Poll for queue updates
   useEffect(() => {
@@ -63,10 +65,10 @@ export const usePlayerQueue = () => {
         await player.setQueue(newQueue);
         await fetchQueue(); // Refresh immediately
       } catch (error) {
-        console.error("Failed to remove song from queue:", error);
+        logger.error("Failed to remove song from queue", { index, error });
       }
     },
-    [playerId, queue, fetchQueue],
+    [playerId, queue, fetchQueue, logger],
   );
 
   // Helper: Reorder songs (for drag & drop)
@@ -84,10 +86,10 @@ export const usePlayerQueue = () => {
         await player.setQueue(result);
         await fetchQueue(); // Refresh immediately
       } catch (error) {
-        console.error("Failed to reorder queue:", error);
+        logger.error("Failed to reorder queue", { oldIndex, newIndex, error });
       }
     },
-    [playerId, queue, fetchQueue],
+    [playerId, queue, fetchQueue, logger],
   );
 
   // Helper: Clear entire queue
@@ -99,9 +101,9 @@ export const usePlayerQueue = () => {
       await player.setQueue([]);
       await fetchQueue(); // Refresh immediately
     } catch (error) {
-      console.error("Failed to clear queue:", error);
+      logger.error("Failed to clear queue", { error });
     }
-  }, [playerId, fetchQueue]);
+  }, [playerId, fetchQueue, logger]);
 
   // Helper: Add songs to queue
   const addSongs = useCallback(
@@ -113,10 +115,13 @@ export const usePlayerQueue = () => {
         await player.add(...songs);
         await fetchQueue(); // Refresh immediately
       } catch (error) {
-        console.error("Failed to add songs to queue:", error);
+        logger.error("Failed to add songs to queue", {
+          count: songs.length,
+          error,
+        });
       }
     },
-    [playerId, fetchQueue],
+    [playerId, fetchQueue, logger],
   );
 
   return {

@@ -7,6 +7,7 @@ import {
 } from "@/atoms/appState";
 import { playerStateAtom } from "@/atoms/playerAtoms";
 import { loadLyricsProvider } from "@/config/providers";
+import { useLogger } from "@/adapters/react/hooks/useLogger";
 import type { SearchResult } from "@/types";
 import { Search, Loader2, Music, X, ListPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -25,6 +26,7 @@ const SearchScreen = () => {
   const toggleSearch = useSetAtom(toggleSearchAtom);
   const setPlayerState = useSetAtom(playerStateAtom);
   const openAddToPlaylistDialog = useSetAtom(openAddToPlaylistDialogAtom);
+  const logger = useLogger("SearchScreen");
 
   // Focus input after animation completes (1 second delay)
   useEffect(() => {
@@ -57,10 +59,10 @@ const SearchScreen = () => {
               providerId: provider.getId(),
             }));
           } catch (error) {
-            console.error(
-              `Search failed for provider ${providerConfig.config.id}:`,
+            logger.error("Search failed for provider", {
+              providerId: providerConfig.config.id,
               error,
-            );
+            });
             return [];
           }
         });
@@ -76,13 +78,14 @@ const SearchScreen = () => {
 
         setResults(uniqueResults);
       } catch (error) {
-        console.error("Search failed:", error);
+        logger.error("Search failed", { query, error });
         setResults([]);
       } finally {
         setIsSearching(false);
       }
     },
-    [enabledProviders],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [enabledProviders, logger],
   );
 
   // Debounce search

@@ -1,6 +1,7 @@
 import { openDB, type DBSchema, type IDBPDatabase } from "idb";
 import type { Song } from "@/types";
 import type { IProviderCache, CacheEntry } from "./CacheInterface";
+import { logService } from "@/core/services/LogService";
 
 /**
  * IndexedDB cache row structure
@@ -78,7 +79,9 @@ export class IndexedDBCache implements IProviderCache {
           },
         });
       } catch (error) {
-        console.error("Failed to initialize IndexedDB cache:", error);
+        logService.error("Failed to initialize cache", "IndexedDBCache", {
+          error,
+        });
         throw error;
       }
     })();
@@ -125,7 +128,12 @@ export class IndexedDBCache implements IProviderCache {
 
       return entry.data;
     } catch (error) {
-      console.error("Failed to get from cache:", error);
+      logService.error("Failed to get from cache", "IndexedDBCache", {
+        providerId,
+        type,
+        variant,
+        error,
+      });
       return null;
     }
   }
@@ -163,7 +171,11 @@ export class IndexedDBCache implements IProviderCache {
         accessedAt: entry.accessedAt,
       }));
     } catch (error) {
-      console.error("Failed to get all from cache:", error);
+      logService.error("Failed to get all from cache", "IndexedDBCache", {
+        providerId,
+        type,
+        error,
+      });
       return [];
     }
   }
@@ -200,7 +212,12 @@ export class IndexedDBCache implements IProviderCache {
 
       await this.db.put("providerCache", entry);
     } catch (error) {
-      console.error("Failed to set cache:", error);
+      logService.error("Failed to set cache", "IndexedDBCache", {
+        providerId,
+        type,
+        variant,
+        error,
+      });
     }
   }
 
@@ -250,7 +267,12 @@ export class IndexedDBCache implements IProviderCache {
 
       await tx.done;
     } catch (error) {
-      console.error("Failed to set many cache entries:", error);
+      logService.error("Failed to set many cache entries", "IndexedDBCache", {
+        providerId,
+        type,
+        count: entries.length,
+        error,
+      });
     }
   }
 
@@ -265,7 +287,7 @@ export class IndexedDBCache implements IProviderCache {
     try {
       await this.db.clear("providerCache");
     } catch (error) {
-      console.error("Failed to clear cache:", error);
+      logService.error("Failed to clear cache", "IndexedDBCache", { error });
     }
   }
 
@@ -297,7 +319,10 @@ export class IndexedDBCache implements IProviderCache {
       await tx.done;
       return deleted;
     } catch (error) {
-      console.error("Failed to cleanup cache:", error);
+      logService.error("Failed to cleanup cache", "IndexedDBCache", {
+        maxAgeMs,
+        error,
+      });
       return 0;
     }
   }
