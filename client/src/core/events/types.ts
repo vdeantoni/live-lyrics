@@ -4,6 +4,11 @@ import type { ProviderType } from "@/core/services/ProviderService";
 import type { ProviderConfig } from "@/types/appState";
 
 /**
+ * Log levels for application logging
+ */
+export type LogLevel = "debug" | "info" | "warn" | "error";
+
+/**
  * Type-safe event definitions for the application event bus
  * All events follow the pattern: { type: string; payload?: any }
  */
@@ -72,4 +77,15 @@ export type AppEvent =
   // UI events
   | { type: "ui.settings.toggle" }
   | { type: "ui.search.toggle" }
-  | { type: "ui.playlists.toggle" };
+  | { type: "ui.playlists.toggle" }
+
+  // Logging events
+  | {
+      type: "log";
+      payload: {
+        level: LogLevel;
+        message: string;
+        context?: string;
+        data?: unknown;
+      };
+    };

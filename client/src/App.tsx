@@ -2,11 +2,15 @@ import { Provider as JotaiProvider } from "jotai";
 import { useAtomValue } from "jotai";
 import Player from "@/components/Player/Player";
 import { useBootstrap } from "@/hooks/useBootstrap";
+import { useConsoleLogger } from "@/adapters/react/hooks/useConsoleLogger";
 import { coreAppStateAtom } from "@/atoms/appState";
 import { currentArtworkUrlAtom } from "@/atoms/playerAtoms";
 
 // Inner component to use hooks inside Jotai Provider
 const AppContent = () => {
+  // Initialize console logger (debug in dev, error in prod)
+  useConsoleLogger(import.meta.env.DEV ? "debug" : "error");
+
   // Bootstrap the app (handles all initialization)
   useBootstrap();
 
