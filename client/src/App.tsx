@@ -40,7 +40,7 @@ const AppContent = () => {
     >
       {/* Subtle overlay for better contrast */}
       {currentArtworkUrl && (
-        <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/20 to-black/40" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/20 to-black/60" />
       )}
 
       <div className="relative z-10 h-full w-full">

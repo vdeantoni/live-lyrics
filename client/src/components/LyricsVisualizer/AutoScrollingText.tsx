@@ -11,15 +11,15 @@ const ANIMATION_CONSTANTS = {
   RESUME_DELAY_AFTER_HOVER: 0.5, // seconds
 } as const;
 
-interface AnimatedSongNameProps extends React.HTMLAttributes<HTMLDivElement> {
-  songName?: string;
+interface AutoScrollingTextProps extends React.HTMLAttributes<HTMLDivElement> {
+  text?: string;
 }
 
-const AnimatedSongName = ({
-  songName = "",
+const AutoScrollingText = ({
+  text = "",
   className = "",
   ...rest
-}: AnimatedSongNameProps) => {
+}: AutoScrollingTextProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLHeadingElement>(null);
 
@@ -111,7 +111,7 @@ const AnimatedSongName = ({
     checkOverflow();
     window.addEventListener("resize", checkOverflow);
     return () => window.removeEventListener("resize", checkOverflow);
-  }, [songName]);
+  }, [text]);
 
   const handleMouseEnter = () => {
     if (resumeTimeoutRef.current) clearTimeout(resumeTimeoutRef.current);
@@ -163,9 +163,9 @@ const AnimatedSongName = ({
       onMouseLeave={handleMouseLeave}
       {...rest}
     >
-      <motion.h2
+      <motion.div
         ref={textRef}
-        className="whitespace-nowrap text-center text-2xl font-semibold"
+        className="whitespace-nowrap"
         animate={controls}
         onUpdate={(latest) => {
           if (typeof latest.x === "number") {
@@ -182,12 +182,12 @@ const AnimatedSongName = ({
         }}
         whileDrag={{ cursor: "grabbing" }}
       >
-        {songName}
-      </motion.h2>
+        {text}
+      </motion.div>
     </div>
   );
 };
 
-AnimatedSongName.displayName = "AnimatedSongName";
+AutoScrollingText.displayName = "AutoScrollingText";
 
-export default AnimatedSongName;
+export default AutoScrollingText;
