@@ -315,10 +315,11 @@ test.describe("Playlists Functionality", () => {
       await expect(playAllButton).toBeVisible();
       await playAllButton.click();
 
-      // Verify player updated (song should still be Bohemian Rhapsody in this case)
-      await expect(
-        page.getByRole("heading", { name: "Bohemian Rhapsody" }),
-      ).toBeVisible();
+      // Verify playlists screen closed and song is visible
+      await expect(page.getByTestId("lyrics-screen")).toBeVisible();
+      await expect(page.getByTestId("song-name")).toHaveText(
+        "Bohemian Rhapsody",
+      );
     });
   });
 
