@@ -19,7 +19,7 @@
       "outputLogs": "new-only"
     },
     "lint": {
-      "dependsOn": ["build"],
+      "dependsOn": [],
       "inputs": [
         "src/**",
         "tests/**",
@@ -28,7 +28,7 @@
       "outputLogs": "new-only"
     },
     "lint:check": {
-      "dependsOn": ["build"],
+      "dependsOn": [],
       "inputs": [
         "src/**",
         "tests/**",
