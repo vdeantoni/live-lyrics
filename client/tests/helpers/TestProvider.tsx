@@ -3,7 +3,8 @@ import { Provider as JotaiProvider, useAtomValue } from "jotai";
 import { useBootstrap } from "@/hooks/useBootstrap";
 import { useEventSync } from "@/adapters/react";
 import { coreAppStateAtom } from "@/atoms/appState";
-import { providerAPI } from "@/api/providerAPI";
+import { providerService } from "@/core/services/ProviderService";
+import { settingsService } from "@/core/services/SettingsService";
 import { createTestProviderConfigs } from "./testRegistryFactory";
 import type { LyricsProvider, ArtworkProvider, Player } from "@/types";
 import type { ProviderConfig } from "@/types/appState";
@@ -19,7 +20,7 @@ interface TestProviderProps {
 
 /**
  * Test provider that sets up Jotai atoms directly for testing
- * Uses providerAPI.replaceAll approach
+ * Uses direct service calls to replace providers and clear settings
  *
  * @example
  * ```typescript
@@ -58,7 +59,17 @@ const JotaiTestSetup: React.FC<TestProviderProps> = ({
   // ✅ Use useEffect for side effects (not useMemo)
   React.useEffect(() => {
     const providers = customProviders || createTestProviderConfigs();
-    providerAPI.replaceAll(providers);
+
+    // Build the provider registry structure
+    const newProviders = {
+      players: providers.players || [],
+      lyrics: providers.lyricsProviders || [],
+      artwork: providers.artworkProviders || [],
+    };
+
+    // Replace providers and clear settings using direct service calls
+    providerService.replaceProviders(newProviders);
+    settingsService.clearAllSettings();
   }, [customProviders]);
 
   return <>{children}</>;
