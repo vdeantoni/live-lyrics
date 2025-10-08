@@ -256,6 +256,12 @@ The app follows an event-driven architecture pattern for state mutations:
 - **React hooks**: Clean component interface via `useSettings()`, `usePlayerControls()`
 - **Factory functions**: DRY code for repeated patterns (storage serialization)
 
+**React Adapters Organization** (`client/src/adapters/react/`):
+The React integration layer is organized into specialized subdirectories:
+- **`hooks/`**: Custom React hooks for component integration (`useSettings.ts`, `usePlayerControls.ts`, `useProviderStatus.ts`)
+- **`sync/`**: Event synchronization hooks that bridge services to React state (`useEventSync.ts`)
+- This separation clarifies the distinction between component-facing hooks and internal sync mechanisms
+
 **Timing Constants** (`client/src/constants/timing.ts`):
 - `POLLING_INTERVALS.SONG_SYNC` (300ms)
 - `POLLING_INTERVALS.LYRICS_FETCH_POLL` (50ms)
@@ -309,6 +315,13 @@ The app uses a centralized configuration-based architecture with multiple provid
 - **Lyrics Providers**: `LrclibLyricsProvider`, `LocalServerLyricsProvider`, `SimulatedLyricsProvider`
 - **Artwork Providers**: `ITunesArtworkProvider` for album cover fetching
 - Providers are loaded dynamically using `loadPlayer()`, `loadLyricsProvider()`, `loadArtworkProvider()`
+
+**Provider Directory Structure** (`client/src/providers/`):
+Providers are organized into categorized subdirectories for better maintainability:
+- **`players/`**: Player implementations (`RemotePlayer.ts`, `LocalPlayer.ts`)
+- **`lyrics/`**: Lyrics provider implementations (`LrclibLyricsProvider.ts`, `LocalServerLyricsProvider.ts`, `SimulatedLyricsProvider.ts`)
+- **`artwork/`**: Artwork provider implementations (`ITunesArtworkProvider.ts`)
+- This structure improves code organization and makes it easier to locate provider implementations
 
 **Enhanced LrcLib Provider**:
 The `LrclibLyricsProvider` features sophisticated track selection with intelligent matching:
@@ -395,6 +408,10 @@ Tests are organized in structured directories:
 - Uses jsdom environment with React Testing Library
 - Excludes E2E tests via configuration to avoid conflicts
 - Supports coverage reporting and interactive UI mode
+- **Key Test Files**:
+  - `useKeyboardShortcuts.test.ts`: Comprehensive 40-test suite covering all keyboard shortcuts, error handling, and edge cases
+  - `IndexedDBCache.test.ts`: Cache layer testing
+  - `jsonRpcWebSocket.test.ts`: WebSocket client testing
 
 **Test Utilities System** (`client/tests/helpers/`):
 The test infrastructure includes a sophisticated utility system for provider registry testing:
@@ -574,6 +591,9 @@ The application supports global keyboard shortcuts implemented via the `useKeybo
 - Shortcuts work when the page is focused and user is not typing in input fields
 - Hook automatically detects input contexts to prevent conflicts
 - Provides intuitive media player controls without mouse interaction
+- **Error Handling**: All async player operations (play, pause, seek) are wrapped in try-catch blocks
+- Failed operations log to console.error instead of throwing unhandled promise rejections
+- Defensive programming with optional chaining and default values for safe state access
 
 ### Animation System
 Settings panel uses Framer Motion with optimized transitions:
