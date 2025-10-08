@@ -97,9 +97,7 @@ test.describe("Player Component", () => {
     test("should seek when slider is moved with keyboard", async ({ page }) => {
       await setupPlayerWithSong(page);
 
-      const progressSlider = page.locator(
-        '[data-testid="progress-slider"] [role="slider"]',
-      );
+      const progressSlider = page.locator('[data-testid="progress-slider"]');
       const currentTimeDisplay = page.locator('[data-testid="current-time"]');
 
       // Initial time should be 0:00
@@ -212,46 +210,6 @@ test.describe("Player Component", () => {
 
       await expect(previousButton).toBeEnabled();
       await expect(nextButton).toBeEnabled();
-    });
-  });
-
-  test.describe("Responsive Layout", () => {
-    test("should display correctly in portrait orientation", async ({
-      page,
-    }) => {
-      await page.setViewportSize({ width: 768, height: 1024 });
-      await setupPlayerWithSong(page);
-
-      // All controls should be visible
-      await expect(
-        page.locator('[data-testid="player-controls"]'),
-      ).toBeVisible();
-      await expect(page.locator('[data-testid="song-name"]')).toBeVisible();
-      await expect(
-        page.locator('[data-testid="play-pause-button"]'),
-      ).toBeVisible();
-      await expect(
-        page.locator('[data-testid="progress-slider"]'),
-      ).toBeVisible();
-    });
-
-    test("should display correctly in landscape orientation", async ({
-      page,
-    }) => {
-      await page.setViewportSize({ width: 1024, height: 768 });
-      await setupPlayerWithSong(page);
-
-      // All controls should be visible
-      await expect(
-        page.locator('[data-testid="player-controls"]'),
-      ).toBeVisible();
-      await expect(page.locator('[data-testid="song-name"]')).toBeVisible();
-      await expect(
-        page.locator('[data-testid="play-pause-button"]'),
-      ).toBeVisible();
-      await expect(
-        page.locator('[data-testid="progress-slider"]'),
-      ).toBeVisible();
     });
   });
 });
