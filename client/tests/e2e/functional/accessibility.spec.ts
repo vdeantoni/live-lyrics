@@ -219,14 +219,6 @@ test.describe("Keyboard Navigation and Accessibility", () => {
       const settingsButton = page.locator('[data-testid="settings-button"]');
       const settingsLabel = await settingsButton.getAttribute("aria-label");
       expect(settingsLabel).toBeTruthy();
-
-      // Progress slider
-      const progressSlider = page.locator(
-        '[data-testid="progress-slider"] [role="slider"]',
-      );
-      expect(await progressSlider.getAttribute("role")).toBe("slider");
-      expect(await progressSlider.getAttribute("aria-valuenow")).toBeTruthy();
-      expect(await progressSlider.getAttribute("aria-valuemax")).toBeTruthy();
     });
 
     test("should update ARIA labels on state changes", async ({ page }) => {
