@@ -9,6 +9,7 @@ import {
 } from "@/atoms/appState";
 import { lyricsDataAtom, playerStateAtom } from "@/atoms/playerAtoms";
 import { loadPlayer } from "@/config/providers";
+import { useLogger } from "@/adapters/react/hooks/useLogger";
 
 /**
  * Global keyboard shortcuts hook for the player
@@ -23,6 +24,7 @@ import { loadPlayer } from "@/config/providers";
  * - A: Open add-to-playlist dialog (blocked when Cmd/Ctrl/Alt are pressed)
  */
 export const useKeyboardShortcuts = () => {
+  const logger = useLogger("useKeyboardShortcuts");
   const selectedPlayer = useAtomValue(selectedPlayerAtom);
   const toggleSettings = useSetAtom(toggleSettingsAtom);
   const toggleSearch = useSetAtom(toggleSearchAtom);
@@ -73,7 +75,7 @@ export const useKeyboardShortcuts = () => {
         try {
           return await loadPlayer(playerId);
         } catch (error) {
-          console.error("Failed to load player:", error);
+          logger.error("Failed to load player", { playerId, error });
           return null;
         }
       };
@@ -92,7 +94,7 @@ export const useKeyboardShortcuts = () => {
                   await player.play();
                 }
               } catch (error) {
-                console.error("Playback control failed:", error);
+                logger.error("Playback control failed", { error });
               }
             }
           }
@@ -135,7 +137,7 @@ export const useKeyboardShortcuts = () => {
                 const newTime = Math.max(0, currentTime - seekAmount);
                 await player.seek(newTime);
               } catch (error) {
-                console.error("Seek failed:", error);
+                logger.error("Seek failed", { error });
               }
             }
           }
@@ -151,7 +153,7 @@ export const useKeyboardShortcuts = () => {
                 const newTime = Math.min(duration, currentTime + seekAmount);
                 await player.seek(newTime);
               } catch (error) {
-                console.error("Seek failed:", error);
+                logger.error("Seek failed", { error });
               }
             }
           }
@@ -171,7 +173,7 @@ export const useKeyboardShortcuts = () => {
                   await player.seek(prevLine.time);
                 }
               } catch (error) {
-                console.error("Seek failed:", error);
+                logger.error("Seek failed", { error });
               }
             }
           }
@@ -194,7 +196,7 @@ export const useKeyboardShortcuts = () => {
                   await player.seek(nextLine.time);
                 }
               } catch (error) {
-                console.error("Seek failed:", error);
+                logger.error("Seek failed", { error });
               }
             }
           }
@@ -220,5 +222,6 @@ export const useKeyboardShortcuts = () => {
     toggleSearch,
     togglePlaylists,
     openAddToPlaylistDialog,
+    logger,
   ]);
 };

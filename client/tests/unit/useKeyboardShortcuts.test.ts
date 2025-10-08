@@ -578,8 +578,9 @@ describe("useKeyboardShortcuts", () => {
   describe("Error Handling", () => {
     it("should handle loadPlayer failure gracefully", async () => {
       vi.mocked(loadPlayer).mockRejectedValue(new Error("Player not found"));
-      const consoleErrorSpy = vi
-        .spyOn(console, "error")
+      const { logService } = await import("@/core/services/LogService");
+      const logErrorSpy = vi
+        .spyOn(logService, "error")
         .mockImplementation(() => {});
 
       renderHook(() => useKeyboardShortcuts());
@@ -591,18 +592,23 @@ describe("useKeyboardShortcuts", () => {
       window.dispatchEvent(event);
 
       await vi.waitFor(() => {
-        expect(consoleErrorSpy).toHaveBeenCalledWith(
-          "Failed to load player:",
-          expect.any(Error),
+        expect(logErrorSpy).toHaveBeenCalledWith(
+          "Failed to load player",
+          "useKeyboardShortcuts",
+          expect.objectContaining({
+            playerId: "local",
+            error: expect.any(Error),
+          }),
         );
       });
 
-      consoleErrorSpy.mockRestore();
+      logErrorSpy.mockRestore();
     });
 
     it("should handle player.play() failure gracefully", async () => {
-      const consoleErrorSpy = vi
-        .spyOn(console, "error")
+      const { logService } = await import("@/core/services/LogService");
+      const logErrorSpy = vi
+        .spyOn(logService, "error")
         .mockImplementation(() => {});
 
       mockPlayer.play = vi.fn().mockRejectedValue(new Error("Playback failed"));
@@ -619,12 +625,15 @@ describe("useKeyboardShortcuts", () => {
       await new Promise((resolve) => setTimeout(resolve, 50));
 
       // Should log error instead of throwing
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        "Playback control failed:",
-        expect.any(Error),
+      expect(logErrorSpy).toHaveBeenCalledWith(
+        "Playback control failed",
+        "useKeyboardShortcuts",
+        expect.objectContaining({
+          error: expect.any(Error),
+        }),
       );
 
-      consoleErrorSpy.mockRestore();
+      logErrorSpy.mockRestore();
     });
 
     it("should handle missing player gracefully", async () => {

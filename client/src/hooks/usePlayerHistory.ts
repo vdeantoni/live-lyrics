@@ -2,6 +2,7 @@ import { useAtomValue } from "jotai";
 import { selectedPlayerAtom } from "@/atoms/appState";
 import { loadPlayer } from "@/config/providers";
 import { POLLING_INTERVALS } from "@/constants/timing";
+import { useLogger } from "@/adapters/react/hooks/useLogger";
 import type { Song } from "@/types";
 import { useCallback, useEffect, useState } from "react";
 
@@ -11,6 +12,7 @@ import { useCallback, useEffect, useState } from "react";
  * Provides helper methods for history operations
  */
 export const usePlayerHistory = () => {
+  const logger = useLogger("usePlayerHistory");
   const selectedPlayer = useAtomValue(selectedPlayerAtom);
   const playerId = selectedPlayer?.config.id;
 
@@ -31,11 +33,11 @@ export const usePlayerHistory = () => {
       setHistory(historyData);
       setError(null);
     } catch (err) {
-      console.error(`Failed to fetch history from "${playerId}":`, err);
+      logger.error("Failed to fetch history", { playerId, error: err });
       setError(err as Error);
       setHistory([]); // Return empty array on error to prevent UI crashes
     }
-  }, [playerId]);
+  }, [playerId, logger]);
 
   // Poll for history updates
   useEffect(() => {
@@ -61,9 +63,9 @@ export const usePlayerHistory = () => {
       await player.clearHistory();
       await fetchHistory(); // Refresh immediately
     } catch (error) {
-      console.error("Failed to clear history:", error);
+      logger.error("Failed to clear history", { error });
     }
-  }, [playerId, fetchHistory]);
+  }, [playerId, fetchHistory, logger]);
 
   // Helper: Replay a song from history (add to queue)
   const replay = useCallback(
@@ -75,10 +77,10 @@ export const usePlayerHistory = () => {
         await player.add(song);
         // No need to refetch history - it doesn't change
       } catch (error) {
-        console.error("Failed to replay song:", error);
+        logger.error("Failed to replay song", { song: song.name, error });
       }
     },
-    [playerId],
+    [playerId, logger],
   );
 
   return {

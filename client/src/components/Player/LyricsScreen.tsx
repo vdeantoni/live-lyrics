@@ -6,6 +6,7 @@ import {
   artworkLoadingAtom,
   lyricsLoadingAtom,
 } from "@/atoms/playerAtoms";
+import { useLogger } from "@/adapters/react/hooks/useLogger";
 import LyricsManager from "../LyricsVisualizer/LyricsManager";
 
 const LyricsScreen = () => {
@@ -13,6 +14,7 @@ const LyricsScreen = () => {
   const artworkUrls = useAtomValue(artworkUrlsAtom);
   const currentArtworkUrl = useAtomValue(currentArtworkUrlAtom);
   const setCurrentArtworkUrl = useSetAtom(currentArtworkUrlAtom);
+  const logger = useLogger("LyricsScreen");
 
   // Get loading states for E2E testing
   const artworkLoading = useAtomValue(artworkLoadingAtom);
@@ -37,12 +39,15 @@ const LyricsScreen = () => {
         await preloadImage(selectedUrl);
         setCurrentArtworkUrl(selectedUrl);
       } catch (error) {
-        console.warn("Failed to load artwork image:", error);
+        logger.warn("Failed to load artwork image", {
+          url: selectedUrl,
+          error,
+        });
         // Fallback: set URL anyway for graceful degradation
         setCurrentArtworkUrl(selectedUrl);
       }
     },
-    [setCurrentArtworkUrl],
+    [setCurrentArtworkUrl, logger],
   );
 
   useEffect(() => {

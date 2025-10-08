@@ -3,6 +3,7 @@ import { loadLyricsProvider } from "@/config/providers";
 import { getCache } from "@/core/services/cache";
 import type { IProviderCache } from "@/core/services/cache";
 import { emit } from "@/core/events/bus";
+import { logService } from "@/core/services/LogService";
 
 /**
  * Lyrics service that handles fetching lyrics from providers with caching
@@ -53,8 +54,10 @@ export class LyricsService {
           // Check cache first
           const cached = await this.cache.get(song, providerId, "lyrics");
           if (cached) {
-            console.log(
-              `Cache hit for lyrics provider "${providerId}" - returning cached lyrics`,
+            logService.debug(
+              "Cache hit - returning cached lyrics",
+              "LyricsService",
+              { providerId },
             );
             emit({
               type: "lyrics.loaded",
@@ -63,8 +66,10 @@ export class LyricsService {
             return;
           }
 
-          console.log(
-            `Cache miss for lyrics provider "${providerId}" - fetching from provider`,
+          logService.debug(
+            "Cache miss - fetching from provider",
+            "LyricsService",
+            { providerId },
           );
 
           // Cache miss - fetch from provider
@@ -73,8 +78,10 @@ export class LyricsService {
           // Check if provider is available
           const isAvailable = await provider.isAvailable();
           if (!isAvailable) {
-            console.warn(
-              `Lyrics provider "${providerId}" is not available, trying next...`,
+            logService.warn(
+              "Provider not available, trying next",
+              "LyricsService",
+              { providerId },
             );
             continue;
           }
@@ -83,8 +90,10 @@ export class LyricsService {
           if (provider.supportsLyrics) {
             const supportsData = await provider.supportsLyrics(song);
             if (!supportsData) {
-              console.log(
-                `Lyrics provider "${providerId}" doesn't support this song, trying next...`,
+              logService.debug(
+                "Provider doesn't support this song, trying next",
+                "LyricsService",
+                { providerId },
               );
               continue;
             }
@@ -97,9 +106,9 @@ export class LyricsService {
           );
 
           if (result && result.trim().length > 0) {
-            console.log(
-              `Successfully got lyrics from provider "${providerId}"`,
-            );
+            logService.debug("Successfully fetched lyrics", "LyricsService", {
+              providerId,
+            });
 
             // Cache the result
             await this.cache.set(song, providerId, "lyrics", result);
@@ -111,27 +120,31 @@ export class LyricsService {
             return;
           }
 
-          console.log(
-            `Provider "${providerId}" returned empty lyrics, trying next...`,
+          logService.debug(
+            "Provider returned empty lyrics, trying next",
+            "LyricsService",
+            { providerId },
           );
         } catch (error) {
           if (this.abortController.signal.aborted) break;
-          console.error(
-            `Failed to get lyrics from provider "${providerId}":`,
-            error,
+          logService.error(
+            "Failed to get lyrics from provider",
+            "LyricsService",
+            { providerId, error },
           );
           // Continue to next provider
         }
       }
 
       // All providers failed
-      console.warn(
-        "All enabled lyrics providers failed or returned empty results",
+      logService.warn(
+        "All enabled providers failed or returned empty results",
+        "LyricsService",
       );
       emit({ type: "lyrics.loaded", payload: { content: "", providerId: "" } });
     } catch (error) {
       if (!this.abortController.signal.aborted) {
-        console.error("Error fetching lyrics:", error);
+        logService.error("Error fetching lyrics", "LyricsService", { error });
         emit({ type: "lyrics.error", payload: { error: error as Error } });
       }
     }

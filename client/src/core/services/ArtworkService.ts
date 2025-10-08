@@ -3,6 +3,7 @@ import { loadArtworkProvider } from "@/config/providers";
 import { getCache } from "@/core/services/cache";
 import type { IProviderCache } from "@/core/services/cache";
 import { emit } from "@/core/events/bus";
+import { logService } from "@/core/services/LogService";
 
 /**
  * Artwork service that handles fetching artwork from providers with caching
@@ -53,16 +54,20 @@ export class ArtworkService {
           // Check cache first (get all variants)
           const cached = await this.cache.getAll(song, providerId, "artwork");
           if (cached.length > 0) {
-            console.log(
-              `Cache hit for artwork provider "${providerId}" - returning cached URLs`,
+            logService.debug(
+              "Cache hit - returning cached URLs",
+              "ArtworkService",
+              { providerId, count: cached.length },
             );
             const urls = cached.map((entry) => entry.data);
             emit({ type: "artwork.loaded", payload: { urls } });
             return;
           }
 
-          console.log(
-            `Cache miss for artwork provider "${providerId}" - fetching from provider`,
+          logService.debug(
+            "Cache miss - fetching from provider",
+            "ArtworkService",
+            { providerId },
           );
 
           // Cache miss - fetch from provider
@@ -71,8 +76,10 @@ export class ArtworkService {
           // Check if provider is available
           const isAvailable = await provider.isAvailable();
           if (!isAvailable) {
-            console.warn(
-              `Artwork provider "${providerId}" is not available, trying next...`,
+            logService.warn(
+              "Provider not available, trying next",
+              "ArtworkService",
+              { providerId },
             );
             continue;
           }
@@ -84,8 +91,10 @@ export class ArtworkService {
           );
 
           if (urls && urls.length > 0) {
-            console.log(
-              `Successfully got ${urls.length} artwork URL(s) from provider "${providerId}"`,
+            logService.debug(
+              "Successfully fetched artwork URLs",
+              "ArtworkService",
+              { providerId, count: urls.length },
             );
 
             // Cache each URL as a separate variant
@@ -104,27 +113,31 @@ export class ArtworkService {
             return;
           }
 
-          console.log(
-            `Provider "${providerId}" returned no artwork URLs, trying next...`,
+          logService.debug(
+            "Provider returned no artwork URLs, trying next",
+            "ArtworkService",
+            { providerId },
           );
         } catch (error) {
           if (this.abortController.signal.aborted) break;
-          console.error(
-            `Failed to get artwork from provider "${providerId}":`,
-            error,
+          logService.error(
+            "Failed to get artwork from provider",
+            "ArtworkService",
+            { providerId, error },
           );
           // Continue to next provider
         }
       }
 
       // All providers failed
-      console.warn(
-        "All enabled artwork providers failed or returned empty results",
+      logService.warn(
+        "All enabled providers failed or returned empty results",
+        "ArtworkService",
       );
       emit({ type: "artwork.loaded", payload: { urls: [] } });
     } catch (error) {
       if (!this.abortController.signal.aborted) {
-        console.error("Error fetching artwork:", error);
+        logService.error("Error fetching artwork", "ArtworkService", { error });
         emit({ type: "artwork.error", payload: { error: error as Error } });
       }
     }
