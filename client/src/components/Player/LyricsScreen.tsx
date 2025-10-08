@@ -1,9 +1,9 @@
-import { useEffect, useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import { useAtomValue, useSetAtom } from "jotai";
 import {
+  artworkLoadingAtom,
   artworkUrlsAtom,
   currentArtworkUrlAtom,
-  artworkLoadingAtom,
   lyricsLoadingAtom,
 } from "@/atoms/playerAtoms";
 import { useLogger } from "@/adapters/react/hooks/useLogger";
