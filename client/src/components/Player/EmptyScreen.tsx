@@ -16,7 +16,7 @@ const EmptyScreen = () => {
         {/* Rotating vinyl record */}
         <div className="h-24 w-24 rounded-full bg-gradient-to-br from-slate-800 via-slate-700 to-slate-900 shadow-2xl">
           <div className="flex h-full w-full items-center justify-center rounded-full border-4 border-slate-600/50">
-            <div className="h-8 w-8 rounded-full bg-slate-900 shadow-inner">
+            <div className="h-8 w-8 rounded-full bg-slate-900/60 shadow-inner">
               <div className="flex h-full w-full items-center justify-center rounded-full border border-slate-700">
                 <Radio className="h-4 w-4 text-white/60" />
               </div>
