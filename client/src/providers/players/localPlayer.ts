@@ -1,5 +1,6 @@
 import type { Song, PlayerSettings } from "@/types";
 import type { Player } from "@/types";
+import { settingsService } from "@/core/services/SettingsService";
 
 /**
  * Local player with queue-based architecture
@@ -26,7 +27,7 @@ export class LocalPlayer implements Player {
   private history: Song[] = [];
 
   // Settings
-  private settings: PlayerSettings = { playOnAdd: false };
+  private settings!: PlayerSettings;
 
   // Subscription listeners for reactive updates
   private songUpdateListeners: Array<(song: Song) => void> = [];
@@ -38,6 +39,7 @@ export class LocalPlayer implements Player {
     }
 
     // Initialize new instance
+    this.settings = settingsService.getPlayerSettings("local");
     this.startClock();
 
     // Store the instance
@@ -268,11 +270,12 @@ export class LocalPlayer implements Player {
   }
 
   async getSettings(): Promise<PlayerSettings> {
-    return { ...this.settings };
+    return settingsService.getPlayerSettings(this.getId());
   }
 
   async setSettings(settings: Partial<PlayerSettings>): Promise<void> {
-    this.settings = { ...this.settings, ...settings };
+    settingsService.setPlayerSettings(this.getId(), settings);
+    this.settings = settingsService.getPlayerSettings(this.getId());
   }
 
   async setQueue(songs: Song[]): Promise<void> {
