@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAtomValue, useSetAtom } from "jotai";
 import {
   enabledLyricsProvidersAtom,
@@ -20,21 +20,12 @@ const SearchScreen = () => {
   >([]);
   const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
 
   const enabledProviders = useAtomValue(enabledLyricsProvidersAtom);
   const toggleSearch = useSetAtom(toggleSearchAtom);
   const setPlayerState = useSetAtom(playerStateAtom);
   const openAddToPlaylistDialog = useSetAtom(openAddToPlaylistDialogAtom);
   const logger = useLogger("SearchScreen");
-
-  // Focus input after animation completes (1 second delay)
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      inputRef.current?.focus();
-    }, 1000);
-    return () => clearTimeout(timeoutId);
-  }, []);
 
   const performSearch = useCallback(
     async (searchQuery: string) => {
@@ -164,7 +155,6 @@ const SearchScreen = () => {
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-zinc-400" />
           <input
-            ref={inputRef}
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}

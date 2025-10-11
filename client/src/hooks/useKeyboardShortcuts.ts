@@ -6,6 +6,9 @@ import {
   toggleSearchAtom,
   togglePlaylistsAtom,
   openAddToPlaylistDialogAtom,
+  settingsOpenAtom,
+  searchOpenAtom,
+  playlistsOpenAtom,
 } from "@/atoms/appState";
 import { lyricsDataAtom, playerStateAtom } from "@/atoms/playerAtoms";
 import { loadPlayer } from "@/config/providers";
@@ -22,6 +25,7 @@ import { useLogger } from "@/adapters/react/hooks/useLogger";
  * - S: Toggle search screen (blocked when Cmd/Ctrl/Alt are pressed)
  * - P: Toggle playlists screen (blocked when Cmd/Ctrl/Alt are pressed)
  * - A: Open add-to-playlist dialog (blocked when Cmd/Ctrl/Alt are pressed)
+ * - Escape: Close currently open overlay screen (settings, search, or playlists)
  */
 export const useKeyboardShortcuts = () => {
   const logger = useLogger("useKeyboardShortcuts");
@@ -30,6 +34,9 @@ export const useKeyboardShortcuts = () => {
   const toggleSearch = useSetAtom(toggleSearchAtom);
   const togglePlaylists = useSetAtom(togglePlaylistsAtom);
   const openAddToPlaylistDialog = useSetAtom(openAddToPlaylistDialogAtom);
+  const isSettingsOpen = useAtomValue(settingsOpenAtom);
+  const isSearchOpen = useAtomValue(searchOpenAtom);
+  const isPlaylistsOpen = useAtomValue(playlistsOpenAtom);
   const lyricsData = useAtomValue(lyricsDataAtom);
   const playerState = useAtomValue(playerStateAtom);
   const {
@@ -81,6 +88,19 @@ export const useKeyboardShortcuts = () => {
       };
 
       switch (key.toLowerCase()) {
+        case "escape": // Escape - Close currently open overlay
+          if (hasModifier) return; // Don't trigger if modifier keys are pressed
+          event.preventDefault();
+          // Close the currently open overlay (priority: settings > search > playlists)
+          if (isSettingsOpen) {
+            toggleSettings();
+          } else if (isSearchOpen) {
+            toggleSearch();
+          } else if (isPlaylistsOpen) {
+            togglePlaylists();
+          }
+          break;
+
         case " ": // Space - Play/Pause
           if (hasModifier) return; // Don't trigger if modifier keys are pressed
           event.preventDefault();
@@ -222,6 +242,9 @@ export const useKeyboardShortcuts = () => {
     toggleSearch,
     togglePlaylists,
     openAddToPlaylistDialog,
+    isSettingsOpen,
+    isSearchOpen,
+    isPlaylistsOpen,
     logger,
   ]);
 };
