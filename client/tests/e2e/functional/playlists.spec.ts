@@ -8,8 +8,8 @@ const openPlaylistsScreen = async (page: Page) => {
   await expect(page.locator('[data-testid="playlists-screen"]')).toBeVisible();
 };
 
-const closeOverlay = async (page: Page) => {
-  await page.locator('[data-testid="close-overlay-button"]').click();
+const closePlaylistsScreen = async (page: Page) => {
+  await page.locator('[data-testid="close-playlists-button"]').click();
 };
 
 const createPlaylist = async (
@@ -79,7 +79,7 @@ test.describe("Playlists Functionality", () => {
         page.locator('[data-testid="playlists-screen"]'),
       ).toBeVisible();
 
-      await closeOverlay(page);
+      await closePlaylistsScreen(page);
       await expect(
         page.locator('[data-testid="playlists-screen"]'),
       ).not.toBeVisible();
@@ -121,7 +121,7 @@ test.describe("Playlists Functionality", () => {
       await playlistsButton.click();
       await expect(playlistsButton).toHaveClass(/(?<!:)text-primary\b/);
 
-      await closeOverlay(page);
+      await closePlaylistsScreen(page);
       await expect(
         page.locator('[data-testid="playlists-screen"]'),
       ).not.toBeVisible();
@@ -231,7 +231,8 @@ test.describe("Playlists Functionality", () => {
         .filter({ hasText: "Search Results" })
         .click();
 
-      await closeOverlay(page);
+      // Close search screen (not playlists)
+      await page.locator('[data-testid="close-search-button"]').click();
       await openPlaylistsScreen(page);
       await expandPlaylist(page, "Search Results");
       await expect(page.getByText("1 song")).toBeVisible();

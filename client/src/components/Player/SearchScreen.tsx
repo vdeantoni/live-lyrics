@@ -138,11 +138,24 @@ const SearchScreen = () => {
     >
       {/* Header */}
       <div className="border-b border-white/10 p-6">
-        <div>
-          <h2 className="text-2xl font-bold text-white">Search Lyrics</h2>
-          <p className="text-sm text-zinc-400">
-            Find songs across all lyrics providers
-          </p>
+        <div className="flex items-start justify-between">
+          <div>
+            <h2 className="text-2xl font-bold text-white">Search Lyrics</h2>
+            <p className="text-sm text-zinc-400">
+              Find songs across all lyrics providers
+            </p>
+          </div>
+          {/* Close Button */}
+          <Button
+            data-testid="close-search-button"
+            size="sm"
+            variant="ghost"
+            className="h-10 w-10 rounded-full border border-white/10 bg-black/40 p-2 shadow-lg backdrop-blur-md hover:scale-105 hover:bg-black/60"
+            onClick={() => toggleSearch()}
+            aria-label="Close search"
+          >
+            <X className="h-5 w-5 text-white/90" />
+          </Button>
         </div>
       </div>
 

@@ -187,7 +187,7 @@ test.describe("Keyboard Navigation and Accessibility", () => {
       ).toBeVisible();
 
       // Close button should exist and be focusable
-      const closeButton = page.locator('[data-testid="close-overlay-button"]');
+      const closeButton = page.locator('[data-testid="close-settings-button"]');
       await closeButton.focus();
 
       // Verify it has focus
@@ -294,7 +294,7 @@ test.describe("Keyboard Navigation and Accessibility", () => {
       ).toBeVisible();
 
       // Close settings
-      const closeButton = page.locator('[data-testid="close-overlay-button"]');
+      const closeButton = page.locator('[data-testid="close-settings-button"]');
       await closeButton.click();
 
       // Should return to lyrics screen

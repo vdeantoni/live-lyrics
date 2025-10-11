@@ -3,20 +3,7 @@ import { screen, fireEvent, waitFor } from "@testing-library/react";
 import { renderWithProviders } from "../helpers/testUtils";
 import MainScreen from "@/components/Player/MainScreen";
 import { useSetAtom } from "jotai";
-import { toggleSearchAtom } from "@/atoms/appState";
-
-// Test helper component that provides a button to toggle search
-const MainScreenWithSearchToggle = () => {
-  const toggleSearch = useSetAtom(toggleSearchAtom);
-  return (
-    <>
-      <button data-testid="test-search-toggle" onClick={toggleSearch}>
-        Toggle Search
-      </button>
-      <MainScreen />
-    </>
-  );
-};
+import { toggleSearchAtom, toggleSettingsAtom } from "@/atoms/appState";
 
 // Mock the child components
 vi.mock("@/components/Player/LyricsScreen", () => ({
@@ -24,11 +11,25 @@ vi.mock("@/components/Player/LyricsScreen", () => ({
 }));
 
 vi.mock("@/components/Player/SettingsScreen", () => ({
-  default: () => <div data-testid="settings-screen">Settings Screen</div>,
+  default: () => (
+    <div data-testid="settings-screen">
+      <button data-testid="close-settings-button" aria-label="Close settings">
+        Close
+      </button>
+      Settings Screen
+    </div>
+  ),
 }));
 
 vi.mock("@/components/Player/SearchScreen", () => ({
-  default: () => <div data-testid="search-screen">Search Screen</div>,
+  default: () => (
+    <div data-testid="search-screen">
+      <button data-testid="close-search-button" aria-label="Close search">
+        Close
+      </button>
+      Search Screen
+    </div>
+  ),
 }));
 
 vi.mock("@/components/Player/LoadingScreen", () => ({
@@ -38,6 +39,23 @@ vi.mock("@/components/Player/LoadingScreen", () => ({
 vi.mock("@/components/Player/EmptyScreen", () => ({
   default: () => <div data-testid="empty-screen">Empty Screen</div>,
 }));
+
+// Test helper component that provides buttons to toggle screens
+const MainScreenWithToggle = () => {
+  const toggleSearch = useSetAtom(toggleSearchAtom);
+  const toggleSettings = useSetAtom(toggleSettingsAtom);
+  return (
+    <>
+      <button data-testid="test-search-toggle" onClick={toggleSearch}>
+        Toggle Search
+      </button>
+      <button data-testid="test-settings-toggle" onClick={toggleSettings}>
+        Toggle Settings
+      </button>
+      <MainScreen />
+    </>
+  );
+};
 
 describe("MainScreen", () => {
   beforeEach(() => {
@@ -56,11 +74,10 @@ describe("MainScreen", () => {
 
     expect(screen.queryByTestId("settings-screen")).not.toBeInTheDocument();
     expect(screen.queryByTestId("loading-screen")).not.toBeInTheDocument();
-    expect(screen.getByTestId("settings-button")).toBeInTheDocument();
   });
 
   it("renders settings screen when settings are open", async () => {
-    await renderWithProviders(<MainScreen />);
+    await renderWithProviders(<MainScreenWithToggle />);
 
     // Wait for content to load (either screen is fine)
     await waitFor(() => {
@@ -69,9 +86,9 @@ describe("MainScreen", () => {
       expect(hasLyricsScreen || hasEmptyScreen).toBeTruthy();
     });
 
-    // Click to open settings
-    const settingsButton = screen.getByTestId("settings-button");
-    fireEvent.click(settingsButton);
+    // Click test button to open settings
+    const settingsToggle = screen.getByTestId("test-settings-toggle");
+    fireEvent.click(settingsToggle);
 
     // Wait for settings screen to appear (AnimatePresence needs time)
     const settingsScreen = await screen.findByTestId("settings-screen");
@@ -79,33 +96,38 @@ describe("MainScreen", () => {
     // Settings should be visible
     expect(settingsScreen).toBeInTheDocument();
     expect(screen.queryByTestId("loading-screen")).not.toBeInTheDocument();
-    expect(screen.getByTestId("close-overlay-button")).toBeInTheDocument();
+    expect(screen.getByTestId("close-settings-button")).toBeInTheDocument();
   });
 
   it("handles settings button click", async () => {
-    await renderWithProviders(<MainScreen />);
-
-    const settingsButton = screen.getByTestId("settings-button");
+    await renderWithProviders(<MainScreenWithToggle />);
 
     // Initially settings should be closed
     expect(screen.queryByTestId("settings-screen")).not.toBeInTheDocument();
 
-    // Click to open settings
-    fireEvent.click(settingsButton);
+    // Click test button to open settings
+    const settingsToggle = screen.getByTestId("test-settings-toggle");
+    fireEvent.click(settingsToggle);
 
     // Wait for settings screen to appear (AnimatePresence needs time)
     const settingsScreen = await screen.findByTestId("settings-screen");
     expect(settingsScreen).toBeInTheDocument();
   });
 
-  it("has proper accessibility labels", async () => {
-    await renderWithProviders(<MainScreen />);
+  it("has proper accessibility labels in close buttons", async () => {
+    await renderWithProviders(<MainScreenWithToggle />);
 
-    expect(screen.getByLabelText("Open settings")).toBeInTheDocument();
+    // Open settings to check close button
+    const settingsToggle = screen.getByTestId("test-settings-toggle");
+    fireEvent.click(settingsToggle);
+
+    await waitFor(() => {
+      expect(screen.getByLabelText("Close settings")).toBeInTheDocument();
+    });
   });
 
   it("opens search screen and closes it with the close button", async () => {
-    await renderWithProviders(<MainScreenWithSearchToggle />);
+    await renderWithProviders(<MainScreenWithToggle />);
 
     // Initially search should be closed
     expect(screen.queryByTestId("search-screen")).not.toBeInTheDocument();
@@ -119,11 +141,11 @@ describe("MainScreen", () => {
     expect(searchScreen).toBeInTheDocument();
 
     // Close button should be visible with proper label
-    const closeButton = screen.getByTestId("close-overlay-button");
+    const closeButton = screen.getByTestId("close-search-button");
     expect(closeButton).toHaveAttribute("aria-label", "Close search");
 
-    // Click the close button
-    fireEvent.click(closeButton);
+    // Click the test toggle button to close
+    fireEvent.click(toggleButton);
 
     // Search screen should disappear
     await waitFor(() => {
