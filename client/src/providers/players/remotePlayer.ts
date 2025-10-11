@@ -25,6 +25,10 @@ export class RemotePlayer implements Player {
   private connectionStateListeners: Array<(connected: boolean) => void> = [];
   private isInitialized = false;
 
+  // Client-side time tracking for smooth playback without server updates
+  private lastUpdateTime: number = Date.now();
+  private intervalId: number | null = null;
+
   private constructor(wsUrl: string = "ws://127.0.0.1:4000/ws") {
     this.wsUrl = wsUrl;
   }
@@ -34,6 +38,45 @@ export class RemotePlayer implements Player {
       RemotePlayer.instance = new RemotePlayer();
     }
     return RemotePlayer.instance;
+  }
+
+  /**
+   * Start internal clock for smooth time progression
+   * Updates every 100ms when playing, similar to LocalPlayer
+   */
+  private startClock(): void {
+    if (this.intervalId !== null) return;
+
+    this.intervalId = window.setInterval(() => {
+      if (this.currentSong.isPlaying) {
+        const now = Date.now();
+        const deltaTime = (now - this.lastUpdateTime) / 1000;
+
+        const newTime = Math.min(
+          this.currentSong.currentTime + deltaTime,
+          this.currentSong.duration,
+        );
+
+        // Create new object to trigger React re-renders
+        this.currentSong = {
+          ...this.currentSong,
+          currentTime: newTime,
+        };
+
+        this.lastUpdateTime = now;
+        this.notifySongUpdateListeners(this.currentSong);
+      }
+    }, 100);
+  }
+
+  /**
+   * Stop internal clock
+   */
+  private stopClock(): void {
+    if (this.intervalId !== null) {
+      clearInterval(this.intervalId);
+      this.intervalId = null;
+    }
   }
 
   /**
@@ -47,8 +90,10 @@ export class RemotePlayer implements Player {
     // Register notification handler for song updates
     this.rpcClient.onNotification((method, params) => {
       if (method === "song.update") {
-        this.currentSong = params as Song;
-        this.notifySongUpdateListeners(params as Song);
+        const newSong = params as Song;
+        this.currentSong = newSong;
+        this.lastUpdateTime = Date.now(); // Reset clock on server update
+        this.notifySongUpdateListeners(newSong);
       } else if (method === "queue.changed") {
         this.queue = (params as { queue: Song[] }).queue;
       } else if (method === "history.changed") {
@@ -65,6 +110,7 @@ export class RemotePlayer implements Player {
     try {
       await this.rpcClient.connect();
       this.isInitialized = true;
+      this.startClock(); // Start internal clock for time tracking
     } catch (error) {
       console.error("[RemotePlayer] Failed to initialize:", error);
       throw error;
@@ -99,16 +145,24 @@ export class RemotePlayer implements Player {
 
   async play(): Promise<void> {
     await this.ensureInitialized();
+    this.lastUpdateTime = Date.now(); // Reset timer on play
     this.rpcClient?.notify("player.play");
   }
 
   async pause(): Promise<void> {
     await this.ensureInitialized();
+    this.lastUpdateTime = Date.now(); // Reset timer on pause
     this.rpcClient?.notify("player.pause");
   }
 
   async seek(time: number): Promise<void> {
     await this.ensureInitialized();
+    // Create new object to trigger React re-renders
+    this.currentSong = {
+      ...this.currentSong,
+      currentTime: time,
+    };
+    this.lastUpdateTime = Date.now(); // Reset timer on seek
     this.rpcClient?.notify("player.seek", { time });
   }
 
@@ -265,6 +319,7 @@ export class RemotePlayer implements Player {
    * Disconnect from WebSocket server
    */
   disconnect(): void {
+    this.stopClock(); // Stop internal clock
     if (this.rpcClient) {
       this.rpcClient.disconnect();
       this.rpcClient = null;

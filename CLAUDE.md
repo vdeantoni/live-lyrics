@@ -105,7 +105,8 @@ Both client and server compile to `dist/` directories:
 - **Runtime**: Node.js with TypeScript
 - **Apple Music Integration**: Uses AppleScript via `osascript` to query macOS Music app
 - **WebSocket Server**: Real-time communication using JSON-RPC 2.0 protocol
-  - `song.update`: Broadcasts current song info to all connected clients (300ms polling)
+  - `song.update`: Broadcasts song info only on state changes (song change, play/pause, significant time drift from seeking)
+  - Server polls Apple Music every 300ms but only broadcasts when meaningful changes occur
   - `queue.changed`: Notifies clients when playlist queue changes
   - `history.changed`: Notifies clients when playback history updates
   - Player control methods: `player.play`, `player.pause`, `player.seek`, `player.next`, `player.previous`
@@ -125,7 +126,8 @@ Both client and server compile to `dist/` directories:
 - **Icons**: Lucide React for consistent iconography
 - **UI Components**: Radix UI primitives (slider, aspect-ratio, button)
 - **Key Features**:
-  - Real-time music data fetching (300ms intervals)
+  - Real-time music data with client-side time tracking (smooth 100ms updates)
+  - Server polls Apple Music every 300ms, broadcasts only on state changes
   - Lyrics integration with external APIs (iTunes artwork, Lrclib lyrics)
   - Visual lyrics display with synchronized highlighting
   - Responsive design with landscape mode optimizations
@@ -204,11 +206,12 @@ Both client and server compile to `dist/` directories:
 
 ### Data Flow
 
-1. Server polls macOS Music app via AppleScript every request
-2. Client queries server every 300ms using React Query
-3. Client fetches additional data (artwork, lyrics) from external APIs
-4. React Query provides caching and persistence across sessions
-5. Components render synchronized lyrics with current playback position
+1. Server polls macOS Music app via AppleScript every 300ms
+2. Server broadcasts song updates via WebSocket only on meaningful state changes (song change, play/pause, time drift >500ms)
+3. Client maintains smooth time progression with internal 100ms clock when playing
+4. Client fetches additional data (artwork, lyrics) from external APIs
+5. React Query provides caching and persistence across sessions
+6. Components render synchronized lyrics with client-tracked playback position
 
 ### State Management Architecture
 
@@ -299,8 +302,8 @@ The application uses a centralized normalization layer to ensure all lyrics are 
 The app uses a centralized configuration-based architecture with multiple providers:
 
 **Available Players**:
-- **Remote Player** (`RemotePlayer`): Singleton instance that connects to local server via WebSocket for real Apple Music integration, with queue and history tracking
-- **Local Player** (`LocalPlayer`): Singleton instance with in-memory player and classic songs playlist
+- **Remote Player** (`RemotePlayer`): Singleton instance that connects to local server via WebSocket for real Apple Music integration, with client-side time tracking (100ms updates), queue and history tracking
+- **Local Player** (`LocalPlayer`): Singleton instance with in-memory player, client-side time tracking, and classic songs playlist
 
 **Provider Management**:
 - Centralized configuration via `/src/config/providers.ts` with lazy loading
