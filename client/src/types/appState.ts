@@ -1,4 +1,9 @@
-import type { Player, LyricsProvider, ArtworkProvider } from "@/types";
+import type {
+  Player,
+  LyricsProvider,
+  ArtworkProvider,
+  PlayerSettings,
+} from "@/types";
 
 /**
  * Provider configuration interface - matches the existing ProviderConfig
@@ -22,6 +27,9 @@ export interface UserProviderOverride {
 
   // Provider-specific configuration overrides
   config?: Record<string, string | number | boolean>;
+
+  // Player-specific settings (for Player providers only)
+  playerSettings?: PlayerSettings;
 }
 
 /**

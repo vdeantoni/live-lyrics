@@ -1,5 +1,6 @@
 import { emit } from "@/core/events/bus";
 import type { UserProviderOverride } from "@/types/appState";
+import type { PlayerSettings } from "@/types";
 
 /**
  * Provider type for settings management
@@ -168,6 +169,41 @@ export class SettingsService {
     emit({
       type: "settings.changed",
       payload: { providerType: "artwork" },
+    });
+  }
+
+  /**
+   * Get player settings for a specific player
+   * Returns defaults if not found (lazy initialization)
+   */
+  getPlayerSettings(playerId: string): PlayerSettings {
+    const settings = this.loadSettings("players");
+    const override = settings.get(playerId);
+    return override?.playerSettings || { playOnAdd: false, timeOffsetInMs: 0 };
+  }
+
+  /**
+   * Set player settings for a specific player
+   * Updates localStorage and emits event
+   */
+  setPlayerSettings(
+    playerId: string,
+    newSettings: Partial<PlayerSettings>,
+  ): void {
+    const settings = this.loadSettings("players");
+    const currentOverride = settings.get(playerId) || {};
+    const currentPlayerSettings = this.getPlayerSettings(playerId);
+
+    settings.set(playerId, {
+      ...currentOverride,
+      playerSettings: { ...currentPlayerSettings, ...newSettings },
+    });
+
+    this.saveSettings("players", settings);
+
+    emit({
+      type: "player.settings.changed",
+      payload: { playerId },
     });
   }
 }
