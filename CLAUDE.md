@@ -146,17 +146,17 @@ Both client and server compile to `dist/` directories:
   - `SilenceIndicator.tsx`: Animated silence detection with cubic easing fade effects (first block fades in/out, middle blocks 1s fade in/out, last block 1s fade in then out)
   - `NoLyricsFound.tsx`: Empty state component for missing lyrics
 - **Player/**: Main application screens and loading states
-  - `MainScreen.tsx`: Root screen component with overlay management and universal close button
+  - `MainScreen.tsx`: Root screen component with overlay management
   - `LoadingScreen.tsx`: Animated loading screen with rotating vinyl record and gradient background
   - `LyricsScreen.tsx`: Main lyrics display screen
-  - `SearchScreen.tsx`: Lyrics search interface with debounced multi-provider search, result deduplication, and song selection
-  - `PlaylistsScreen.tsx`: Responsive playlists/queue/history screen with conditional rendering (3 layouts: mobile tabs, tablet 2-column, desktop 3-column) using `useMediaQuery` for optimal DOM performance
+  - `SearchScreen.tsx`: Lyrics search interface with debounced multi-provider search, result deduplication, song selection, and dedicated close button
+  - `PlaylistsScreen.tsx`: Responsive playlists/queue/history screen with conditional rendering (3 layouts: mobile tabs, tablet 2-column, desktop 3-column) using `useMediaQuery` for optimal DOM performance, with dedicated close button
   - `PlaylistsColumn.tsx`: Playlist management UI with expand/collapse, play all, and delete functionality
   - `QueueColumn.tsx`: Player queue display with song list
   - `HistoryColumn.tsx`: Playback history display
-  - `PlayerControls.tsx`: Playback controls with progress slider, play/pause button, previous/next navigation buttons, and quick action buttons
+  - `PlayerControls.tsx`: Playback controls with progress slider, play/pause button, previous/next navigation buttons, settings button, and quick action buttons
 - **Settings/**: Comprehensive settings system with drag-and-drop provider management
-  - `SettingsScreen.tsx`: Main settings panel with smooth slide animations
+  - `SettingsScreen.tsx`: Main settings panel with smooth slide animations and dedicated close button
   - `PlayerSection.tsx`: Music player selection (Local/Remote)
   - `LyricsProviderSection.tsx`: Lyrics provider management with drag-and-drop reordering
   - `ArtworkProviderSection.tsx`: Artwork provider management with drag-and-drop reordering
@@ -180,9 +180,10 @@ Both client and server compile to `dist/` directories:
 - Smooth slide-from-bottom transition (300ms duration)
 - iOS-style easing curve `[0.25, 0.1, 0.25, 1]`
 - Lyrics screen remains static while overlays slide over
-- Gear button morphs to close button when any overlay (search/settings) is open
+- Settings button remains visible in PlayerControls and highlights when active
+- Each overlay screen (settings, search, playlists) has its own dedicated close button
 - Smart input field detection prevents keyboard shortcut conflicts
-- Mutual exclusivity between search and settings screens
+- Mutual exclusivity between search, settings, and playlists screens
 
 **Search Screen**:
 - Debounced search input (300ms delay) to minimize API calls
