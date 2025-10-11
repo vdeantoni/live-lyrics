@@ -239,6 +239,11 @@ export function setupWebSocket(wss: WebSocketServer): void {
   let historyList: Song[] = [];
   let pollInterval: NodeJS.Timeout | null = null;
 
+  // Server-side time tracking to reduce unnecessary broadcasts
+  let lastServerTime: number = 0;
+  let lastServerUpdateTimestamp: number = Date.now();
+  let isServerPlaying: boolean = false;
+
   // Helper: Add song to history (max 50 items)
   const addToHistory = (song: Song) => {
     // Check if song is already the last item in history
@@ -312,16 +317,31 @@ export function setupWebSocket(wss: WebSocketServer): void {
           addToHistory(lastSong);
         }
 
+        // Calculate expected time based on server's internal clock
+        const expectedTime = isServerPlaying
+          ? lastServerTime + (Date.now() - lastServerUpdateTimestamp) / 1000
+          : lastServerTime;
+
+        // Detect time drift (e.g., from seeking or external changes)
+        const timeDrift = Math.abs(songInfo.currentTime - expectedTime);
+        const significantDrift = timeDrift > 0.5; // 500ms threshold
+
         // Check if song update should be broadcast
+        // Only broadcast for meaningful state changes, not normal time progression
         const shouldBroadcast =
           !lastSong ||
           lastSong.name !== songInfo.name ||
           lastSong.artist !== songInfo.artist ||
-          Math.abs(lastSong.currentTime - songInfo.currentTime) > 1 ||
-          lastSong.isPlaying !== songInfo.isPlaying;
+          lastSong.album !== songInfo.album ||
+          lastSong.duration !== songInfo.duration ||
+          lastSong.isPlaying !== songInfo.isPlaying ||
+          significantDrift;
 
         if (shouldBroadcast) {
           lastSong = songInfo;
+          lastServerTime = songInfo.currentTime;
+          lastServerUpdateTimestamp = Date.now();
+          isServerPlaying = songInfo.isPlaying;
           broadcastSongUpdate(wss, songInfo);
         }
       } catch (error) {
