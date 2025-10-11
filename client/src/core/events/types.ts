@@ -43,6 +43,7 @@ export type AppEvent =
       type: "settings.changed";
       payload: { providerType: SettingsProviderType; providerId?: string };
     }
+  | { type: "player.settings.changed"; payload: { playerId: string } }
 
   // Provider events (emitted by ProviderService)
   | {

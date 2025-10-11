@@ -3,6 +3,7 @@ import {
   settingsService,
   type ProviderType,
 } from "@/core/services/SettingsService";
+import type { PlayerSettings } from "@/types";
 
 /**
  * Hook that provides settings management functions
@@ -37,10 +38,23 @@ export const useSettings = () => {
     settingsService.clearAllSettings();
   }, []);
 
+  const getPlayerSettings = useCallback((playerId: string) => {
+    return settingsService.getPlayerSettings(playerId);
+  }, []);
+
+  const setPlayerSettings = useCallback(
+    (playerId: string, settings: Partial<PlayerSettings>) => {
+      settingsService.setPlayerSettings(playerId, settings);
+    },
+    [],
+  );
+
   return {
     setProviderEnabled,
     reorderProviders,
     resetProviderSettings,
     clearAllSettings,
+    getPlayerSettings,
+    setPlayerSettings,
   };
 };

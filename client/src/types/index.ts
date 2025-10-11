@@ -48,6 +48,9 @@ export interface TagsData {
 export interface PlayerSettings {
   /** Auto-play when songs are added to queue */
   playOnAdd: boolean;
+  /** This can be used to tweak the time used to display lyrics, for example, when there's a delay from a remote player
+   *  or the lyrics file is not perfect for this song. It expects time in miliseconds and can be negative. */
+  timeOffsetInMs: number;
 }
 
 export interface Player {
