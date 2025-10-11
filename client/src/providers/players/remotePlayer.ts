@@ -1,6 +1,7 @@
 import type { Song, PlayerSettings } from "@/types";
 import type { Player } from "@/types";
 import { JsonRpcWebSocketClient } from "./jsonRpcWebSocket";
+import { settingsService } from "@/core/services/SettingsService";
 
 /**
  * Remote player - communicates with server via WebSocket + JSON-RPC 2.0
@@ -204,11 +205,11 @@ export class RemotePlayer implements Player {
   }
 
   async getSettings(): Promise<PlayerSettings> {
-    throw new Error("Remote player does not support settings");
+    return settingsService.getPlayerSettings(this.getId());
   }
 
-  async setSettings(): Promise<void> {
-    throw new Error("Remote player does not support settings");
+  async setSettings(settings: Partial<PlayerSettings>): Promise<void> {
+    settingsService.setPlayerSettings(this.getId(), settings);
   }
 
   async setQueue(): Promise<void> {

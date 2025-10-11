@@ -165,7 +165,7 @@ export class TestPlayer implements Player {
   };
   private queue: Song[] = [];
   private history: Song[] = [];
-  private settings: PlayerSettings = { playOnAdd: false };
+  private settings: PlayerSettings = { playOnAdd: false, timeOffsetInMs: 0 };
 
   private id: string;
   private name: string;
@@ -381,6 +381,6 @@ export class TestPlayer implements Player {
     };
     this.queue = [];
     this.history = [];
-    this.settings = { playOnAdd: false };
+    this.settings = { playOnAdd: false, timeOffsetInMs: 0 };
   }
 }
