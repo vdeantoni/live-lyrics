@@ -159,13 +159,13 @@ Both client and server compile to `dist/` directories:
   - `PlayerControls.tsx`: Playback controls with progress slider, play/pause button, previous/next navigation buttons, settings button, and quick action buttons
 - **Settings/**: Comprehensive settings system with drag-and-drop provider management
   - `SettingsScreen.tsx`: Main settings panel with smooth slide animations and dedicated close button
-  - `PlayerSection.tsx`: Music player selection (Local/Remote)
+  - `PlayerSection.tsx`: Music player selection (Local/Remote) with player-specific settings (auto-play toggle, lyrics sync time offset)
   - `LyricsProviderSection.tsx`: Lyrics provider management with drag-and-drop reordering
   - `ArtworkProviderSection.tsx`: Artwork provider management with drag-and-drop reordering
   - `ProviderSection.tsx`: Reusable drag-and-drop provider list with @dnd-kit integration
   - `SortableProviderItem.tsx`: Individual draggable provider items with status icons and loading states
   - `ClearAppDataSection.tsx`: App data management with clear functionality
-- **ui/**: Reusable UI components (buttons, sliders, skeletons)
+- **ui/**: Reusable UI components (buttons, sliders, inputs, skeletons)
 
 ### User Interaction Features
 
@@ -236,10 +236,11 @@ The app follows an event-driven architecture pattern for state mutations:
 
 **SettingsService** (`SettingsService.ts`):
 - Singleton service handling all settings-related business logic
-- Methods: `setProviderEnabled()`, `toggleProvider()`, `reorderProviders()`, `resetProviderSettings()`, `clearAllSettings()`
-- Each method updates localStorage and emits `settings.changed` events
+- Methods: `setProviderEnabled()`, `toggleProvider()`, `reorderProviders()`, `resetProviderSettings()`, `clearAllSettings()`, `getPlayerSettings()`, `setPlayerSettings()`
+- Each method updates localStorage and emits `settings.changed` or `player.settings.changed` events
 - Events are handled by `useEventSync()` which updates Jotai atoms
 - Components use `useSettings()` hook to access service methods
+- Player settings stored per-player (local/remote): `{ playOnAdd: boolean, timeOffsetInMs: number }`
 
 **PlayerService** (`PlayerService.ts`):
 - Singleton service for player control (play, pause, seek)
@@ -302,8 +303,8 @@ The application uses a centralized normalization layer to ensure all lyrics are 
 The app uses a centralized configuration-based architecture with multiple providers:
 
 **Available Players**:
-- **Remote Player** (`RemotePlayer`): Singleton instance that connects to local server via WebSocket for real Apple Music integration, with client-side time tracking (100ms updates), queue and history tracking
-- **Local Player** (`LocalPlayer`): Singleton instance with in-memory player, client-side time tracking, and classic songs playlist
+- **Remote Player** (`RemotePlayer`): Singleton instance that connects to local server via WebSocket for real Apple Music integration, with client-side time tracking (100ms updates), queue and history tracking, and persistent settings via SettingsService
+- **Local Player** (`LocalPlayer`): Singleton instance with in-memory player, client-side time tracking, classic songs playlist, and persistent settings via SettingsService
 
 **Provider Management**:
 - Centralized configuration via `/src/config/providers.ts` with lazy loading
