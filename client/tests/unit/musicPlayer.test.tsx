@@ -2,7 +2,6 @@ import { describe, it, expect, vi } from "vitest";
 import { screen } from "@testing-library/react";
 import { renderLightweight } from "../helpers/testUtils";
 import Player from "@/components/Player/Player";
-import MainScreen from "@/components/Player/MainScreen";
 import PlayerControls from "@/components/Player/PlayerControls";
 import SettingsScreen from "@/components/Player/SettingsScreen";
 
@@ -82,7 +81,7 @@ vi.mock("@/components/Settings/ClearAppDataSection", () => ({
   ),
 }));
 
-// Mock specific atoms that need special values - removed isSettingsOpenAtom since MainScreen uses local state now
+// Mock specific atoms - keeping actual implementation from appState
 vi.mock("@/atoms/appState", async () => {
   const actual = await vi.importActual("@/atoms/appState");
   return {
@@ -126,22 +125,14 @@ describe("Player Components", () => {
     expect(screen.getByTestId("player")).toBeInTheDocument();
   });
 
-  it("should render MainScreen with settings button", () => {
-    renderLightweight(<MainScreen />);
-    // Settings button can be either open or close state depending on initial state
-    const settingsButton =
-      screen.queryByTestId("settings-button") ||
-      screen.queryByTestId("close-overlay-button");
-    expect(settingsButton).toBeInTheDocument();
-  });
-
-  it("should render PlayerControls component", () => {
+  it("should render PlayerControls with all elements", () => {
     renderLightweight(<PlayerControls />);
     expect(screen.getByTestId("player-controls")).toBeInTheDocument();
     expect(screen.getByTestId("play-pause-button")).toBeInTheDocument();
     expect(screen.getByTestId("progress-slider")).toBeInTheDocument();
     expect(screen.getByTestId("previous-button")).toBeInTheDocument();
     expect(screen.getByTestId("next-button")).toBeInTheDocument();
+    expect(screen.getByTestId("settings-button")).toBeInTheDocument();
   });
 
   it("should render SettingsScreen component", () => {

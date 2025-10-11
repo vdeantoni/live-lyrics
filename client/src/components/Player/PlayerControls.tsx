@@ -6,6 +6,7 @@ import {
   Pause,
   Play,
   Search,
+  Settings,
   SkipBack,
   SkipForward,
 } from "lucide-react";
@@ -16,6 +17,8 @@ import {
   searchOpenAtom,
   togglePlaylistsAtom,
   playlistsOpenAtom,
+  toggleSettingsAtom,
+  settingsOpenAtom,
   openAddToPlaylistDialogAtom,
 } from "@/atoms/appState";
 import AutoScrollingText from "../LyricsVisualizer/AutoScrollingText";
@@ -30,6 +33,7 @@ const PlayerControls = () => {
   const { currentTime, duration, isPlaying, name, album, artist } = playerState;
   const isSearchOpen = useAtomValue(searchOpenAtom);
   const isPlaylistsOpen = useAtomValue(playlistsOpenAtom);
+  const isSettingsOpen = useAtomValue(settingsOpenAtom);
 
   // Player controls (event-driven)
   const { play, pause, next, previous } = usePlayerControls();
@@ -37,6 +41,7 @@ const PlayerControls = () => {
   // Action atoms
   const toggleSearch = useSetAtom(toggleSearchAtom);
   const togglePlaylists = useSetAtom(togglePlaylistsAtom);
+  const toggleSettings = useSetAtom(toggleSettingsAtom);
   const openAddToPlaylistDialog = useSetAtom(openAddToPlaylistDialogAtom);
 
   const handlePlayPause = () => {
@@ -203,6 +208,31 @@ const PlayerControls = () => {
                 }}
               >
                 <Search />
+              </motion.div>
+            </Button>
+
+            {/* Settings Button */}
+            <Button
+              data-testid="settings-button"
+              size="sm"
+              variant="ghost"
+              className={`dark:hover:bg-accent/0 hover:text-primary h-10 w-10 transform rounded-full p-2 transition-colors ${
+                isSettingsOpen ? "text-primary" : ""
+              }`}
+              aria-label="Settings"
+              onClick={toggleSettings}
+            >
+              <motion.div
+                animate={{
+                  scale: isSettingsOpen ? [1, 1.2, 1] : 1,
+                  rotate: isSettingsOpen ? [0, 10, -10, 0] : 0,
+                }}
+                transition={{
+                  duration: 0.3,
+                  ease: "easeInOut",
+                }}
+              >
+                <Settings />
               </motion.div>
             </Button>
           </div>

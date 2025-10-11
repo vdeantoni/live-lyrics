@@ -36,11 +36,12 @@ test.describe("Settings Functionality", () => {
         page.locator('[data-testid="settings-screen"]'),
       ).toBeVisible();
 
-      // Settings button should be hidden (replaced by close button)
-      await expect(settingsButton).not.toBeVisible();
+      // Settings button should remain visible and highlighted
+      await expect(settingsButton).toBeVisible();
+      await expect(settingsButton).toHaveClass(/(?<!:)text-primary\b/);
 
       // Click close button to close
-      const closeButton = page.locator('[data-testid="close-overlay-button"]');
+      const closeButton = page.locator('[data-testid="close-settings-button"]');
       await closeButton.click();
 
       // Should be back to lyrics screen with settings button visible again
@@ -49,6 +50,7 @@ test.describe("Settings Functionality", () => {
       ).not.toBeVisible();
       await expect(page.locator('[data-testid="lyrics-screen"]')).toBeVisible();
       await expect(settingsButton).toBeVisible();
+      await expect(settingsButton).not.toHaveClass(/(?<!:)text-primary\b/);
     });
 
     test("should display settings content correctly", async ({ page }) => {
@@ -182,7 +184,7 @@ test.describe("Settings Functionality", () => {
       ).toBeVisible();
 
       // Close button should work
-      const closeButton = page.locator('[data-testid="close-overlay-button"]');
+      const closeButton = page.locator('[data-testid="close-settings-button"]');
       await closeButton.click();
 
       await expect(page.locator('[data-testid="lyrics-screen"]')).toBeVisible();
@@ -222,7 +224,7 @@ test.describe("Settings Functionality", () => {
       ).toBeVisible();
 
       // Close search and verify we're back to lyrics
-      const closeButton = page.locator('[data-testid="close-overlay-button"]');
+      const closeButton = page.locator('[data-testid="close-search-button"]');
       await closeButton.click();
 
       await expect(page.locator('[data-testid="lyrics-screen"]')).toBeVisible();
