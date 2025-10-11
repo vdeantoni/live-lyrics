@@ -160,7 +160,7 @@ test.describe("Playlists Functionality", () => {
     }) => {
       await openPlaylistsScreen(page);
       await createPlaylist(page, "My Favorites");
-      await closeOverlay(page);
+      await closePlaylistsScreen(page);
 
       await addCurrentSongToPlaylist(page, "My Favorites");
 
@@ -198,7 +198,7 @@ test.describe("Playlists Functionality", () => {
     test("should prevent duplicate songs", async ({ page }) => {
       await openPlaylistsScreen(page);
       await createPlaylist(page, "No Dupes");
-      await closeOverlay(page);
+      await closePlaylistsScreen(page);
 
       await addCurrentSongToPlaylist(page, "No Dupes");
       await page.keyboard.press("a");
@@ -213,7 +213,7 @@ test.describe("Playlists Functionality", () => {
     test("should add song from search results", async ({ page }) => {
       await openPlaylistsScreen(page);
       await createPlaylist(page, "Search Results");
-      await closeOverlay(page);
+      await closePlaylistsScreen(page);
 
       await page.keyboard.press("s");
       await page
@@ -243,7 +243,7 @@ test.describe("Playlists Functionality", () => {
     test("should expand and collapse playlists", async ({ page }) => {
       await openPlaylistsScreen(page);
       await createPlaylist(page, "Toggle Test");
-      await closeOverlay(page);
+      await closePlaylistsScreen(page);
       await addCurrentSongToPlaylist(page, "Toggle Test");
 
       await openPlaylistsScreen(page);
@@ -279,7 +279,7 @@ test.describe("Playlists Functionality", () => {
     test("should remove song from playlist", async ({ page }) => {
       await openPlaylistsScreen(page);
       await createPlaylist(page, "Remove Song");
-      await closeOverlay(page);
+      await closePlaylistsScreen(page);
       await addCurrentSongToPlaylist(page, "Remove Song");
 
       await openPlaylistsScreen(page);
@@ -303,7 +303,7 @@ test.describe("Playlists Functionality", () => {
     test("should play all songs from playlist", async ({ page }) => {
       await openPlaylistsScreen(page);
       await createPlaylist(page, "Play All Test");
-      await closeOverlay(page);
+      await closePlaylistsScreen(page);
       await addCurrentSongToPlaylist(page, "Play All Test");
 
       await openPlaylistsScreen(page);
