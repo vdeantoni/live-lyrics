@@ -110,12 +110,17 @@ test.describe("Error Handling", () => {
       // Should still show lyrics screen
       await expect(page.locator('[data-testid="lyrics-screen"]')).toBeVisible();
 
+      // Wait for artwork loading to complete
+      await page.waitForSelector(
+        '[data-testid="lyrics-screen"][data-artwork-loading="false"]',
+        { timeout: 8000 },
+      );
+
       // Background artwork should not be visible when all providers disabled
       const artworkBackground = page.locator(
         '[data-testid="lyrics-background"]',
       );
-      const isVisible = await artworkBackground.isVisible().catch(() => false);
-      expect(isVisible).toBe(false);
+      await expect(artworkBackground).not.toBeVisible();
     });
   });
 
