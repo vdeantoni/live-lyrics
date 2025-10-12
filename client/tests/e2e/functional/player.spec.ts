@@ -64,9 +64,7 @@ test.describe("Player Component", () => {
       await playButton.click();
 
       // Wait for time to progress
-      await expect(currentTimeDisplay).not.toHaveText("0:00", {
-        timeout: 3000,
-      });
+      await expect(currentTimeDisplay).not.toHaveText("0:00", {});
 
       // Verify time has progressed
       const currentTime = await currentTimeDisplay.textContent();

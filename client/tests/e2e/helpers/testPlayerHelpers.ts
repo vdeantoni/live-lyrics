@@ -25,17 +25,14 @@ export async function loadTestSong(
   console.log("[loadTestSong] Starting song load...");
 
   // Wait for event bus to be ready
-  await page.waitForFunction(
-    () => {
-      const eventBus = (
-        window as Window & {
-          __EVENT_BUS__?: { emit?: (event: unknown) => void };
-        }
-      ).__EVENT_BUS__;
-      return eventBus?.emit !== undefined;
-    },
-    { timeout: 10000 },
-  );
+  await page.waitForFunction(() => {
+    const eventBus = (
+      window as Window & {
+        __EVENT_BUS__?: { emit?: (event: unknown) => void };
+      }
+    ).__EVENT_BUS__;
+    return eventBus?.emit !== undefined;
+  });
 
   // Wait for the app UI to be rendered
   await page.waitForSelector(
@@ -115,25 +112,18 @@ export async function loadTestSong(
 
   // Wait for UI to update with the song name
   const expectedName = songData.name || "Bohemian Rhapsody";
-  await page.waitForFunction(
-    (name) => {
-      const songName = document.querySelector('[data-testid="song-name"]');
-      return songName && songName.textContent?.includes(name);
-    },
-    expectedName,
-    { timeout: 10000 },
-  );
+  await page.waitForFunction((name) => {
+    const songName = document.querySelector('[data-testid="song-name"]');
+    return songName && songName.textContent?.includes(name);
+  }, expectedName);
 
   // Wait for play button to be enabled (song fully loaded)
-  await page.waitForFunction(
-    () => {
-      const playButton = document.querySelector(
-        '[data-testid="play-pause-button"]',
-      );
-      return playButton && !(playButton as HTMLButtonElement).disabled;
-    },
-    { timeout: 10000 },
-  );
+  await page.waitForFunction(() => {
+    const playButton = document.querySelector(
+      '[data-testid="play-pause-button"]',
+    );
+    return playButton && !(playButton as HTMLButtonElement).disabled;
+  });
 
   console.log("[loadTestSong] Song loaded successfully");
 }
@@ -158,20 +148,16 @@ export async function setupPlayerWithSong(
 
   if (waitForArtworkAndLyrics) {
     // Wait for lyrics screen to be visible first
-    await page.waitForSelector('[data-testid="lyrics-screen"]', {
-      timeout: 5000,
-    });
+    await page.waitForSelector('[data-testid="lyrics-screen"]');
 
     // Wait for artwork loading to complete (more generous timeout)
     await page.waitForSelector(
       '[data-testid="lyrics-screen"][data-artwork-loading="false"]',
-      { timeout: 15000 },
     );
 
     // Wait for lyrics loading to complete (more generous timeout)
     await page.waitForSelector(
       '[data-testid="lyrics-screen"][data-lyrics-loading="false"]',
-      { timeout: 15000 },
     );
   }
 }

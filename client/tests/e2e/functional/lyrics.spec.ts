@@ -200,9 +200,7 @@ test.describe("Lyrics Display", () => {
       // Background should eventually appear (after image loads)
       await expect(
         page.locator('[data-testid="lyrics-background"]'),
-      ).toBeVisible({
-        timeout: 5000,
-      });
+      ).toBeVisible({});
 
       // Background should have background-image style
       const background = page.locator('[data-testid="lyrics-background"]');
@@ -273,9 +271,7 @@ test.describe("Lyrics Display", () => {
       await setupPlayerWithSong(page);
 
       // Should show "No Lyrics Found" state
-      await expect(page.locator('[data-testid="no-lyrics"]')).toBeVisible({
-        timeout: 10000,
-      });
+      await expect(page.locator('[data-testid="no-lyrics"]')).toBeVisible({});
       await expect(page.getByText("No Lyrics Found")).toBeVisible();
 
       // Should show song information in the message

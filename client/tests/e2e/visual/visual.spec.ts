@@ -82,9 +82,7 @@ test.describe("Visual Regression Tests", () => {
 
     // Wait for highlighted line
     await page
-      .waitForSelector('[data-testid="lyrics-line"][data-current="true"]', {
-        timeout: 2000,
-      })
+      .waitForSelector('[data-testid="lyrics-line"][data-current="true"]', {})
       .catch(() => {});
 
     await takeScreenshot(page, "lyrics-highlighted", 500);

@@ -113,7 +113,6 @@ test.describe("Error Handling", () => {
       // Wait for artwork loading to complete
       await page.waitForSelector(
         '[data-testid="lyrics-screen"][data-artwork-loading="false"]',
-        { timeout: 8000 },
       );
 
       // Background artwork should not be visible when all providers disabled

@@ -43,9 +43,7 @@ test.describe("Keyboard Navigation and Accessibility", () => {
       await page.keyboard.press("ArrowRight");
 
       // Wait for time to update
-      await expect(currentTimeDisplay).not.toHaveText("0:00", {
-        timeout: 3000,
-      });
+      await expect(currentTimeDisplay).not.toHaveText("0:00");
 
       const timeText = await currentTimeDisplay.textContent();
       expect(timeText).toMatch(/0:0[5-9]|0:1[0-5]/);
@@ -79,9 +77,7 @@ test.describe("Keyboard Navigation and Accessibility", () => {
       await page.keyboard.press("Shift+ArrowRight");
 
       // Wait for time to update
-      await expect(currentTimeDisplay).not.toHaveText("0:00", {
-        timeout: 3000,
-      });
+      await expect(currentTimeDisplay).not.toHaveText("0:00", {});
 
       const timeText = await currentTimeDisplay.textContent();
       // Should be around 15 seconds (allow variance)
