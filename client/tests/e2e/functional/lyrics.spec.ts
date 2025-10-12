@@ -15,7 +15,7 @@ test.describe("Lyrics Display", () => {
     test("should display synchronized lyrics with correct content", async ({
       page,
     }) => {
-      await setupPlayerWithSong(page);
+      await setupPlayerWithSong(page, true);
 
       // Wait for lyrics container and lines to load
       await expect(
@@ -36,7 +36,7 @@ test.describe("Lyrics Display", () => {
     test("should highlight current line at specific playback time", async ({
       page,
     }) => {
-      await setupPlayerWithSong(page);
+      await setupPlayerWithSong(page, true);
 
       // Wait for lyrics to render
       await expect(
@@ -63,7 +63,7 @@ test.describe("Lyrics Display", () => {
     test("should display word-level highlighting for active line", async ({
       page,
     }) => {
-      await setupPlayerWithSong(page);
+      await setupPlayerWithSong(page, true);
 
       // Wait for lyrics
       await expect(
@@ -89,7 +89,7 @@ test.describe("Lyrics Display", () => {
     test("should auto-scroll to keep current line in viewport", async ({
       page,
     }) => {
-      await setupPlayerWithSong(page);
+      await setupPlayerWithSong(page, true);
 
       // Wait for lyrics
       await expect(
@@ -114,7 +114,7 @@ test.describe("Lyrics Display", () => {
     test("should allow clicking on words to seek to that timestamp", async ({
       page,
     }) => {
-      await setupPlayerWithSong(page);
+      await setupPlayerWithSong(page, true);
 
       // Wait for lyrics
       await expect(
@@ -150,7 +150,7 @@ test.describe("Lyrics Display", () => {
   test.describe("Responsive Layout", () => {
     test("should display lyrics in landscape orientation", async ({ page }) => {
       await page.setViewportSize({ width: 1024, height: 768 });
-      await setupPlayerWithSong(page);
+      await setupPlayerWithSong(page, true);
 
       // Lyrics container and lines should be visible
       await expect(
@@ -168,7 +168,7 @@ test.describe("Lyrics Display", () => {
       page,
     }) => {
       // Start in portrait
-      await setupPlayerWithSong(page);
+      await setupPlayerWithSong(page, true);
 
       // Verify lyrics visible
       const lyricsLines = page.locator('[data-testid="lyrics-line"]');
