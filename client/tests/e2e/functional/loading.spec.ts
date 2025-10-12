@@ -40,7 +40,7 @@ test.describe("Loading Screen", () => {
     );
 
     // Wait for bootstrap to complete
-    await expect(loadingScreen).not.toBeVisible({ timeout: 5000 });
+    await expect(loadingScreen).not.toBeVisible();
 
     // Should show empty state after bootstrap
     await expect(page.locator('[data-testid="empty-screen"]')).toBeVisible();
