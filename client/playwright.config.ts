@@ -35,10 +35,6 @@ export default defineConfig({
     screenshot: "only-on-failure",
     /* Record video only on failure */
     video: "retain-on-failure",
-
-    /* Action timeouts - reduced for local development */
-    actionTimeout: process.env.CI ? 30 * 1000 : 15 * 1000, // 15 second per action locally, 30s in CI
-    navigationTimeout: process.env.CI ? 30 * 1000 : 15 * 1000, // 15 seconds for navigation locally, 30s in CI
   },
 
   /* Configure projects for major browsers - reduced for CI performance */
