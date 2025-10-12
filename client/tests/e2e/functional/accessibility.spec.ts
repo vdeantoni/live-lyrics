@@ -146,7 +146,14 @@ test.describe("Keyboard Navigation and Accessibility", () => {
     test("should support Tab navigation through interactive elements", async ({
       page,
     }) => {
+      // Ensure clean page load before testing
+      await page.goto("/");
       await setupPlayerWithSong(page);
+
+      // Wait for player controls to be fully rendered
+      await expect(
+        page.locator('[data-testid="player-controls"]'),
+      ).toBeVisible();
 
       // Tab through elements
       let foundFocusableElement = false;
@@ -155,20 +162,22 @@ test.describe("Keyboard Navigation and Accessibility", () => {
 
         const activeElement = await page.evaluate(() => {
           const el = document.activeElement;
+          // Check element itself or closest interactive parent
+          const isButton = el?.tagName === "BUTTON" || el?.closest("button");
+          const isInput = el?.tagName === "INPUT";
+          const hasInteractiveRole =
+            el?.getAttribute("role") === "slider" ||
+            el?.getAttribute("role") === "button";
+
           return {
             tagName: el?.tagName,
             role: el?.getAttribute("role"),
             ariaLabel: el?.getAttribute("aria-label"),
+            isFocusable: isButton || isInput || hasInteractiveRole,
           };
         });
 
-        // Check if we reached a focusable element
-        if (
-          activeElement.tagName === "BUTTON" ||
-          activeElement.tagName === "INPUT" ||
-          activeElement.role === "slider" ||
-          activeElement.role === "button"
-        ) {
+        if (activeElement.isFocusable) {
           foundFocusableElement = true;
           break;
         }
@@ -178,6 +187,8 @@ test.describe("Keyboard Navigation and Accessibility", () => {
     });
 
     test("should have focusable close button in settings", async ({ page }) => {
+      // Ensure clean page load before testing
+      await page.goto("/");
       await setupPlayerWithSong(page);
 
       // Open settings
