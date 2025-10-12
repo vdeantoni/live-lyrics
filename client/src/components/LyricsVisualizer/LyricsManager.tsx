@@ -13,7 +13,11 @@ import {
   lyricsLoadingAtom,
   currentLyricsProviderAtom,
 } from "@/atoms/playerAtoms";
-import { enabledLyricsProvidersAtom } from "@/atoms/appState";
+import {
+  enabledLyricsProvidersAtom,
+  selectedPlayerAtom,
+} from "@/atoms/appState";
+import { settingsService } from "@/core/services/SettingsService";
 import { UI_DELAYS } from "@/constants/timing";
 
 const LyricsManager = () => {
@@ -24,6 +28,8 @@ const LyricsManager = () => {
   const lyricsLoading = useAtomValue(lyricsLoadingAtom);
   const currentProvider = useAtomValue(currentLyricsProviderAtom);
   const enabledLyricsProviders = useAtomValue(enabledLyricsProvidersAtom);
+  const selectedPlayer = useAtomValue(selectedPlayerAtom);
+  const playerId = selectedPlayer?.config.id;
 
   // Action atoms
   const setLyricsData = useSetAtom(lyricsDataAtom);
@@ -105,12 +111,18 @@ const LyricsManager = () => {
     };
   }, [lyricsContent, setLyricsData, setActiveLine, setActiveWord]);
 
-  // Sync with current time
+  // Sync with current time (with time offset applied)
   useEffect(() => {
     if (!liricleRef.current || !currentTime) return;
 
-    liricleRef.current.sync(currentTime);
-  }, [currentTime]);
+    // Get player settings and apply time offset
+    const playerSettings = settingsService.getPlayerSettings(
+      playerId || "local",
+    );
+    const adjustedTime = currentTime + playerSettings.timeOffsetInMs / 1000;
+
+    liricleRef.current.sync(adjustedTime);
+  }, [currentTime, playerId]);
 
   if (!name || !artist) return null;
 

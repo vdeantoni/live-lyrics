@@ -269,6 +269,23 @@ describe("LocalPlayer - Queue System", () => {
       expect(updatedSettings.playOnAdd).toBe(true);
     });
 
+    it("should allow getting and setting timeOffsetInMs", async () => {
+      const settings = await player.getSettings();
+      expect(settings.timeOffsetInMs).toBe(0); // Default
+
+      await player.setSettings({ timeOffsetInMs: 500 });
+
+      const updatedSettings = await player.getSettings();
+      expect(updatedSettings.timeOffsetInMs).toBe(500);
+    });
+
+    it("should allow setting negative timeOffsetInMs", async () => {
+      await player.setSettings({ timeOffsetInMs: -300 });
+
+      const settings = await player.getSettings();
+      expect(settings.timeOffsetInMs).toBe(-300);
+    });
+
     it("should auto-play when playOnAdd is true", async () => {
       await player.clear();
       await player.setSettings({ playOnAdd: true });
