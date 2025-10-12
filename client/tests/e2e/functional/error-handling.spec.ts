@@ -128,6 +128,8 @@ test.describe("Error Handling", () => {
         uncaughtErrors.push(error);
       });
 
+      // Ensure clean page load before testing
+      await page.goto("/");
       await setupPlayerWithSong(page);
 
       // Basic interactions should not cause errors
@@ -167,6 +169,8 @@ test.describe("Error Handling", () => {
         uncaughtErrors.push(error);
       });
 
+      // Ensure clean page load before testing
+      await page.goto("/");
       await setupPlayerWithSong(page);
 
       const playButton = page.locator('[data-testid="play-pause-button"]');
