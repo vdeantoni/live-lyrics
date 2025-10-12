@@ -180,7 +180,7 @@ test.describe("Settings Functionality", () => {
 
       // Settings should still be visible and functional
       await expect(
-        page.getByRole("heading", { name: "Settings" }),
+        page.getByRole("heading", { name: "Settings", exact: true }),
       ).toBeVisible();
 
       // Close button should work
@@ -210,7 +210,7 @@ test.describe("Settings Functionality", () => {
         page.locator('[data-testid="settings-screen"]'),
       ).toBeVisible();
       await expect(
-        page.getByRole("heading", { name: "Settings" }),
+        page.getByRole("heading", { name: "Settings", exact: true }),
       ).toBeVisible();
 
       // Open search using keyboard shortcut 'S' (settings should close)
