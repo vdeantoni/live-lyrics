@@ -167,6 +167,9 @@ test.describe("Lyrics Display", () => {
     test("should maintain lyrics when switching orientations", async ({
       page,
     }) => {
+      // Ensure clean page load before testing
+      await page.goto("/");
+
       // Start in portrait
       await setupPlayerWithSong(page, true);
 
