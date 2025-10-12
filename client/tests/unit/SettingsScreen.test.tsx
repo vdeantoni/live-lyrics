@@ -25,13 +25,13 @@ describe("SettingsScreen", () => {
     await renderWithProviders(<SettingsScreen />);
 
     // Verify section header
-    expect(screen.getByText("Remote Player")).toBeInTheDocument();
+    expect(screen.getByText("Player")).toBeInTheDocument();
 
-    // Verify the actual remote player config is rendered (not the fallback)
+    // Verify the actual remote player config is rendered
     expect(screen.getByText("Server")).toBeInTheDocument();
-    expect(screen.getByText("Remote Player")).toBeInTheDocument();
+    expect(screen.getByText("Remote player")).toBeInTheDocument();
 
-    // Verify the toggle is enabled (not disabled like in fallback)
+    // Verify the toggle is enabled
     const remotePlayerToggle = screen.getByTestId("remote-player-toggle");
     expect(remotePlayerToggle).not.toBeDisabled();
 

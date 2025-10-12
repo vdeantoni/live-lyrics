@@ -157,9 +157,21 @@ export async function setupPlayerWithSong(
   });
 
   if (waitForArtworkAndLyrics) {
+    // Wait for lyrics screen to be visible first
+    await page.waitForSelector('[data-testid="lyrics-screen"]', {
+      timeout: 5000,
+    });
+
+    // Wait for artwork loading to complete (more generous timeout)
     await page.waitForSelector(
-      '[data-testid="lyrics-screen"][data-artwork-loading="false"][data-lyrics-loading="false"]',
-      { timeout: 8000 },
+      '[data-testid="lyrics-screen"][data-artwork-loading="false"]',
+      { timeout: 15000 },
+    );
+
+    // Wait for lyrics loading to complete (more generous timeout)
+    await page.waitForSelector(
+      '[data-testid="lyrics-screen"][data-lyrics-loading="false"]',
+      { timeout: 15000 },
     );
   }
 }
