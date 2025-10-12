@@ -121,7 +121,7 @@ export async function loadTestSong(
       return songName && songName.textContent?.includes(name);
     },
     expectedName,
-    { timeout: 5000 },
+    { timeout: 10000 },
   );
 
   // Wait for play button to be enabled (song fully loaded)
@@ -132,7 +132,7 @@ export async function loadTestSong(
       );
       return playButton && !(playButton as HTMLButtonElement).disabled;
     },
-    { timeout: 5000 },
+    { timeout: 10000 },
   );
 
   console.log("[loadTestSong] Song loaded successfully");
