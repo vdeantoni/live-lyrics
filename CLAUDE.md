@@ -240,7 +240,8 @@ The app follows an event-driven architecture pattern for state mutations:
 - Each method updates localStorage and emits `settings.changed` or `player.settings.changed` events
 - Events are handled by `useEventSync()` which updates Jotai atoms
 - Components use `useSettings()` hook to access service methods
-- Player settings stored per-player (local/remote): `{ playOnAdd: boolean, timeOffsetInMs: number }`
+- Player settings stored per-player (local/remote): `{ playOnAdd: boolean, timeOffsetInMs: number, serverUrl?: string }`
+- Server URL setting (remote player only) allows configuring WebSocket connection endpoint
 
 **PlayerService** (`PlayerService.ts`):
 - Singleton service for player control (play, pause, seek)
@@ -303,7 +304,7 @@ The application uses a centralized normalization layer to ensure all lyrics are 
 The app uses a centralized configuration-based architecture with multiple providers:
 
 **Available Players**:
-- **Remote Player** (`RemotePlayer`): Singleton instance that connects to local server via WebSocket for real Apple Music integration, with client-side time tracking (100ms updates), queue and history tracking, and persistent settings via SettingsService
+- **Remote Player** (`RemotePlayer`): Singleton instance that connects to local server via WebSocket for real Apple Music integration, with client-side time tracking (100ms updates), queue and history tracking, and persistent settings via SettingsService. Server URL is configurable via settings UI (default: ws://127.0.0.1:4000/ws).
 - **Local Player** (`LocalPlayer`): Singleton instance with in-memory player, client-side time tracking, classic songs playlist, and persistent settings via SettingsService
 
 **Provider Management**:
