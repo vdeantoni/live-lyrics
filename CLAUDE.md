@@ -33,7 +33,7 @@ You can run any pnpm command from the root directory by using the `--filter` opt
 ### Individual workspace commands:
 
 - Client: `cd client && pnpm dev` (Vite dev server on port 5173)
-- Server: `cd server && pnpm dev` (Node.js server on port 4000)
+- Server: `cd server && pnpm dev` (Node.js server, attempts ports 4000, 5000, 5173, 8080, 3000, 3001, 4001, 4002 in order)
 
 ### Testing commands:
 
@@ -103,6 +103,7 @@ Both client and server compile to `dist/` directories:
 
 - **Framework**: Hono (lightweight web framework)
 - **Runtime**: Node.js with TypeScript
+- **Port Selection**: Automatically finds available port from [4000, 5000, 5173, 8080, 3000, 3001, 4001, 4002]
 - **Apple Music Integration**: Uses AppleScript via `osascript` to query macOS Music app
 - **WebSocket Server**: Real-time communication using JSON-RPC 2.0 protocol
   - `song.update`: Broadcasts song info only on state changes (song change, play/pause, significant time drift from seeking)
