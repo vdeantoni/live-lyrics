@@ -15,6 +15,7 @@ export const PlayerSection = () => {
   const [playerSettings, setPlayerSettings] = useState<PlayerSettings>({
     playOnAdd: false,
     timeOffsetInMs: 0,
+    serverUrl: "ws://127.0.0.1:4000/ws",
   });
 
   const currentPlayerId = selectedPlayer?.config.id || "local";
@@ -42,6 +43,11 @@ export const PlayerSection = () => {
     if (isNaN(numValue)) return;
     settings.setPlayerSettings(currentPlayerId, { timeOffsetInMs: numValue });
     setPlayerSettings((prev) => ({ ...prev, timeOffsetInMs: numValue }));
+  };
+
+  const handleServerUrlChange = (value: string) => {
+    settings.setPlayerSettings(currentPlayerId, { serverUrl: value });
+    setPlayerSettings((prev) => ({ ...prev, serverUrl: value }));
   };
 
   const handleToggle = (enabled: boolean) => {
@@ -93,6 +99,29 @@ export const PlayerSection = () => {
           <h4 className="text-sm font-medium text-white">Player Settings</h4>
 
           <div className="flex w-full max-w-lg flex-col gap-4">
+            {/* Server URL Input - only for remote player */}
+            {isRemotePlayer && (
+              <div className="space-y-2">
+                <label
+                  htmlFor="server-url-input"
+                  className="text-sm font-medium text-white"
+                >
+                  Server URL
+                </label>
+                <div className="text-xs text-zinc-400">
+                  WebSocket URL for remote server (e.g., ws://127.0.0.1:4000/ws)
+                </div>
+                <Input
+                  id="server-url-input"
+                  type="text"
+                  value={playerSettings.serverUrl || "ws://127.0.0.1:4000/ws"}
+                  onChange={(e) => handleServerUrlChange(e.target.value)}
+                  className="border-white/10 bg-zinc-800/50"
+                  placeholder="ws://127.0.0.1:4000/ws"
+                />
+              </div>
+            )}
+
             {/* Auto-play Toggle */}
             <div className="flex items-center justify-between">
               <div className="flex-1">

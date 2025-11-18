@@ -30,8 +30,10 @@ export class RemotePlayer implements Player {
   private lastUpdateTime: number = Date.now();
   private intervalId: number | null = null;
 
-  private constructor(wsUrl: string = "ws://127.0.0.1:4000/ws") {
-    this.wsUrl = wsUrl;
+  private constructor() {
+    // Load server URL from settings, default to port 4000
+    const settings = settingsService.getPlayerSettings("remote");
+    this.wsUrl = settings.serverUrl || "ws://127.0.0.1:4000/ws";
   }
 
   static getInstance(): RemotePlayer {
@@ -210,6 +212,16 @@ export class RemotePlayer implements Player {
 
   async setSettings(settings: Partial<PlayerSettings>): Promise<void> {
     settingsService.setPlayerSettings(this.getId(), settings);
+
+    // If serverUrl changed, reconnect with new URL
+    if (settings.serverUrl !== undefined && settings.serverUrl !== this.wsUrl) {
+      this.wsUrl = settings.serverUrl;
+      if (this.isInitialized) {
+        // Disconnect and reconnect with new URL
+        this.disconnect();
+        await this.initialize();
+      }
+    }
   }
 
   async setQueue(): Promise<void> {
@@ -222,9 +234,13 @@ export class RemotePlayer implements Player {
 
   async isAvailable(): Promise<boolean> {
     try {
+      // Use the configured server URL from settings
+      const settings = settingsService.getPlayerSettings(this.getId());
+      const wsUrl = settings.serverUrl || "ws://127.0.0.1:4000/ws";
+
       // Simple check: try to connect to WebSocket
       return new Promise((resolve) => {
-        const ws = new WebSocket(this.wsUrl);
+        const ws = new WebSocket(wsUrl);
 
         const timeout = setTimeout(() => {
           ws.close();
